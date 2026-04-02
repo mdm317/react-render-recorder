@@ -1,0 +1,80 @@
+:root {
+  color: #e2e8f0;
+  background:
+    radial-gradient(circle at top, rgba(56, 189, 248, 0.24), transparent 32%),
+    linear-gradient(180deg, #020617 0%, #111827 100%);
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+code {
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.4rem;
+  background: rgba(148, 163, 184, 0.14);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.shell {
+  display: grid;
+  gap: 2rem;
+  width: min(100% - 2rem, 900px);
+  margin: 0 auto;
+  padding: 4rem 0 5rem;
+}
+
+.hero {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.eyebrow {
+  margin: 0;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  color: #67e8f9;
+}
+
+.hero h1 {
+  margin: 0;
+  max-width: 12ch;
+  font-size: clamp(2.75rem, 8vw, 5.5rem);
+  line-height: 0.95;
+}
+
+.copy {
+  margin: 0;
+  max-width: 48rem;
+  color: #cbd5e1;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 640px) {
+  .shell {
+    padding-top: 3rem;
+  }
+}

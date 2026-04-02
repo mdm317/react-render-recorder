@@ -1,0 +1,15 @@
+{
+  "name": "react-record-workspace",
+  "private": true,
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "dev": "pnpm --filter example-react dev",
+    "build": "pnpm --filter devtools-api build && pnpm --filter react-record build && pnpm --filter example-react build",
+    "build:devtools-api": "pnpm --filter devtools-api build",
+    "build:example-react": "pnpm --filter example-react build",
+    "build:react-record": "pnpm --filter react-record build"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
+}
