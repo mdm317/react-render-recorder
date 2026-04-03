@@ -3,3 +3,6 @@ dist
 .DS_Store
 *.tsbuildinfo
 pnpm-debug.log*
+.codex/
+.omx/
+AGENTS.md
