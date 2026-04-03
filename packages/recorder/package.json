@@ -9,10 +9,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/react-record.js"
-    },
-    "./devtools": {
-      "types": "./dist/devtools.d.ts",
-      "import": "./dist/devtools.js"
     }
   },
   "files": [
@@ -22,9 +18,10 @@
   "scripts": {
     "dev": "vite",
     "dev:lib": "vite build --watch",
-    "build": "vite build && tsc -p tsconfig.build.json",
-    "build:demo": "vite build --mode demo",
-    "preview": "vite preview --outDir dist-demo"
+    "build": "rm -rf dist && vite build && tsc -p tsconfig.build.json",
+    "build:dev-web": "vite build --mode dev-web",
+    "preview:dev-web": "vite preview --outDir dist-dev-web",
+    "verify:regression": "node scripts/verify-regression.mjs"
   },
   "dependencies": {
     "devtools-api": "workspace:*"

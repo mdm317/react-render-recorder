@@ -1,4 +1,4 @@
-import { createRecorderDevtoolsSnapshot } from "devtools-api";
+import { createRecorderSnapshot } from "../core";
 import { useId, useState } from "react";
 
 export interface ReactRecordProps {
@@ -12,7 +12,7 @@ export function ReactRecord({
 }: ReactRecordProps) {
   const [isRecording, setIsRecording] = useState(initialRecording);
   const statusId = useId();
-  const devtoolsSnapshot = createRecorderDevtoolsSnapshot({
+  const recorderSnapshot = createRecorderSnapshot({
     label,
     isRecording,
   });
@@ -49,7 +49,7 @@ export function ReactRecord({
             background: "rgba(15, 23, 42, 0.08)",
           }}
         >
-          {devtoolsSnapshot.channel}:{devtoolsSnapshot.badge}
+          {recorderSnapshot.channel}:{recorderSnapshot.badge}
         </code>
       </div>
 

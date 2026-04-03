@@ -15,10 +15,6 @@ importers:
         version: 6.0.2
 
   packages/recorder:
-    dependencies:
-      devtools-api:
-        specifier: workspace:*
-        version: link:../devtools-api
     devDependencies:
       '@types/react':
         specifier: ^19.2.14

@@ -8,12 +8,9 @@ const devtoolsApiEntry = fileURLToPath(
 );
 
 const reactRecordEntry = fileURLToPath(new URL("./src/index.ts", import.meta.url));
-const reactRecordDevtoolsEntry = fileURLToPath(
-  new URL("./src/devtools.ts", import.meta.url),
-);
 
 export default defineConfig(({ command, mode }) => {
-  const isDemoMode = command === "serve" || mode === "demo";
+  const isDevelopmentWebMode = command === "serve" || mode === "dev-web";
 
   return {
     plugins: [react()],
@@ -22,22 +19,19 @@ export default defineConfig(({ command, mode }) => {
         "devtools-api": devtoolsApiEntry,
       },
     },
-    build: isDemoMode
+    build: isDevelopmentWebMode
       ? {
-          outDir: "dist-demo",
+          outDir: "dist-dev-web",
         }
-      : {
+        : {
           lib: {
-            entry: {
-              "react-record": reactRecordEntry,
-              devtools: reactRecordDevtoolsEntry,
-            },
-            fileName: (_format, entryName) => `${entryName}.js`,
+            entry: reactRecordEntry,
+            fileName: () => "react-record.js",
             formats: ["es"],
           },
           sourcemap: true,
           rollupOptions: {
-            external: ["react", "react-dom", "react/jsx-runtime"],
+            external: ["devtools-api", "react", "react-dom", "react/jsx-runtime"],
           },
         },
   };

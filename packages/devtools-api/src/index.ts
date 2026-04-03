@@ -8,30 +8,6 @@
  *
  * Original React DevTools shared sources are licensed under the MIT license.
  */
-export interface RecorderDevtoolsSnapshot {
-  channel: "devtools-api";
-  label: string;
-  state: "idle" | "recording";
-  badge: string;
-}
-
-export interface RecorderDevtoolsOptions {
-  label: string;
-  isRecording: boolean;
-}
-
-export function createRecorderDevtoolsSnapshot({
-  label,
-  isRecording,
-}: RecorderDevtoolsOptions): RecorderDevtoolsSnapshot {
-  return {
-    channel: "devtools-api",
-    label,
-    state: isRecording ? "recording" : "idle",
-    badge: isRecording ? "LIVE" : "READY",
-  };
-}
-
 type ComponentFilter = unknown;
 
 export type Handler = (data: unknown) => void;
