@@ -3,27 +3,42 @@ import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      "devtools-api": fileURLToPath(
-        new URL("../devtools-api/src/index.ts", import.meta.url),
-      ),
-    },
-  },
-  build: {
-    lib: {
-      entry: {
-        "react-record": fileURLToPath(new URL("./src/index.ts", import.meta.url)),
-        devtools: fileURLToPath(new URL("./src/devtools.ts", import.meta.url)),
+const devtoolsApiEntry = fileURLToPath(
+  new URL("../devtools-api/src/index.ts", import.meta.url),
+);
+
+const reactRecordEntry = fileURLToPath(new URL("./src/index.ts", import.meta.url));
+const reactRecordDevtoolsEntry = fileURLToPath(
+  new URL("./src/devtools.ts", import.meta.url),
+);
+
+export default defineConfig(({ command, mode }) => {
+  const isDemoMode = command === "serve" || mode === "demo";
+
+  return {
+    plugins: [react()],
+    resolve: {
+      alias: {
+        "devtools-api": devtoolsApiEntry,
       },
-      fileName: (_format, entryName) => `${entryName}.js`,
-      formats: ["es"],
     },
-    sourcemap: true,
-    rollupOptions: {
-      external: ["react", "react-dom", "react/jsx-runtime"],
-    },
-  },
+    build: isDemoMode
+      ? {
+          outDir: "dist-demo",
+        }
+      : {
+          lib: {
+            entry: {
+              "react-record": reactRecordEntry,
+              devtools: reactRecordDevtoolsEntry,
+            },
+            fileName: (_format, entryName) => `${entryName}.js`,
+            formats: ["es"],
+          },
+          sourcemap: true,
+          rollupOptions: {
+            external: ["react", "react-dom", "react/jsx-runtime"],
+          },
+        },
+  };
 });

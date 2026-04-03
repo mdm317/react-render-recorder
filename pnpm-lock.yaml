@@ -14,35 +14,7 @@ importers:
         specifier: ^6.0.2
         version: 6.0.2
 
-  packages/example:
-    dependencies:
-      react:
-        specifier: ^19.2.4
-        version: 19.2.4
-      react-dom:
-        specifier: ^19.2.4
-        version: 19.2.4(react@19.2.4)
-      react-record:
-        specifier: workspace:*
-        version: link:../react-record
-    devDependencies:
-      '@types/react':
-        specifier: ^19.2.14
-        version: 19.2.14
-      '@types/react-dom':
-        specifier: ^19.2.3
-        version: 19.2.3(@types/react@19.2.14)
-      '@vitejs/plugin-react':
-        specifier: ^6.0.1
-        version: 6.0.1(vite@8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2))
-      typescript:
-        specifier: ^6.0.2
-        version: 6.0.2
-      vite:
-        specifier: ^8.0.3
-        version: 8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)
-
-  packages/react-record:
+  packages/recorder:
     dependencies:
       devtools-api:
         specifier: workspace:*

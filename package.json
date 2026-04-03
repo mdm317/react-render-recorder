@@ -3,10 +3,10 @@
   "private": true,
   "packageManager": "pnpm@10.32.1",
   "scripts": {
-    "dev": "pnpm --filter example-react dev",
-    "build": "pnpm --filter devtools-api build && pnpm --filter react-record build && pnpm --filter example-react build",
+    "dev": "pnpm --filter react-record dev",
+    "build": "pnpm --filter devtools-api build && pnpm --filter react-record build && pnpm --filter react-record build:demo",
     "build:devtools-api": "pnpm --filter devtools-api build",
-    "build:example-react": "pnpm --filter example-react build",
+    "build:demo": "pnpm --filter react-record build:demo",
     "build:react-record": "pnpm --filter react-record build"
   },
   "workspaces": [

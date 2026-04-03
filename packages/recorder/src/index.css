@@ -61,7 +61,7 @@ code {
 
 .hero h1 {
   margin: 0;
-  max-width: 12ch;
+  max-width: 14ch;
   font-size: clamp(2.75rem, 8vw, 5.5rem);
   line-height: 0.95;
 }
