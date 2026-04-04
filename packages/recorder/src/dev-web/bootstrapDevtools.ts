@@ -1,3 +1,7 @@
 import { installReactRecordCommitLogger } from "../core";
 
-installReactRecordCommitLogger(window);
+export const cleanupDevtools = installReactRecordCommitLogger(window, {
+  recorderUI: {
+    label: "Recorder preview",
+  },
+});

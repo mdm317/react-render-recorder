@@ -31,7 +31,7 @@ export default defineConfig(({ command, mode }) => {
           },
           sourcemap: true,
           rollupOptions: {
-            external: ["devtools-api", "react", "react-dom", "react/jsx-runtime"],
+            external: ["devtools-api"],
           },
         },
   };

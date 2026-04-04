@@ -24,11 +24,8 @@
     "verify:regression": "node scripts/verify-regression.mjs"
   },
   "dependencies": {
-    "devtools-api": "workspace:*"
-  },
-  "peerDependencies": {
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "devtools-api": "workspace:*",
+    "preact": "^10.29.1"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",

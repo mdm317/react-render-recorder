@@ -1,10 +1,61 @@
 import { installHook, type DevToolsHook, type RendererID } from "devtools-api";
 
+import { mountRecorderUI, type RecorderUIOptions } from "../ui/mountRecorderUI";
+
 export type CommitFiberRootCallback = (
   rendererID: RendererID,
   root: unknown,
   priorityLevel?: number,
 ) => void;
+
+export type InstallReactRecordCommitLoggerOptions = {
+  mountTarget?: Element | null;
+  recorderUI?: RecorderUIOptions;
+};
+
+function resolveMountTarget(
+  target: object,
+  mountTarget?: Element | null,
+): { element: Element | null; cleanup: () => void } {
+  if (mountTarget != null) {
+    return {
+      element: mountTarget,
+      cleanup: () => {},
+    };
+  }
+
+  const targetDocument =
+    "document" in target &&
+    target.document != null &&
+    typeof target.document === "object" &&
+    "body" in target.document
+      ? (target.document as Document)
+      : null;
+
+  if (targetDocument?.body == null) {
+    return {
+      element: null,
+      cleanup: () => {},
+    };
+  }
+
+  targetDocument.body.insertAdjacentHTML("beforeend", '<div id="recorder-root"></div>');
+  const element = targetDocument.body.lastElementChild;
+
+  if (!(element instanceof HTMLDivElement) || element.id !== "recorder-root") {
+    return {
+      element: null,
+      cleanup: () => {},
+    };
+  }
+
+  return {
+    element,
+    cleanup: () => {
+      element.remove();
+    },
+  };
+}
 
 function getOrInstallHook(target: object): DevToolsHook | null {
   if (Object.prototype.hasOwnProperty.call(target, "__REACT_DEVTOOLS_GLOBAL_HOOK__")) {
@@ -38,8 +89,23 @@ export function registerOnCommitFiberRoot(
 
 export function installReactRecordCommitLogger(
   target: object = globalThis,
+  options: InstallReactRecordCommitLoggerOptions = {},
 ): () => void {
-  return registerOnCommitFiberRoot((rendererID, root, priorityLevel) => {
+  const { element: mountTarget, cleanup: cleanupMountTarget } = resolveMountTarget(
+    target,
+    options.mountTarget,
+  );
+
+  const cleanupRecorderUI =
+    mountTarget == null ? () => {} : mountRecorderUI(mountTarget, options.recorderUI);
+
+  const cleanupCommitLogger = registerOnCommitFiberRoot((rendererID, root, priorityLevel) => {
     console.log("[react-record] onCommitFiberRoot", { rendererID, root, priorityLevel });
   }, target);
+
+  return () => {
+    cleanupCommitLogger();
+    cleanupRecorderUI();
+    cleanupMountTarget();
+  };
 }

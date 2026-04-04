@@ -1,15 +1,14 @@
+/** @jsxImportSource preact */
+
+import { useId, useState } from "preact/hooks";
+
 import { createRecorderSnapshot } from "../core";
-import { useId, useState } from "react";
+import type { RecorderUIOptions } from "./types";
 
-export interface ReactRecordProps {
-  label?: string;
-  initialRecording?: boolean;
-}
-
-export function ReactRecord({
+export function RecorderUI({
   label = "react-record",
   initialRecording = false,
-}: ReactRecordProps) {
+}: RecorderUIOptions) {
   const [isRecording, setIsRecording] = useState(initialRecording);
   const statusId = useId();
   const recorderSnapshot = createRecorderSnapshot({
