@@ -7,7 +7,7 @@ export type CommitRecord = {
   timestamp: number;
 };
 
-export type RecorderStoreSnapshot = {
+export type RecorderStoreState = {
   isRecording: boolean;
   commitCount: number;
   latestCommit: CommitRecord | null;
@@ -16,7 +16,7 @@ export type RecorderStoreSnapshot = {
 
 export type RecorderStore = {
   subscribe: (listener: () => void) => () => void;
-  getSnapshot: () => RecorderStoreSnapshot;
+  getSnapshot: () => RecorderStoreState;
   recordCommit: (commit: Omit<CommitRecord, "timestamp">) => void;
   setRecording: (value: boolean) => void;
   reset: () => void;
@@ -33,7 +33,7 @@ export function createRecorderStore(options: CreateRecorderStoreOptions = {}): R
   const listeners = new Set<() => void>();
   const maxRecentCommits = options.maxRecentCommits ?? DEFAULT_MAX_RECENT_COMMITS;
 
-  let snapshot: RecorderStoreSnapshot = {
+  let state: RecorderStoreState = {
     isRecording: options.initialRecording ?? false,
     commitCount: 0,
     latestCommit: null,
@@ -46,8 +46,8 @@ export function createRecorderStore(options: CreateRecorderStoreOptions = {}): R
     }
   }
 
-  function setSnapshot(nextSnapshot: RecorderStoreSnapshot) {
-    snapshot = nextSnapshot;
+  function setState(nextState: RecorderStoreState) {
+    state = nextState;
     emit();
   }
 
@@ -61,11 +61,11 @@ export function createRecorderStore(options: CreateRecorderStoreOptions = {}): R
     },
 
     getSnapshot() {
-      return snapshot;
+      return state;
     },
 
     recordCommit(commit) {
-      if (!snapshot.isRecording) {
+      if (!state.isRecording) {
         return;
       }
 
@@ -74,28 +74,28 @@ export function createRecorderStore(options: CreateRecorderStoreOptions = {}): R
         timestamp: Date.now(),
       };
 
-      setSnapshot({
-        ...snapshot,
-        commitCount: snapshot.commitCount + 1,
+      setState({
+        ...state,
+        commitCount: state.commitCount + 1,
         latestCommit: nextCommit,
-        recentCommits: [nextCommit, ...snapshot.recentCommits].slice(0, maxRecentCommits),
+        recentCommits: [nextCommit, ...state.recentCommits].slice(0, maxRecentCommits),
       });
     },
 
     setRecording(value) {
-      if (snapshot.isRecording === value) {
+      if (state.isRecording === value) {
         return;
       }
 
-      setSnapshot({
-        ...snapshot,
+      setState({
+        ...state,
         isRecording: value,
       });
     },
 
     reset() {
-      setSnapshot({
-        ...snapshot,
+      setState({
+        ...state,
         commitCount: 0,
         latestCommit: null,
         recentCommits: [],
