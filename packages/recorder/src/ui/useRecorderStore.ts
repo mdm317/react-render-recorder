@@ -1,11 +1,7 @@
 import { useSyncExternalStore } from "preact/compat";
 import { useRef } from "preact/hooks";
 
-import {
-  createRecorderStore,
-  type RecorderStore,
-  type RecorderStoreSnapshot,
-} from "../store";
+import { createRecorderStore, type RecorderStore, type RecorderStoreSnapshot } from "../store";
 import type { RecorderUIOptions } from "./types";
 
 type UseRecorderStoreOptions = Pick<RecorderUIOptions, "initialRecording" | "store">;
@@ -15,9 +11,7 @@ type UseRecorderStoreResult = {
   snapshot: RecorderStoreSnapshot;
 };
 
-export function useRecorderStore(
-  options: UseRecorderStoreOptions = {},
-): UseRecorderStoreResult {
+export function useRecorderStore(options: UseRecorderStoreOptions = {}): UseRecorderStoreResult {
   const { initialRecording, store } = options;
   const fallbackStoreRef = useRef<RecorderStore | null>(store ?? null);
 
