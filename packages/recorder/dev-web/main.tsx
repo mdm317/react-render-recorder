@@ -3,8 +3,8 @@ import "./index.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { cleanupDevtools } from "./bootstrapDevtools";
 import { App } from "./App";
+import { cleanupDevtools } from "./bootstrapDevtools";
 
 const container = document.getElementById("root");
 
