@@ -7,3 +7,5 @@ pnpm-debug.log*
 .codex/
 .omx/
 AGENTS.md
+.agents
+.specify
