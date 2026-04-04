@@ -2,7 +2,6 @@
 
 import { useId, useState } from "preact/hooks";
 
-import { createRecorderSnapshot } from "../core";
 import type { RecorderUIOptions } from "./types";
 
 export function RecorderUI({
@@ -11,10 +10,7 @@ export function RecorderUI({
 }: RecorderUIOptions) {
   const [isRecording, setIsRecording] = useState(initialRecording);
   const statusId = useId();
-  const recorderSnapshot = createRecorderSnapshot({
-    label,
-    isRecording,
-  });
+  const recorderBadge = isRecording ? "LIVE" : "READY";
 
   return (
     <section
@@ -48,7 +44,7 @@ export function RecorderUI({
             background: "rgba(15, 23, 42, 0.08)",
           }}
         >
-          {recorderSnapshot.channel}:{recorderSnapshot.badge}
+          devtools-api:{recorderBadge}
         </code>
       </div>
 

@@ -2,29 +2,11 @@ import assert from "node:assert/strict";
 
 import { installHook } from "../../devtools-api/dist/index.js";
 import {
-  createRecorderSnapshot,
   mountRecorderUI,
   registerOnCommitFiberRoot,
 } from "../dist/react-record.js";
 
 assert.equal(typeof mountRecorderUI, "function");
-
-const idleSnapshot = createRecorderSnapshot({
-  label: "Recorder preview",
-  isRecording: false,
-});
-
-assert.equal(idleSnapshot.label, "Recorder preview");
-assert.equal(idleSnapshot.state, "idle");
-assert.equal(idleSnapshot.badge, "READY");
-
-const recordingSnapshot = createRecorderSnapshot({
-  label: "Recorder preview",
-  isRecording: true,
-});
-
-assert.equal(recordingSnapshot.state, "recording");
-assert.equal(recordingSnapshot.badge, "LIVE");
 
 const hookTarget = {};
 const hook = installHook(hookTarget);
