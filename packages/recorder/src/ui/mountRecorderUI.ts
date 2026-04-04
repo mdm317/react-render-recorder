@@ -6,10 +6,7 @@ import type { RecorderUIOptions } from "./types";
 
 export type { RecorderUIOptions } from "./types";
 
-export function mountRecorderUI(
-  target: Element,
-  options: RecorderUIOptions = {},
-): () => void {
+export function mountRecorderUI(target: Element, options: RecorderUIOptions = {}): () => void {
   const store =
     options.store ?? createRecorderStore({ initialRecording: options.initialRecording });
 

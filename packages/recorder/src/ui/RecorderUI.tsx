@@ -47,8 +47,7 @@ export function RecorderUI({
         padding: "1.25rem",
         borderRadius: "1rem",
         border: "1px solid rgba(15, 23, 42, 0.12)",
-        background:
-          "linear-gradient(135deg, rgba(248, 250, 252, 0.96), rgba(226, 232, 240, 0.88))",
+        background: "linear-gradient(135deg, rgba(248, 250, 252, 0.96), rgba(226, 232, 240, 0.88))",
         boxShadow: "0 18px 40px rgba(15, 23, 42, 0.08)",
       }}
     >

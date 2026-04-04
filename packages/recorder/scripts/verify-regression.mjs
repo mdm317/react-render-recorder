@@ -51,7 +51,10 @@ assert.deepEqual(callbackArgs, [7, root, 3]);
 
 cleanup();
 
-assert.equal(recorderTarget.__REACT_DEVTOOLS_GLOBAL_HOOK__.onCommitFiberRoot, existingHook.onCommitFiberRoot);
+assert.equal(
+  recorderTarget.__REACT_DEVTOOLS_GLOBAL_HOOK__.onCommitFiberRoot,
+  existingHook.onCommitFiberRoot,
+);
 
 const recorderStore = createRecorderStore();
 

@@ -34,13 +34,7 @@ export function registerOnCommitFiberRoot(
   const original = hook.onCommitFiberRoot;
 
   hook.onCommitFiberRoot = function (rendererID, root, priorityLevel, ...args) {
-    const result = original.call(
-      this,
-      rendererID,
-      root,
-      priorityLevel,
-      ...args,
-    );
+    const result = original.call(this, rendererID, root, priorityLevel, ...args);
     callback(rendererID, root, priorityLevel);
     return result;
   };
@@ -54,8 +48,8 @@ export function installReactRecordCommitLogger(): () => void {
   const target = initRootContainer();
   render(h(RecorderUI, {} as RecorderUIOptions), target);
 
-  registerOnCommitFiberRoot((rendererID, root, priorityLevel) => {
-    // recorderStore.recordCommit({ rendererID, root, priorityLevel });
+  registerOnCommitFiberRoot((_rendererID, _root, _priorityLevel) => {
+    // recorderStore.recordCommit({ rendererID: _rendererID, root: _root, priorityLevel: _priorityLevel });
   });
 
   return () => {};

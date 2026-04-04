@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "react", "import"],
+  "categories": {
+    "correctness": "error"
+  },
+  "ignorePatterns": ["**/dist/**", "**/dist-dev-web/**"],
+  "env": {
+    "builtin": true
+  },
+  "settings": {
+    "react": {
+      "version": "19.2.4"
+    }
+  }
+}
