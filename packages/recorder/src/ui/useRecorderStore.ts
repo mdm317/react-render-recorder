@@ -1,14 +1,14 @@
 import { useSyncExternalStore } from "preact/compat";
 import { useRef } from "preact/hooks";
 
-import { createRecorderStore, type RecorderStore, type RecorderStoreSnapshot } from "../store";
+import { createRecorderStore, type RecorderStore, type RecorderStoreState } from "../store";
 import type { RecorderUIOptions } from "./types";
 
 type UseRecorderStoreOptions = Pick<RecorderUIOptions, "initialRecording" | "store">;
 
 type UseRecorderStoreResult = {
   recorderStore: RecorderStore;
-  snapshot: RecorderStoreSnapshot;
+  state: RecorderStoreState;
 };
 
 export function useRecorderStore(options: UseRecorderStoreOptions = {}): UseRecorderStoreResult {
@@ -24,13 +24,13 @@ export function useRecorderStore(options: UseRecorderStoreOptions = {}): UseReco
     throw new Error("Recorder store could not be initialized.");
   }
 
-  const snapshot = useSyncExternalStore<RecorderStoreSnapshot>(
+  const state = useSyncExternalStore<RecorderStoreState>(
     resolvedStore.subscribe,
     resolvedStore.getSnapshot,
   );
 
   return {
     recorderStore: resolvedStore,
-    snapshot,
+    state,
   };
 }

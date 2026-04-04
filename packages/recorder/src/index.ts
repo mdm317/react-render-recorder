@@ -7,5 +7,5 @@ export type {
   CommitRecord,
   CreateRecorderStoreOptions,
   RecorderStore,
-  RecorderStoreSnapshot,
+  RecorderStoreState,
 } from "./store";

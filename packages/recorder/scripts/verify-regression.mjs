@@ -70,14 +70,14 @@ recorderStore.setRecording(true);
 assert.equal(recorderStore.getSnapshot().isRecording, true);
 
 recorderStore.recordCommit({ rendererID: 2, root, priorityLevel: 2 });
-const snapshotAfterCommit = recorderStore.getSnapshot();
-assert.equal(snapshotAfterCommit.commitCount, 1);
-assert.equal(snapshotAfterCommit.latestCommit?.rendererID, 2);
-assert.equal(snapshotAfterCommit.latestCommit?.priorityLevel, 2);
-assert.equal(snapshotAfterCommit.latestCommit?.root, root);
-assert.equal(typeof snapshotAfterCommit.latestCommit?.timestamp, "number");
-assert.equal(snapshotAfterCommit.recentCommits.length, 1);
-assert.equal(snapshotAfterCommit.recentCommits[0]?.rendererID, 2);
+const stateAfterCommit = recorderStore.getSnapshot();
+assert.equal(stateAfterCommit.commitCount, 1);
+assert.equal(stateAfterCommit.latestCommit?.rendererID, 2);
+assert.equal(stateAfterCommit.latestCommit?.priorityLevel, 2);
+assert.equal(stateAfterCommit.latestCommit?.root, root);
+assert.equal(typeof stateAfterCommit.latestCommit?.timestamp, "number");
+assert.equal(stateAfterCommit.recentCommits.length, 1);
+assert.equal(stateAfterCommit.recentCommits[0]?.rendererID, 2);
 
 recorderStore.reset();
 assert.deepEqual(recorderStore.getSnapshot(), {

@@ -10,11 +10,11 @@ export function RecorderUI({
   initialRecording = false,
   store,
 }: RecorderUIOptions) {
-  const { recorderStore, snapshot } = useRecorderStore({
+  const { recorderStore, state } = useRecorderStore({
     initialRecording,
     store,
   });
-  const { isRecording, commitCount, latestCommit } = snapshot;
+  const { isRecording, commitCount, latestCommit } = state;
   const statusId = useId();
   const recorderBadge = isRecording ? "LIVE" : "READY";
   const latestCommitLabel =
