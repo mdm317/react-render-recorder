@@ -1,27 +1,19 @@
 /** @jsxImportSource preact */
 
-import { useEffect, useId, useRef, useState } from "preact/hooks";
+import { useId } from "preact/hooks";
 
-import { createRecorderStore } from "../store";
 import type { RecorderUIOptions } from "./types";
+import { useRecorderStore } from "./useRecorderStore";
 
 export function RecorderUI({
   label = "react-record",
   initialRecording = false,
   store,
 }: RecorderUIOptions) {
-  const fallbackStoreRef = useRef(store ?? null);
-
-  if (store == null && fallbackStoreRef.current == null) {
-    fallbackStoreRef.current = createRecorderStore({ initialRecording });
-  }
-
-  const recorderStore = store ?? fallbackStoreRef.current;
-  if (recorderStore == null) {
-    throw new Error("Recorder store could not be initialized.");
-  }
-
-  const [snapshot, setSnapshot] = useState(() => recorderStore.getSnapshot());
+  const { recorderStore, snapshot } = useRecorderStore({
+    initialRecording,
+    store,
+  });
   const { isRecording, commitCount, latestCommit } = snapshot;
   const statusId = useId();
   const recorderBadge = isRecording ? "LIVE" : "READY";
@@ -30,14 +22,6 @@ export function RecorderUI({
       ? "No commits captured yet."
       : `Renderer ${latestCommit.rendererID} at ${new Date(latestCommit.timestamp).toLocaleTimeString()}`;
   const priorityLabel = latestCommit?.priorityLevel ?? "n/a";
-
-  useEffect(() => {
-    setSnapshot(recorderStore.getSnapshot());
-
-    return recorderStore.subscribe(() => {
-      setSnapshot(recorderStore.getSnapshot());
-    });
-  }, [recorderStore]);
 
   return (
     <section
