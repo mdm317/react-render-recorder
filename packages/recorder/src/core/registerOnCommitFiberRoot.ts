@@ -1,5 +1,6 @@
 import { installHook, type DevToolsHook, type RendererID } from "devtools-api";
 
+import { createRecorderStore, type RecorderStore } from "../store";
 import { mountRecorderUI, type RecorderUIOptions } from "../ui/mountRecorderUI";
 
 export type CommitFiberRootCallback = (
@@ -11,6 +12,7 @@ export type CommitFiberRootCallback = (
 export type InstallReactRecordCommitLoggerOptions = {
   mountTarget?: Element | null;
   recorderUI?: RecorderUIOptions;
+  store?: RecorderStore;
 };
 
 function resolveMountTarget(
@@ -91,16 +93,25 @@ export function installReactRecordCommitLogger(
   target: object = globalThis,
   options: InstallReactRecordCommitLoggerOptions = {},
 ): () => void {
+  const recorderStore =
+    options.store ??
+    createRecorderStore({ initialRecording: options.recorderUI?.initialRecording });
+
   const { element: mountTarget, cleanup: cleanupMountTarget } = resolveMountTarget(
     target,
     options.mountTarget,
   );
 
   const cleanupRecorderUI =
-    mountTarget == null ? () => {} : mountRecorderUI(mountTarget, options.recorderUI);
+    mountTarget == null
+      ? () => {}
+      : mountRecorderUI(mountTarget, {
+          ...options.recorderUI,
+          store: recorderStore,
+        });
 
   const cleanupCommitLogger = registerOnCommitFiberRoot((rendererID, root, priorityLevel) => {
-    console.log("[react-record] onCommitFiberRoot", { rendererID, root, priorityLevel });
+    recorderStore.recordCommit({ rendererID, root, priorityLevel });
   }, target);
 
   return () => {

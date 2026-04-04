@@ -1,16 +1,43 @@
 /** @jsxImportSource preact */
 
-import { useId, useState } from "preact/hooks";
+import { useEffect, useId, useRef, useState } from "preact/hooks";
 
+import { createRecorderStore } from "../store";
 import type { RecorderUIOptions } from "./types";
 
 export function RecorderUI({
   label = "react-record",
   initialRecording = false,
+  store,
 }: RecorderUIOptions) {
-  const [isRecording, setIsRecording] = useState(initialRecording);
+  const fallbackStoreRef = useRef(store ?? null);
+
+  if (store == null && fallbackStoreRef.current == null) {
+    fallbackStoreRef.current = createRecorderStore({ initialRecording });
+  }
+
+  const recorderStore = store ?? fallbackStoreRef.current;
+  if (recorderStore == null) {
+    throw new Error("Recorder store could not be initialized.");
+  }
+
+  const [snapshot, setSnapshot] = useState(() => recorderStore.getSnapshot());
+  const { isRecording, commitCount, latestCommit } = snapshot;
   const statusId = useId();
   const recorderBadge = isRecording ? "LIVE" : "READY";
+  const latestCommitLabel =
+    latestCommit == null
+      ? "No commits captured yet."
+      : `Renderer ${latestCommit.rendererID} at ${new Date(latestCommit.timestamp).toLocaleTimeString()}`;
+  const priorityLabel = latestCommit?.priorityLevel ?? "n/a";
+
+  useEffect(() => {
+    setSnapshot(recorderStore.getSnapshot());
+
+    return recorderStore.subscribe(() => {
+      setSnapshot(recorderStore.getSnapshot());
+    });
+  }, [recorderStore]);
 
   return (
     <section
@@ -35,7 +62,9 @@ export function RecorderUI({
             fontSize: "0.95rem",
           }}
         >
-          {isRecording ? "Recording in progress." : "Recorder is idle."}
+          {isRecording
+            ? `Recording in progress. ${commitCount} commits captured.`
+            : "Recorder is idle."}
         </p>
         <code
           style={{
@@ -46,13 +75,31 @@ export function RecorderUI({
         >
           devtools-api:{recorderBadge}
         </code>
+        <p
+          style={{
+            margin: 0,
+            color: "#334155",
+            fontSize: "0.9rem",
+          }}
+        >
+          {latestCommitLabel}
+        </p>
+        <p
+          style={{
+            margin: 0,
+            color: "#64748b",
+            fontSize: "0.82rem",
+          }}
+        >
+          Latest priority: {priorityLabel}
+        </p>
       </div>
 
       <button
         type="button"
         aria-describedby={statusId}
         onClick={() => {
-          setIsRecording((current) => !current);
+          recorderStore.setRecording(!isRecording);
         }}
         style={{
           width: "fit-content",
