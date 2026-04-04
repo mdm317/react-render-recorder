@@ -29,7 +29,7 @@ export type CreateRecorderStoreOptions = {
 
 const DEFAULT_MAX_RECENT_COMMITS = 20;
 
-export function createRecorderStore(options: CreateRecorderStoreOptions = {}): RecorderStore {
+function createRecorderStoreInstance(options: CreateRecorderStoreOptions = {}): RecorderStore {
   const listeners = new Set<() => void>();
   const maxRecentCommits = options.maxRecentCommits ?? DEFAULT_MAX_RECENT_COMMITS;
 
@@ -102,4 +102,14 @@ export function createRecorderStore(options: CreateRecorderStoreOptions = {}): R
       });
     },
   };
+}
+
+let recorderStoreSingleton: RecorderStore | null = null;
+
+export function createRecorderStore(options: CreateRecorderStoreOptions = {}): RecorderStore {
+  if (recorderStoreSingleton == null) {
+    recorderStoreSingleton = createRecorderStoreInstance(options);
+  }
+
+  return recorderStoreSingleton;
 }

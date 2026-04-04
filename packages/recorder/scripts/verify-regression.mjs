@@ -3,11 +3,11 @@ import assert from "node:assert/strict";
 import { installHook } from "../../devtools-api/dist/index.js";
 import {
   createRecorderStore,
-  mountRecorderUI,
+  installReactRecordCommitLogger,
   registerOnCommitFiberRoot,
 } from "../dist/react-record.js";
 
-assert.equal(typeof mountRecorderUI, "function");
+assert.equal(typeof installReactRecordCommitLogger, "function");
 assert.equal(typeof createRecorderStore, "function");
 
 const hookTarget = {};
@@ -57,6 +57,10 @@ assert.equal(
 );
 
 const recorderStore = createRecorderStore();
+const recorderStoreSingleton = createRecorderStore();
+
+assert.equal(recorderStoreSingleton, recorderStore);
+recorderStore.reset();
 
 recorderStore.recordCommit({ rendererID: 1, root, priorityLevel: 1 });
 assert.deepEqual(recorderStore.getSnapshot(), {
