@@ -1,7 +1,11 @@
 {
   "name": "react-record",
   "version": "0.0.0",
+  "files": [
+    "dist"
+  ],
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/react-record.js",
   "module": "./dist/react-record.js",
   "types": "./dist/index.d.ts",
@@ -11,10 +15,6 @@
       "import": "./dist/react-record.js"
     }
   },
-  "files": [
-    "dist"
-  ],
-  "sideEffects": false,
   "scripts": {
     "dev": "vite",
     "dev:lib": "vite build --watch",

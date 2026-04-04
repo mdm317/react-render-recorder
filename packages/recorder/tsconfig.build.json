@@ -8,10 +8,5 @@
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": [
-    "src/index.ts",
-    "src/core/**/*.ts",
-    "src/ui/**/*.ts",
-    "src/ui/**/*.tsx"
-  ]
+  "include": ["src/index.ts", "src/core/**/*.ts", "src/ui/**/*.ts", "src/ui/**/*.tsx"]
 }

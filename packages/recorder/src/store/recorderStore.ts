@@ -29,9 +29,7 @@ export type CreateRecorderStoreOptions = {
 
 const DEFAULT_MAX_RECENT_COMMITS = 20;
 
-export function createRecorderStore(
-  options: CreateRecorderStoreOptions = {},
-): RecorderStore {
+export function createRecorderStore(options: CreateRecorderStoreOptions = {}): RecorderStore {
   const listeners = new Set<() => void>();
   const maxRecentCommits = options.maxRecentCommits ?? DEFAULT_MAX_RECENT_COMMITS;
 

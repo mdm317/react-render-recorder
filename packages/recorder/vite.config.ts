@@ -3,9 +3,7 @@ import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-const devtoolsApiEntry = fileURLToPath(
-  new URL("../devtools-api/src/index.ts", import.meta.url),
-);
+const devtoolsApiEntry = fileURLToPath(new URL("../devtools-api/src/index.ts", import.meta.url));
 
 const reactRecordEntry = fileURLToPath(new URL("./src/index.ts", import.meta.url));
 
@@ -23,7 +21,7 @@ export default defineConfig(({ command, mode }) => {
       ? {
           outDir: "dist-dev-web",
         }
-        : {
+      : {
           lib: {
             entry: reactRecordEntry,
             fileName: () => "react-record.js",

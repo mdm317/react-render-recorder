@@ -18,12 +18,7 @@ export type OnCommitFiberRoot = (
   priorityLevel?: number,
   ...args: unknown[]
 ) => unknown;
-export type ReactBuildType =
-  | "deadcode"
-  | "development"
-  | "outdated"
-  | "production"
-  | "unminified";
+export type ReactBuildType = "deadcode" | "development" | "outdated" | "production" | "unminified";
 
 export interface DevToolsHookSettings {
   appendComponentStack: boolean;
@@ -101,19 +96,16 @@ export type AttachRenderer = (
   target: unknown,
   shouldStartProfilingNow: boolean,
   profilingSettings: ProfilingSettings,
-  componentFiltersOrComponentFiltersPromise:
-    | ComponentFilter[]
-    | Promise<ComponentFilter[]>,
+  componentFiltersOrComponentFiltersPromise: ComponentFilter[] | Promise<ComponentFilter[]>,
 ) => RendererInterface | null | undefined;
 
 const FIREFOX_CONSOLE_DIMMING_COLOR = "color: rgba(124, 124, 124, 0.75)";
 const ANSI_STYLE_DIMMING_TEMPLATE = "\x1b[2;38;2;124;124;124m%s\x1b[0m";
-const ANSI_STYLE_DIMMING_TEMPLATE_WITH_COMPONENT_STACK =
-  "\x1b[2;38;2;124;124;124m%s %o\x1b[0m";
+const ANSI_STYLE_DIMMING_TEMPLATE_WITH_COMPONENT_STACK = "\x1b[2;38;2;124;124;124m%s %o\x1b[0m";
 
 const PREFIX_REGEX = /\s{4}(in|at)\s{1}/;
 const ROW_COLUMN_NUMBER_REGEX = /:\d+:\d+(\n|$)/;
-const frameDiffs = / \(\<anonymous\>\)$|\@unknown\:0\:0$|\(|\)|\[|\]/gm;
+const frameDiffs = / \(<anonymous>\)$|@unknown:0:0$|\(|\)|\[|\]/gm;
 
 const defaultProfilingSettings: ProfilingSettings = {
   recordChangeDescriptions: false,
@@ -121,16 +113,14 @@ const defaultProfilingSettings: ProfilingSettings = {
 };
 
 const userAgent =
-  typeof globalThis.navigator === "object" &&
-  typeof globalThis.navigator.userAgent === "string"
+  typeof globalThis.navigator === "object" && typeof globalThis.navigator.userAgent === "string"
     ? globalThis.navigator.userAgent
     : "";
 const isChrome = /\bChrome\//.test(userAgent) && !/\bEdg\//.test(userAgent);
 const isEdge = /\bEdg\//.test(userAgent);
 const isFirefox = /\bFirefox\//.test(userAgent);
 const isNative =
-  typeof globalThis.navigator === "object" &&
-  globalThis.navigator.product === "ReactNative";
+  typeof globalThis.navigator === "object" && globalThis.navigator.product === "ReactNative";
 
 let attachRendererImpl: AttachRenderer = () => undefined;
 
@@ -215,18 +205,14 @@ function formatWithStyles(
   if (
     inputArgs == null ||
     inputArgs.length === 0 ||
-    (typeof inputArgs[0] === "string" &&
-      inputArgs[0].match(/([^%]|^)(%c)/g) != null) ||
+    (typeof inputArgs[0] === "string" && inputArgs[0].match(/([^%]|^)(%c)/g) != null) ||
     style === undefined
   ) {
     return [...(inputArgs ?? [])];
   }
 
   const formatSpecifiers = /([^%]|^)((%%)*)(%([oOdisf]))/g;
-  if (
-    typeof inputArgs[0] === "string" &&
-    inputArgs[0].match(formatSpecifiers) != null
-  ) {
+  if (typeof inputArgs[0] === "string" && inputArgs[0].match(formatSpecifiers) != null) {
     return [`%c${inputArgs[0]}`, style, ...inputArgs.slice(1)];
   }
 
@@ -247,17 +233,9 @@ function formatWithStyles(
   return [firstArg, style, ...inputArgs];
 }
 
-type ConsoleMethodName =
-  | "error"
-  | "group"
-  | "groupCollapsed"
-  | "info"
-  | "log"
-  | "trace"
-  | "warn";
+type ConsoleMethodName = "error" | "group" | "groupCollapsed" | "info" | "log" | "trace" | "warn";
 
-const targetConsole = console as Console &
-  Record<ConsoleMethodName, (...args: unknown[]) => void>;
+const targetConsole = console as Console & Record<ConsoleMethodName, (...args: unknown[]) => void>;
 
 function getConsoleMethod(method: ConsoleMethodName): (...args: unknown[]) => void {
   const candidate = targetConsole[method];
@@ -267,10 +245,7 @@ function getConsoleMethod(method: ConsoleMethodName): (...args: unknown[]) => vo
   return () => {};
 }
 
-function setConsoleMethod(
-  method: ConsoleMethodName,
-  value: (...args: unknown[]) => void,
-): void {
+function setConsoleMethod(method: ConsoleMethodName, value: (...args: unknown[]) => void): void {
   targetConsole[method] = value;
 }
 
@@ -286,9 +261,7 @@ function detectReactBuildType(renderer: ReactRenderer): ReactBuildType {
     const mount = renderer.Mount;
     const renderNewRootComponent = mount?._renderNewRootComponent;
     if (typeof renderNewRootComponent === "function") {
-      const renderRootCode = Function.prototype.toString.call(
-        renderNewRootComponent,
-      );
+      const renderRootCode = Function.prototype.toString.call(renderNewRootComponent);
 
       if (!renderRootCode.startsWith("function")) {
         return "production";
@@ -304,18 +277,12 @@ function detectReactBuildType(renderer: ReactRenderer): ReactBuildType {
         ) {
           return "development";
         }
-        if (
-          renderRootCode.includes("nextElement") ||
-          renderRootCode.includes("nextComponent")
-        ) {
+        if (renderRootCode.includes("nextElement") || renderRootCode.includes("nextComponent")) {
           return "unminified";
         }
         return "development";
       }
-      if (
-        renderRootCode.includes("nextElement") ||
-        renderRootCode.includes("nextComponent")
-      ) {
+      if (renderRootCode.includes("nextElement") || renderRootCode.includes("nextComponent")) {
         return "unminified";
       }
       return "outdated";
@@ -332,29 +299,17 @@ function detectReactBuildType(renderer: ReactRenderer): ReactBuildType {
 // pluggable callback so the hook installer can stay self-contained.
 export function installHook(
   target: unknown,
-  componentFiltersOrComponentFiltersPromise:
-    | ComponentFilter[]
-    | Promise<ComponentFilter[]> = [],
-  maybeSettingsOrSettingsPromise?:
-    | DevToolsHookSettings
-    | Promise<DevToolsHookSettings>,
+  componentFiltersOrComponentFiltersPromise: ComponentFilter[] | Promise<ComponentFilter[]> = [],
+  maybeSettingsOrSettingsPromise?: DevToolsHookSettings | Promise<DevToolsHookSettings>,
   shouldStartProfilingNow = false,
   profilingSettings: ProfilingSettings = defaultProfilingSettings,
 ): DevToolsHook | null {
-  if (
-    target == null ||
-    (typeof target !== "object" && typeof target !== "function")
-  ) {
+  if (target == null || (typeof target !== "object" && typeof target !== "function")) {
     return null;
   }
 
   const targetObject = target as Record<string, unknown>;
-  if (
-    Object.prototype.hasOwnProperty.call(
-      targetObject,
-      "__REACT_DEVTOOLS_GLOBAL_HOOK__",
-    )
-  ) {
+  if (Object.prototype.hasOwnProperty.call(targetObject, "__REACT_DEVTOOLS_GLOBAL_HOOK__")) {
     return null;
   }
 
@@ -437,9 +392,7 @@ export function installHook(
     const id = ++uidCounter;
     renderers.set(id, renderer);
 
-    const reactBuildType = hasDetectedBadDCE
-      ? "deadcode"
-      : detectReactBuildType(renderer);
+    const reactBuildType = hasDetectedBadDCE ? "deadcode" : detectReactBuildType(renderer);
 
     hook.emit("renderer", {
       id,
@@ -460,7 +413,7 @@ export function installHook(
 
     if (rendererInterface != null) {
       hook.rendererInterfaces.set(id, rendererInterface);
-      hook.emit("renderer-attached", {id, rendererInterface});
+      hook.emit("renderer-attached", { id, rendererInterface });
     } else {
       hook.hasUnsupportedRendererAttached = true;
       hook.emit("unsupported-renderer-version");
@@ -489,8 +442,7 @@ export function installHook(
     };
     const current = rootLike.current;
     const isKnownRoot = mountedRoots.has(root);
-    const isUnmounting =
-      current?.memoizedState == null || current.memoizedState.element == null;
+    const isUnmounting = current?.memoizedState == null || current.memoizedState.element == null;
 
     if (!isKnownRoot && !isUnmounting) {
       mountedRoots.add(root);
@@ -498,9 +450,7 @@ export function installHook(
       mountedRoots.delete(root);
     }
 
-    rendererInterfaces
-      .get(rendererID)
-      ?.handleCommitFiberRoot?.(root, priorityLevel);
+    rendererInterfaces.get(rendererID)?.handleCommitFiberRoot?.(root, priorityLevel);
   }
 
   function onPostCommitFiberRoot(rendererID: RendererID, root: unknown): void {
@@ -512,12 +462,7 @@ export function installHook(
       return;
     }
 
-    const methods: ConsoleMethodName[] = [
-      "group",
-      "groupCollapsed",
-      "info",
-      "log",
-    ];
+    const methods: ConsoleMethodName[] = ["group", "groupCollapsed", "info", "log"];
 
     methods.forEach((method) => {
       const originalMethod = getConsoleMethod(method);
@@ -538,14 +483,9 @@ export function installHook(
         }
 
         if (isFirefox) {
-          originalMethod(
-            ...formatWithStyles(args, FIREFOX_CONSOLE_DIMMING_COLOR),
-          );
+          originalMethod(...formatWithStyles(args, FIREFOX_CONSOLE_DIMMING_COLOR));
         } else {
-          originalMethod(
-            ANSI_STYLE_DIMMING_TEMPLATE,
-            ...formatConsoleArgumentsFromArgs(args),
-          );
+          originalMethod(ANSI_STYLE_DIMMING_TEMPLATE, ...formatConsoleArgumentsFromArgs(args));
         }
       };
 
@@ -601,11 +541,7 @@ export function installHook(
       return;
     }
 
-    const methods: Array<"error" | "trace" | "warn"> = [
-      "error",
-      "trace",
-      "warn",
-    ];
+    const methods: Array<"error" | "trace" | "warn"> = ["error", "trace", "warn"];
 
     methods.forEach((method) => {
       const originalMethod = getConsoleMethod(method);
@@ -616,10 +552,7 @@ export function installHook(
           return;
         }
 
-        if (
-          isRunningDuringStrictModeInvocation &&
-          settings.hideConsoleLogsInStrictMode
-        ) {
+        if (isRunningDuringStrictModeInvocation && settings.hideConsoleLogsInStrictMode) {
           return;
         }
 
@@ -627,16 +560,14 @@ export function installHook(
         let alreadyHasComponentStack = false;
         if (settings.appendComponentStack) {
           const lastArg = args[args.length - 1];
-          alreadyHasComponentStack =
-            typeof lastArg === "string" && isStringComponentStack(lastArg);
+          alreadyHasComponentStack = typeof lastArg === "string" && isStringComponentStack(lastArg);
         }
 
         const shouldShowInlineWarningsAndErrors =
-          settings.showInlineWarningsAndErrors &&
-          (method === "error" || method === "warn");
+          settings.showInlineWarningsAndErrors && (method === "error" || method === "warn");
 
         for (const rendererInterface of hook.rendererInterfaces.values()) {
-          const {getComponentStack, onErrorOrWarning} = rendererInterface;
+          const { getComponentStack, onErrorOrWarning } = rendererInterface;
 
           try {
             if (shouldShowInlineWarningsAndErrors && onErrorOrWarning != null) {
@@ -656,7 +587,7 @@ export function installHook(
                 continue;
               }
 
-              const {componentStack, enableOwnerStacks} = match;
+              const { componentStack, enableOwnerStacks } = match;
               if (componentStack !== "") {
                 const fakeError = new Error("");
                 fakeError.name =
@@ -674,10 +605,7 @@ export function installHook(
 
                 if (alreadyHasComponentStack) {
                   const lastArg = args[args.length - 1];
-                  if (
-                    typeof lastArg === "string" &&
-                    areStackTracesEqual(lastArg, componentStack)
-                  ) {
+                  if (typeof lastArg === "string" && areStackTracesEqual(lastArg, componentStack)) {
                     const firstArg = args[0];
                     if (
                       args.length > 1 &&
@@ -705,6 +633,7 @@ export function installHook(
         }
 
         if (settings.breakOnConsoleErrors) {
+          // oxlint-disable-next-line no-debugger -- this setting intentionally pauses execution here.
           debugger;
         }
 
@@ -713,15 +642,9 @@ export function installHook(
           !settings.disableSecondConsoleLogDimmingInStrictMode
         ) {
           if (isFirefox) {
-            let argsWithStyles = formatWithStyles(
-              args,
-              FIREFOX_CONSOLE_DIMMING_COLOR,
-            );
+            let argsWithStyles = formatWithStyles(args, FIREFOX_CONSOLE_DIMMING_COLOR);
             if (injectedComponentStackAsFakeError) {
-              argsWithStyles = [
-                `${String(argsWithStyles[0])} %o`,
-                ...argsWithStyles.slice(1),
-              ];
+              argsWithStyles = [`${String(argsWithStyles[0])} %o`, ...argsWithStyles.slice(1)];
             }
             originalMethod(...argsWithStyles);
           } else {
