@@ -24,56 +24,31 @@ export function RecorderUI({
   const priorityLabel = latestCommit?.priorityLevel ?? "n/a";
 
   return (
-    <section
-      style={{
-        display: "grid",
-        gap: "1rem",
-        padding: "1.25rem",
-        borderRadius: "1rem",
-        border: "1px solid rgba(15, 23, 42, 0.12)",
-        background: "linear-gradient(135deg, rgba(248, 250, 252, 0.96), rgba(226, 232, 240, 0.88))",
-        boxShadow: "0 18px 40px rgba(15, 23, 42, 0.08)",
-      }}
-    >
-      <div style={{ display: "grid", gap: "0.35rem" }}>
-        <strong style={{ fontSize: "1rem", color: "#0f172a" }}>{label}</strong>
-        <p
-          id={statusId}
-          style={{
-            margin: 0,
-            color: "#475569",
-            fontSize: "0.95rem",
-          }}
-        >
+    <section className="grid gap-4 p-5 rounded-2xl border border-slate-200/60 bg-gradient-to-br from-slate-50/95 to-slate-100/90 shadow-lg">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <span
+            className={`inline-block size-2.5 rounded-full ${isRecording ? "bg-red-500 animate-pulse" : "bg-slate-400"}`}
+          />
+          <strong className="text-sm font-semibold text-slate-900">
+            {label}
+          </strong>
+        </div>
+        <code className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-900/6 text-slate-600">
+          devtools-api:{recorderBadge}
+        </code>
+      </div>
+
+      <div className="grid gap-1.5">
+        <p id={statusId} className="m-0 text-sm text-slate-500">
           {isRecording
             ? `Recording in progress. ${commitCount} commits captured.`
             : "Recorder is idle."}
         </p>
-        <code
-          style={{
-            width: "fit-content",
-            color: "#0f172a",
-            background: "rgba(15, 23, 42, 0.08)",
-          }}
-        >
-          devtools-api:{recorderBadge}
-        </code>
-        <p
-          style={{
-            margin: 0,
-            color: "#334155",
-            fontSize: "0.9rem",
-          }}
-        >
+        <p className="m-0 text-xs text-slate-400">
           {latestCommitLabel}
         </p>
-        <p
-          style={{
-            margin: 0,
-            color: "#64748b",
-            fontSize: "0.82rem",
-          }}
-        >
+        <p className="m-0 text-xs text-slate-400">
           Latest priority: {priorityLabel}
         </p>
       </div>
@@ -84,17 +59,15 @@ export function RecorderUI({
         onClick={() => {
           recorderStore.setRecording(!isRecording);
         }}
-        style={{
-          width: "fit-content",
-          padding: "0.75rem 1rem",
-          border: "none",
-          borderRadius: "999px",
-          fontWeight: 700,
-          cursor: "pointer",
-          color: "#fff",
-          background: isRecording ? "#dc2626" : "#0f766e",
-        }}
+        className={`inline-flex items-center gap-2 w-fit px-4 py-2.5 rounded-full text-sm font-bold cursor-pointer border-none text-white transition-all duration-200 ${
+          isRecording
+            ? "bg-red-600 hover:bg-red-700 shadow-red-500/25 shadow-md"
+            : "bg-teal-700 hover:bg-teal-800 shadow-teal-700/25 shadow-md"
+        }`}
       >
+        <span
+          className={`inline-block size-2 rounded-full ${isRecording ? "bg-white animate-pulse" : "bg-white/70"}`}
+        />
         {isRecording ? "Stop" : "Start"} recording
       </button>
     </section>
