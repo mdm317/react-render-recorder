@@ -21,7 +21,8 @@
     "build": "rm -rf dist && vite build && tsc -p tsconfig.build.json",
     "build:dev-web": "vite build --mode dev-web",
     "preview:dev-web": "vite preview --outDir dist-dev-web",
-    "verify:regression": "node scripts/verify-regression.mjs"
+    "verify:regression": "node scripts/verify-regression.mjs",
+    "test:e2e": "playwright test --config e2e/playwright.config.ts"
   },
   "dependencies": {
     "devtools-api": "workspace:*",
@@ -35,6 +36,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "tailwindcss": "^4.2.2",
+    "@playwright/test": "^1.51.1",
     "typescript": "^6.0.2",
     "vite": "^8.0.3"
   }

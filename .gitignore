@@ -9,3 +9,5 @@ pnpm-debug.log*
 AGENTS.md
 .agents
 .specify
+test-results
+playwright-report

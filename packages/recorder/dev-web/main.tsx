@@ -4,7 +4,10 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { App } from "./App";
-import { cleanupDevtools } from "./bootstrapDevtools";
+import { installReactRecordCommitLogger } from "../src";
+
+installReactRecordCommitLogger();
+
 
 const container = document.getElementById("root");
 
@@ -22,7 +25,6 @@ root.render(
 
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
-    cleanupDevtools();
     root.unmount();
   });
 }
