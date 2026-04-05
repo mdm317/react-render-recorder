@@ -43,11 +43,6 @@ code {
   min-height: 0;
 }
 
-#recorder-root {
-  width: min(100% - 2rem, 900px);
-  margin: -1rem auto 0;
-}
-
 .shell {
   display: grid;
   gap: 2rem;
@@ -112,9 +107,5 @@ code {
 @media (max-width: 640px) {
   .shell {
     padding-top: 3rem;
-  }
-
-  #recorder-root {
-    margin-top: -0.5rem;
   }
 }
