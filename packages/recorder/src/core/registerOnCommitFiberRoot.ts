@@ -6,11 +6,18 @@ export type CommitFiberRootCallback = (
   priorityLevel?: number,
 ) => void;
 
+function getOrInstallHook(target: object) {
+  return (
+    (target as { __REACT_DEVTOOLS_GLOBAL_HOOK__?: ReturnType<typeof installHook> })
+      .__REACT_DEVTOOLS_GLOBAL_HOOK__ ?? installHook(target)
+  );
+}
+
 export function registerOnCommitFiberRoot(
   callback: CommitFiberRootCallback,
   target: object = globalThis,
 ): () => void {
-  const hook = installHook(target);
+  const hook = getOrInstallHook(target);
   if (hook == null) {
     return () => {};
   }
