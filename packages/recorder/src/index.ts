@@ -1,4 +1,6 @@
-export { installReactRecordCommitLogger, registerOnCommitFiberRoot } from "./core";
+import { installReactRecordCommitLogger, registerOnCommitFiberRoot } from "./core";
+
+export { installReactRecordCommitLogger, registerOnCommitFiberRoot };
 export type { CommitFiberRootCallback } from "./core";
 export { createRecorderStore } from "./store";
 export type {
@@ -9,3 +11,5 @@ export type {
   RecorderStore,
   RecorderStoreState,
 } from "./store";
+
+installReactRecordCommitLogger();

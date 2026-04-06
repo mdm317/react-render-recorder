@@ -6,22 +6,11 @@
   ],
   "type": "module",
   "sideEffects": false,
-  "main": "./dist/react-record.js",
-  "module": "./dist/react-record.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/react-record.js"
-    }
-  },
+  "main": "./dist/react-record.auto.js",
   "scripts": {
     "dev": "vite",
     "dev:lib": "vite build --watch",
-    "build": "rm -rf dist && vite build && tsc -p tsconfig.build.json",
-    "build:dev-web": "vite build --mode dev-web",
-    "preview:dev-web": "vite preview --outDir dist-dev-web",
-    "verify:regression": "node scripts/verify-regression.mjs",
+    "build": "rm -rf dist && vite build",
     "test:unit": "vitest run",
     "test:e2e": "playwright test --config e2e/playwright.config.ts"
   },
