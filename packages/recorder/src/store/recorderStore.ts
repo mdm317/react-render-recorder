@@ -1,44 +1,37 @@
 import type { CommitFiberChange, RendererID } from "devtools-api";
-
-export type CommitRecord = {
-  changes?: CommitFiberChange[];
-  rendererID: RendererID;
-  root: unknown;
-  priorityLevel?: number;
-  timestamp: number;
-};
+import { CommitData } from "../core/types";
 
 export type RecorderStoreState = {
   isRecording: boolean;
-  commitCount: number;
-  latestCommit: CommitRecord | null;
-  recentCommits: CommitRecord[];
+  commits: CommitData[];
+  fiberChanges: CommitFiberChange[][];
 };
 
 export type RecorderStore = {
   subscribe: (listener: () => void) => () => void;
   getSnapshot: () => RecorderStoreState;
-  recordCommit: (commit: Omit<CommitRecord, "timestamp">) => void;
+  recordCommit: (commit: CommitData & { changes: CommitFiberChange[] }) => void;
   setRecording: (value: boolean) => void;
   reset: () => void;
 };
 
 export type CreateRecorderStoreOptions = {
-  initialRecording?: boolean;
   maxRecentCommits?: number;
 };
 
 const DEFAULT_MAX_RECENT_COMMITS = 20;
 
-function createRecorderStoreInstance(options: CreateRecorderStoreOptions = {}): RecorderStore {
+function createRecorderStoreInstance(
+  options: CreateRecorderStoreOptions = {},
+): RecorderStore {
   const listeners = new Set<() => void>();
-  const maxRecentCommits = options.maxRecentCommits ?? DEFAULT_MAX_RECENT_COMMITS;
+  const maxRecentCommits =
+    options.maxRecentCommits ?? DEFAULT_MAX_RECENT_COMMITS;
 
   let state: RecorderStoreState = {
-    isRecording: options.initialRecording ?? false,
-    commitCount: 0,
-    latestCommit: null,
-    recentCommits: [],
+    isRecording: false,
+    commits: [],
+    fiberChanges: [],
   };
 
   function emit() {
@@ -65,22 +58,12 @@ function createRecorderStoreInstance(options: CreateRecorderStoreOptions = {}): 
       return state;
     },
 
-    recordCommit(commit) {
+    recordCommit({ changes, ...args }) {
       if (!state.isRecording) {
         return;
       }
-
-      const nextCommit: CommitRecord = {
-        ...commit,
-        timestamp: Date.now(),
-      };
-
-      setState({
-        ...state,
-        commitCount: state.commitCount + 1,
-        latestCommit: nextCommit,
-        recentCommits: [nextCommit, ...state.recentCommits].slice(0, maxRecentCommits),
-      });
+      state.commits.push(args);
+      state.fiberChanges.push(changes);
     },
 
     setRecording(value) {
@@ -96,10 +79,9 @@ function createRecorderStoreInstance(options: CreateRecorderStoreOptions = {}): 
 
     reset() {
       setState({
-        ...state,
-        commitCount: 0,
-        latestCommit: null,
-        recentCommits: [],
+        isRecording: false,
+        commits: [],
+        fiberChanges: [],
       });
     },
   };
@@ -107,7 +89,9 @@ function createRecorderStoreInstance(options: CreateRecorderStoreOptions = {}): 
 
 let recorderStoreSingleton: RecorderStore | null = null;
 
-export function createRecorderStore(options: CreateRecorderStoreOptions = {}): RecorderStore {
+export function createRecorderStore(
+  options: CreateRecorderStoreOptions = {},
+): RecorderStore {
   if (recorderStoreSingleton == null) {
     recorderStoreSingleton = createRecorderStoreInstance(options);
   }
