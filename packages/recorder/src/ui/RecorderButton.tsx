@@ -4,31 +4,91 @@ import { useRecorderStore } from "./useRecorderStore";
 
 export function RecorderButton() {
   const { state, setRecording } = useRecorderStore();
+  const recording = state.isRecording;
 
   return (
     <button
       type="button"
-      aria-label="Open recorder state"
+      aria-label={recording ? "Stop recording" : "Start recording"}
       onClick={() => {
-        setRecording(!state.isRecording)
+        setRecording(!recording);
         console.log(state);
       }}
-      className="group relative inline-flex items-center gap-3 rounded-full border border-white/12 bg-[linear-gradient(180deg,#101115_0%,#020202_100%)] px-3 py-3 text-[0.7rem] font-black uppercase tracking-[0.34em] text-white shadow-[0_18px_40px_rgba(0,0,0,0.4)] transition duration-200 ease-out hover:-translate-y-0.5 hover:border-white/20 hover:shadow-[0_24px_48px_rgba(0,0,0,0.5)] active:translate-y-0"
+      className={[
+        "recorder-btn group relative inline-flex items-center gap-2.5 rounded-full px-4 py-2.5 text-[0.65rem] font-bold uppercase tracking-[0.2em] transition-all duration-300 ease-out",
+        recording
+          ? "recorder-btn--active border border-rose-400/30 bg-[linear-gradient(180deg,#1a0a0e_0%,#0d0608_100%)] text-white shadow-[0_0_32px_rgba(225,29,72,0.25),0_12px_36px_rgba(0,0,0,0.5)] hover:shadow-[0_0_40px_rgba(225,29,72,0.35),0_16px_44px_rgba(0,0,0,0.55)]"
+          : "border border-white/10 bg-[linear-gradient(180deg,#18181b_0%,#09090b_100%)] text-white/70 shadow-[0_8px_24px_rgba(0,0,0,0.3)] hover:-translate-y-0.5 hover:border-white/16 hover:text-white/90 hover:shadow-[0_14px_32px_rgba(0,0,0,0.4)]",
+        "active:translate-y-0 active:scale-[0.98]",
+      ].join(" ")}
     >
+      {/* inner border highlight */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-[1px] rounded-full border border-white/8"
+        className={[
+          "pointer-events-none absolute inset-[1px] rounded-full border transition-colors duration-300",
+          recording ? "border-rose-500/10" : "border-white/6",
+        ].join(" ")}
       />
+
+      {/* ambient glow overlay */}
+      {recording && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(225,29,72,0.15),transparent_60%)] animate-[glow-shift_3s_ease-in-out_infinite]"
+        />
+      )}
+
+      {/* record indicator dot */}
       <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_34%),linear-gradient(135deg,rgba(255,84,107,0.22),transparent_46%)]"
-      />
-      <span className="relative flex size-10 items-center justify-center rounded-full border border-white/12 bg-[radial-gradient(circle_at_35%_30%,#ffcdc9_0%,#ff6b7d_28%,#e11d48_58%,#4a0712_100%)] shadow-[0_0_26px_rgba(225,29,72,0.45)]">
-        <span className="absolute size-6 rounded-full bg-white/18 blur-[2px] transition duration-200 group-hover:scale-110" />
-        <span className="absolute size-4 rounded-full bg-white/12 animate-pulse" />
-        <span className="relative size-3 rounded-full bg-white shadow-[0_0_14px_rgba(255,255,255,0.9)]" />
+        className={[
+          "relative flex items-center justify-center rounded-full transition-all duration-300",
+          recording ? "size-8" : "size-7",
+        ].join(" ")}
+      >
+        {/* outer ring */}
+        <span
+          className={[
+            "absolute inset-0 rounded-full border transition-all duration-300",
+            recording
+              ? "border-rose-500/40 bg-rose-950/50"
+              : "border-white/10 bg-white/4",
+          ].join(" ")}
+        />
+
+        {/* pulse ring (recording only) */}
+        {recording && (
+          <span className="absolute inset-[-3px] rounded-full border border-rose-500/20 animate-[pulse-ring_2s_cubic-bezier(0.4,0,0.6,1)_infinite]" />
+        )}
+
+        {/* core dot / stop square */}
+        <span
+          className={[
+            "relative transition-all duration-300",
+            recording
+              ? "size-3 rounded-[2px] bg-rose-500 shadow-[0_0_10px_rgba(225,29,72,0.7),0_0_20px_rgba(225,29,72,0.3)] animate-[rec-pulse_1.5s_ease-in-out_infinite]"
+              : "size-2.5 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 shadow-[0_0_6px_rgba(225,29,72,0.3)]",
+          ].join(" ")}
+        />
       </span>
-      <span className="relative pr-1 text-white/92">REC</span>
+
+      {/* label */}
+      <span
+        className={[
+          "relative pr-0.5 transition-colors duration-300",
+          recording ? "text-rose-300" : "text-white/60 group-hover:text-white/80",
+        ].join(" ")}
+      >
+        {recording ? "REC" : "REC"}
+      </span>
+
+      {/* live badge (recording only) */}
+      {recording && (
+        <span className="relative flex size-1.5">
+          <span className="absolute inline-flex size-full animate-ping rounded-full bg-rose-400 opacity-60" />
+          <span className="relative inline-flex size-1.5 rounded-full bg-rose-500" />
+        </span>
+      )}
     </button>
   );
 }
