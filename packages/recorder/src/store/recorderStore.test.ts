@@ -25,7 +25,7 @@ function createChange({
   hooks = null,
 }: {
   displayName?: string | null;
-  hooks?: Array<{ index: number; prev: unknown; next: unknown }> | null;
+  hooks?: Array<{ hookIndex: number; prev: unknown; next: unknown }> | null;
 } = {}) {
   return {
     changeDescription: {
@@ -85,13 +85,15 @@ describe("recorderStore", () => {
     const store = createRecorderStore();
 
     store.setRecording(true);
-    recordCommit(1, [createChange({ hooks: [{ index: 0, prev: 1, next: 2 }] })]);
+    recordCommit(1, [
+      createChange({ hooks: [{ hookIndex: 0, prev: 1, next: 2 }] }),
+    ]);
     store.setRecording(false);
 
     expect(store.getSnapshot().hookChangedHistory).toEqual({
       ExampleComponent: {
         0: {
-          index: 0,
+          hookIndex: 0,
           prev: 1,
           next: 2,
           commitIndex: 0,
@@ -115,10 +117,10 @@ describe("recorderStore", () => {
     store.setRecording(true);
 
     recordCommit(2, [
-      createChange({ hooks: [{ index: 0, prev: 1, next: 2 }] }),
+      createChange({ hooks: [{ hookIndex: 0, prev: 1, next: 2 }] }),
       createChange({
         displayName: null,
-        hooks: [{ index: 9, prev: "ignored", next: "ignored" }],
+        hooks: [{ hookIndex: 9, prev: "ignored", next: "ignored" }],
       }),
       createChange(),
     ], 2);
@@ -126,13 +128,13 @@ describe("recorderStore", () => {
     recordCommit(3, [
       createChange({
         hooks: [
-          { index: 0, prev: 2, next: 3 },
-          { index: 1, prev: "a", next: "b" },
+          { hookIndex: 0, prev: 2, next: 3 },
+          { hookIndex: 1, prev: "a", next: "b" },
         ],
       }),
       createChange({
         displayName: "OtherComponent",
-        hooks: [{ index: 0, prev: "x", next: "y" }],
+        hooks: [{ hookIndex: 0, prev: "x", next: "y" }],
       }),
     ], 3);
 
@@ -145,13 +147,13 @@ describe("recorderStore", () => {
       hookChangedHistory: {
         ExampleComponent: {
           0: {
-            index: 0,
+            hookIndex: 0,
             prev: 2,
             next: 3,
             commitIndex: 1,
           },
           1: {
-            index: 1,
+            hookIndex: 1,
             prev: "a",
             next: "b",
             commitIndex: 1,
@@ -159,7 +161,7 @@ describe("recorderStore", () => {
         },
         OtherComponent: {
           0: {
-            index: 0,
+            hookIndex: 0,
             prev: "x",
             next: "y",
             commitIndex: 1,

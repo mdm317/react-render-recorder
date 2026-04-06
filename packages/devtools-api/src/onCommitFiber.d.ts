@@ -33,7 +33,7 @@ export type ChangeDescription = {
     state: Array<string> | null;
 };
 export type ChangedHook = {
-    index: number;
+    hookIndex: number;
     prev: unknown;
     next: unknown;
 };

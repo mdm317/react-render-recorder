@@ -190,7 +190,7 @@ export type ChangeDescription = {
 }
 
 export type ChangedHook = {
-  index: number
+  hookIndex: number
   prev: unknown
   next: unknown
 }
@@ -285,7 +285,7 @@ function getChangedHooks(
   while (prevHook !== null && nextHook !== null) {
     if (didStatefulHookChange(prevHook, nextHook)) {
       changedHooks.push({
-        index: currentIndex,
+        hookIndex: currentIndex,
         prev: prevHook.memoizedState,
         next: nextHook.memoizedState,
       })

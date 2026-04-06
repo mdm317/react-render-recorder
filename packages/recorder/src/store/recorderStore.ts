@@ -13,7 +13,7 @@ export type HookHistoryEntry = HookChange & {
 // value: hook changes indexed by hook index
 export type HookChangedHistory = Record<string, HookIndexed>;
 
-// key: changeDescription.hooks.index
+// key: changeDescription.hooks.hookIndex
 // value: changed hook data + commit index
 export type HookIndexed = Record<number, HookHistoryEntry>;
 
@@ -67,7 +67,7 @@ function buildHookChangedHistory(
       const indexedHooks = history[displayName] ?? {};
 
       changedHooks.forEach((hook) => {
-        indexedHooks[hook.index] = {
+        indexedHooks[hook.hookIndex] = {
           ...hook,
           commitIndex,
         };

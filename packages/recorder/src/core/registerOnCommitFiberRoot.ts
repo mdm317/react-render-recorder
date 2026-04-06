@@ -1,6 +1,5 @@
 import {
   installHook,
-  onCommitFiber,
   type CommitFiberChange,
   type RecorderFiberRoot,
   type RendererID,
@@ -33,9 +32,8 @@ export function registerOnCommitFiberRoot(
 
   hook.onCommitFiberRoot = function (rendererID, root, priorityLevel, ...args) {
     const fiberRoot = root as RecorderFiberRoot;
-    const changes = onCommitFiber(fiberRoot);
     const result = original.call(this, rendererID, root, priorityLevel, ...args);
-    callback(rendererID, fiberRoot, priorityLevel, changes);
+    callback(rendererID, fiberRoot, priorityLevel);
     return result;
   };
 
