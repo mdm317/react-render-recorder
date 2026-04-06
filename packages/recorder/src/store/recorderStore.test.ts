@@ -92,12 +92,14 @@ describe("recorderStore", () => {
 
     expect(store.getSnapshot().hookChangedHistory).toEqual({
       ExampleComponent: {
-        0: {
-          hookIndex: 0,
-          prev: 1,
-          next: 2,
-          commitIndex: 0,
-        },
+        0: [
+          {
+            hookIndex: 0,
+            prev: 1,
+            next: 2,
+            commitIndex: 0,
+          },
+        ],
       },
     });
 
@@ -146,26 +148,38 @@ describe("recorderStore", () => {
       isRecording: false,
       hookChangedHistory: {
         ExampleComponent: {
-          0: {
-            hookIndex: 0,
-            prev: 2,
-            next: 3,
-            commitIndex: 1,
-          },
-          1: {
-            hookIndex: 1,
-            prev: "a",
-            next: "b",
-            commitIndex: 1,
-          },
+          0: [
+            {
+              hookIndex: 0,
+              prev: 1,
+              next: 2,
+              commitIndex: 0,
+            },
+            {
+              hookIndex: 0,
+              prev: 2,
+              next: 3,
+              commitIndex: 1,
+            },
+          ],
+          1: [
+            {
+              hookIndex: 1,
+              prev: "a",
+              next: "b",
+              commitIndex: 1,
+            },
+          ],
         },
         OtherComponent: {
-          0: {
-            hookIndex: 0,
-            prev: "x",
-            next: "y",
-            commitIndex: 1,
-          },
+          0: [
+            {
+              hookIndex: 0,
+              prev: "x",
+              next: "y",
+              commitIndex: 1,
+            },
+          ],
         },
       },
     });
