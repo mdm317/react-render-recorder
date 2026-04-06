@@ -84,6 +84,8 @@ function createRecorderStoreInstance(
   options: CreateRecorderStoreOptions = {},
 ): RecorderStore {
   const listeners = new Set<() => void>();
+  
+  // oxlint-disable-next-line no-unused-vars todo
   const maxRecentCommits =
     options.maxRecentCommits ?? DEFAULT_MAX_RECENT_COMMITS;
 
