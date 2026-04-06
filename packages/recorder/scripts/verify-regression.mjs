@@ -192,9 +192,9 @@ recorderStore.reset();
 recorderStore.recordCommit({ rendererID: 1, root, priorityLevel: 1, changes: [] });
 assert.deepEqual(recorderStore.getSnapshot(), {
   isRecording: false,
-  commitCount: 0,
-  latestCommit: null,
-  recentCommits: [],
+  commits: [],
+  fiberChanges: [],
+  hookChangedHistory: {},
 });
 
 recorderStore.setRecording(true);
@@ -202,21 +202,19 @@ assert.equal(recorderStore.getSnapshot().isRecording, true);
 
 recorderStore.recordCommit({ rendererID: 2, root, priorityLevel: 2, changes: [] });
 const stateAfterCommit = recorderStore.getSnapshot();
-assert.equal(stateAfterCommit.commitCount, 1);
-assert.deepEqual(stateAfterCommit.latestCommit?.changes, []);
-assert.equal(stateAfterCommit.latestCommit?.rendererID, 2);
-assert.equal(stateAfterCommit.latestCommit?.priorityLevel, 2);
-assert.equal(stateAfterCommit.latestCommit?.root, root);
-assert.equal(typeof stateAfterCommit.latestCommit?.timestamp, "number");
-assert.equal(stateAfterCommit.recentCommits.length, 1);
-assert.equal(stateAfterCommit.recentCommits[0]?.rendererID, 2);
+assert.equal(stateAfterCommit.commits.length, 1);
+assert.deepEqual(stateAfterCommit.fiberChanges, [[]]);
+assert.deepEqual(stateAfterCommit.hookChangedHistory, {});
+assert.equal(stateAfterCommit.commits[0]?.rendererID, 2);
+assert.equal(stateAfterCommit.commits[0]?.priorityLevel, 2);
+assert.equal(stateAfterCommit.commits[0]?.root, root);
 
 recorderStore.reset();
 assert.deepEqual(recorderStore.getSnapshot(), {
-  isRecording: true,
-  commitCount: 0,
-  latestCommit: null,
-  recentCommits: [],
+  isRecording: false,
+  commits: [],
+  fiberChanges: [],
+  hookChangedHistory: {},
 });
 
 console.log("Recorder regression checks passed.");

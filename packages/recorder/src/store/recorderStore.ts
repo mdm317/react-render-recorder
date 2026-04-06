@@ -1,10 +1,27 @@
-import type { CommitFiberChange, RendererID } from "devtools-api";
+import type { CommitFiberChange } from "devtools-api";
 import { CommitData } from "../core/types";
+
+type HookChange = NonNullable<
+  NonNullable<CommitFiberChange["changeDescription"]["hooks"]>[number]
+>;
+
+export type HookHistoryEntry = HookChange & {
+  commitIndex: number;
+};
+
+// key: displayName
+// value: hook changes indexed by hook index
+export type HookChangedHistory = Record<string, HookIndexed>;
+
+// key: changeDescription.hooks.index
+// value: changed hook data + commit index
+export type HookIndexed = Record<number, HookHistoryEntry>;
 
 export type RecorderStoreState = {
   isRecording: boolean;
   commits: CommitData[];
   fiberChanges: CommitFiberChange[][];
+  hookChangedHistory: HookChangedHistory;
 };
 
 export type RecorderStore = {
@@ -16,10 +33,52 @@ export type RecorderStore = {
 };
 
 export type CreateRecorderStoreOptions = {
+  initialRecording?: boolean;
   maxRecentCommits?: number;
 };
 
 const DEFAULT_MAX_RECENT_COMMITS = 20;
+
+function createInitialState(isRecording = false): RecorderStoreState {
+  return {
+    isRecording,
+    commits: [],
+    fiberChanges: [],
+    hookChangedHistory: {},
+  };
+}
+
+function buildHookChangedHistory(
+  fiberChanges: CommitFiberChange[][],
+): HookChangedHistory {
+  const history: HookChangedHistory = {};
+
+  fiberChanges.forEach((commitChanges, commitIndex) => {
+    commitChanges.forEach(({ changeDescription, displayName }) => {
+      if (displayName == null) {
+        return;
+      }
+
+      const changedHooks = changeDescription.hooks;
+      if (changedHooks == null || changedHooks.length === 0) {
+        return;
+      }
+
+      const indexedHooks = history[displayName] ?? {};
+
+      changedHooks.forEach((hook) => {
+        indexedHooks[hook.index] = {
+          ...hook,
+          commitIndex,
+        };
+      });
+
+      history[displayName] = indexedHooks;
+    });
+  });
+
+  return history;
+}
 
 function createRecorderStoreInstance(
   options: CreateRecorderStoreOptions = {},
@@ -28,11 +87,7 @@ function createRecorderStoreInstance(
   const maxRecentCommits =
     options.maxRecentCommits ?? DEFAULT_MAX_RECENT_COMMITS;
 
-  let state: RecorderStoreState = {
-    isRecording: false,
-    commits: [],
-    fiberChanges: [],
-  };
+  let state: RecorderStoreState = createInitialState(options.initialRecording);
 
   function emit() {
     for (const listener of listeners) {
@@ -62,6 +117,7 @@ function createRecorderStoreInstance(
       if (!state.isRecording) {
         return;
       }
+
       state.commits.push(args);
       state.fiberChanges.push(changes);
     },
@@ -71,18 +127,20 @@ function createRecorderStoreInstance(
         return;
       }
 
+      if (value) {
+        setState(createInitialState(true));
+        return;
+      }
+
       setState({
         ...state,
         isRecording: value,
+        hookChangedHistory: buildHookChangedHistory(state.fiberChanges),
       });
     },
 
     reset() {
-      setState({
-        isRecording: false,
-        commits: [],
-        fiberChanges: [],
-      });
+      setState(createInitialState());
     },
   };
 }

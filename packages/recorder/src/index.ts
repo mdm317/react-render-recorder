@@ -2,8 +2,10 @@ export { installReactRecordCommitLogger, registerOnCommitFiberRoot } from "./cor
 export type { CommitFiberRootCallback } from "./core";
 export { createRecorderStore } from "./store";
 export type {
-  CommitRecord,
   CreateRecorderStoreOptions,
+  HookChangedHistory,
+  HookHistoryEntry,
+  HookIndexed,
   RecorderStore,
   RecorderStoreState,
 } from "./store";

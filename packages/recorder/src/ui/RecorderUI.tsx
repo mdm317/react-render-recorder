@@ -15,15 +15,17 @@ export function RecorderUI({
     initialRecording,
     store,
   });
-  const { isRecording, commitCount, latestCommit } = state;
+  const { isRecording, commits } = state;
   const statusId = useId();
   const [isExpanded, setIsExpanded] = useState(false);
+  const commitCount = commits.length;
+  const latestCommit = commits[commitCount - 1] ?? null;
 
   const recorderBadge = isRecording ? "LIVE" : "READY";
   const latestCommitLabel =
     latestCommit == null
       ? "No commits captured yet."
-      : `Renderer ${latestCommit.rendererID} at ${new Date(latestCommit.timestamp).toLocaleTimeString()}`;
+      : `Latest renderer: ${latestCommit.rendererID}`;
   const priorityLabel = latestCommit?.priorityLevel ?? "n/a";
 
   return (

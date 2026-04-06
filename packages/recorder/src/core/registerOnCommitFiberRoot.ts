@@ -1,10 +1,16 @@
-import { installHook, type RendererID } from "devtools-api";
-import { FiberRoot } from "../../../devtools-api/src/onCommitFiber";
+import {
+  installHook,
+  onCommitFiber,
+  type CommitFiberChange,
+  type RecorderFiberRoot,
+  type RendererID,
+} from "devtools-api";
 
 export type CommitFiberRootCallback = (
   rendererID: RendererID,
-  root: FiberRoot,
+  root: RecorderFiberRoot,
   priorityLevel?: number,
+  changes?: CommitFiberChange[],
 ) => void;
 
 function getOrInstallHook(target: object) {
@@ -26,8 +32,10 @@ export function registerOnCommitFiberRoot(
   const original = hook.onCommitFiberRoot;
 
   hook.onCommitFiberRoot = function (rendererID, root, priorityLevel, ...args) {
+    const fiberRoot = root as RecorderFiberRoot;
+    const changes = onCommitFiber(fiberRoot);
     const result = original.call(this, rendererID, root, priorityLevel, ...args);
-    callback(rendererID, root as FiberRoot, priorityLevel);
+    callback(rendererID, fiberRoot, priorityLevel, changes);
     return result;
   };
 

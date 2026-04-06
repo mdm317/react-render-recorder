@@ -22,6 +22,7 @@
     "build:dev-web": "vite build --mode dev-web",
     "preview:dev-web": "vite preview --outDir dist-dev-web",
     "verify:regression": "node scripts/verify-regression.mjs",
+    "test:unit": "vitest run",
     "test:e2e": "playwright test --config e2e/playwright.config.ts"
   },
   "dependencies": {
@@ -38,6 +39,7 @@
     "tailwindcss": "^4.2.2",
     "@playwright/test": "^1.51.1",
     "typescript": "^6.0.2",
-    "vite": "^8.0.3"
+    "vite": "^8.0.3",
+    "vitest": "^3.2.4"
   }
 }

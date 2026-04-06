@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 
 const devtoolsApiEntry = fileURLToPath(new URL("../devtools-api/src/index.ts", import.meta.url));
 
@@ -33,5 +33,9 @@ export default defineConfig(({ command, mode }) => {
             external: ["devtools-api"],
           },
         },
+    test: {
+      include: ["src/**/*.test.ts"],
+      exclude: ["e2e/**"],
+    },
   };
 });

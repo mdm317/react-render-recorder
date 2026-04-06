@@ -1,7 +1,9 @@
 export { createRecorderStore } from "./recorderStore";
 export type {
-  CommitRecord,
   CreateRecorderStoreOptions,
+  HookChangedHistory,
+  HookHistoryEntry,
+  HookIndexed,
   RecorderStore,
   RecorderStoreState,
 } from "./recorderStore";

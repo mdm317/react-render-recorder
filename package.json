@@ -14,7 +14,7 @@
     "format:check": "oxfmt --config .oxfmtrc.json --check .",
     "lint": "oxlint --config .oxlintrc.json --deny-warnings packages",
     "lint:fix": "oxlint --config .oxlintrc.json --deny-warnings --fix packages",
-    "verify:recorder": "pnpm --filter devtools-api build && pnpm --filter react-record build && pnpm --filter react-record verify:regression",
+    "verify:recorder": "pnpm --filter devtools-api build && pnpm --filter react-record build && pnpm --filter react-record verify:regression && pnpm --filter react-record test:unit",
     "test:e2e": "pnpm --filter react-record test:e2e"
   },
   "devDependencies": {
