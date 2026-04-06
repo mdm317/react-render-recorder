@@ -8,13 +8,8 @@ import { useRecorderStore } from "./useRecorderStore";
 
 export function RecorderUI({
   label = "react-record",
-  initialRecording = false,
-  store,
 }: RecorderUIOptions) {
-  const { recorderStore, state } = useRecorderStore({
-    initialRecording,
-    store,
-  });
+  const { recorderStore, state } = useRecorderStore();
   const { isRecording, commits } = state;
   const statusId = useId();
   const [isExpanded, setIsExpanded] = useState(false);

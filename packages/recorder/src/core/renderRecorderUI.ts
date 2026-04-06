@@ -1,6 +1,5 @@
 import { h, render } from "preact";
 
-import type { RecorderStore } from "../store";
 import { RecorderUI } from "../ui/RecorderUI";
 
 function initRecorderRoot(): HTMLDivElement {
@@ -22,9 +21,9 @@ function initRecorderRoot(): HTMLDivElement {
   return rootTarget;
 }
 
-export function renderRecorderUI(store: RecorderStore): () => void {
+export function renderRecorderUI(): () => void {
   const target = initRecorderRoot();
-  render(h(RecorderUI, { store }), target);
+  render(h(RecorderUI, { label: "react-record" }), target);
 
   return () => {
     render(null, target);
