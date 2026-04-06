@@ -10,6 +10,14 @@
  */
 type ComponentFilter = unknown;
 
+export {
+  onCommitFiber,
+  type ChangeDescription,
+  type CommitFiberChange,
+  type RecorderFiber,
+  type RecorderFiberRoot,
+} from "./onCommitFiber.js";
+
 export type Handler = (data: unknown) => void;
 export type RendererID = number;
 export type OnCommitFiberRoot = (

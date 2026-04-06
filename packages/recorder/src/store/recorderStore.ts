@@ -1,6 +1,7 @@
-import type { RendererID } from "devtools-api";
+import type { CommitFiberChange, RendererID } from "devtools-api";
 
 export type CommitRecord = {
+  changes?: CommitFiberChange[];
   rendererID: RendererID;
   root: unknown;
   priorityLevel?: number;
