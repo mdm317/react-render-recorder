@@ -44,4 +44,3 @@ export type CommitFiberChange = {
     prevFiber: Fiber | null;
 };
 export declare function onCommitFiber(root: FiberRoot): Array<CommitFiberChange>;
-export {};

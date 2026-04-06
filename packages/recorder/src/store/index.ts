@@ -1,4 +1,8 @@
 export { createRecorderStore } from "./recorderStore";
+export {
+  formatHookChangedHistoryForLLM,
+  logHookChangedHistoryForLLM,
+} from "../logging/hookChangedHistoryLogger";
 export type {
   CreateRecorderStoreOptions,
   HookChangedHistory,
@@ -7,3 +11,4 @@ export type {
   RecorderStore,
   RecorderStoreState,
 } from "./recorderStore";
+export type { HookChangedHistoryLogger } from "../logging/hookChangedHistoryLogger";

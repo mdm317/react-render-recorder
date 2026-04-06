@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import {
+  formatHookChangedHistoryForLLM,
+  logHookChangedHistoryForLLM,
+} from "../logging/hookChangedHistoryLogger";
 import { createRecorderStore } from "./recorderStore";
 
 function ExampleComponent() {}
@@ -185,5 +189,86 @@ describe("recorderStore", () => {
     });
     expect(store.getSnapshot().commits).toHaveLength(2);
     expect(store.getSnapshot().fiberChanges).toHaveLength(2);
+  });
+
+  it("formats hookChangedHistory into an LLM-friendly log", () => {
+    const message = formatHookChangedHistoryForLLM({
+      OtherComponent: {
+        0: [
+          {
+            hookIndex: 0,
+            prev: { value: "x" },
+            next: undefined,
+            commitIndex: 1,
+          },
+        ],
+      },
+      ExampleComponent: {
+        1: [
+          {
+            hookIndex: 1,
+            prev: "a",
+            next: "b",
+            commitIndex: 2,
+          },
+        ],
+        0: [
+          {
+            hookIndex: 0,
+            prev: 1,
+            next: 2,
+            commitIndex: 0,
+          },
+          {
+            hookIndex: 0,
+            prev: 2,
+            next: 3,
+            commitIndex: 1,
+          },
+        ],
+      },
+    });
+
+    expect(message).toBe(`Hook change history summary
+- Components with hook changes: 2
+- Distinct changed hooks: 3
+- Total hook change events: 4
+- Commit indices are zero-based.
+
+Component ExampleComponent
+- Hook 0 changed 2 time(s) across commit(s): 0, 1
+  - Commit 0: 1 -> 2
+  - Commit 1: 2 -> 3
+- Hook 1 changed 1 time(s) across commit(s): 2
+  - Commit 2: "a" -> "b"
+
+Component OtherComponent
+- Hook 0 changed 1 time(s) across commit(s): 1
+  - Commit 1: {"value":"x"} -> undefined`);
+  });
+
+  it("logs the formatted hookChangedHistory and returns the message", () => {
+    const messages: string[] = [];
+
+    const message = logHookChangedHistoryForLLM(
+      {
+        ExampleComponent: {
+          0: [
+            {
+              hookIndex: 0,
+              prev: 1,
+              next: 2,
+              commitIndex: 0,
+            },
+          ],
+        },
+      },
+      (formattedMessage) => {
+        messages.push(formattedMessage);
+      },
+    );
+
+    expect(messages).toEqual([message]);
+    expect(message).toContain("Component ExampleComponent");
   });
 });

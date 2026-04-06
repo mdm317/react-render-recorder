@@ -5,10 +5,15 @@ import { onCommitFiber } from "devtools-api";
 export { registerOnCommitFiberRoot } from "./registerOnCommitFiberRoot";
 export type { CommitFiberRootCallback } from "./registerOnCommitFiberRoot";
 export { renderRecorderUI } from "./renderRecorderUI";
-export { createRecorderStore } from "../store";
+export {
+  createRecorderStore,
+  formatHookChangedHistoryForLLM,
+  logHookChangedHistoryForLLM,
+} from "../store";
 export type {
   CreateRecorderStoreOptions,
   HookChangedHistory,
+  HookChangedHistoryLogger,
   HookHistoryEntry,
   HookIndexed,
   RecorderStore,
