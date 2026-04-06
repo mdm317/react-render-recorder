@@ -3,13 +3,14 @@
 import { useRecorderStore } from "./useRecorderStore";
 
 export function RecorderButton() {
-  const { state } = useRecorderStore();
+  const { state, setRecording } = useRecorderStore();
 
   return (
     <button
       type="button"
       aria-label="Open recorder state"
       onClick={() => {
+        setRecording(!state.isRecording)
         console.log(state);
       }}
       className="group relative inline-flex items-center gap-3 rounded-full border border-white/12 bg-[linear-gradient(180deg,#101115_0%,#020202_100%)] px-3 py-3 text-[0.7rem] font-black uppercase tracking-[0.34em] text-white shadow-[0_18px_40px_rgba(0,0,0,0.4)] transition duration-200 ease-out hover:-translate-y-0.5 hover:border-white/20 hover:shadow-[0_24px_48px_rgba(0,0,0,0.5)] active:translate-y-0"
