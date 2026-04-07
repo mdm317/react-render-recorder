@@ -1,3 +1,5 @@
+import { inspectHooksOfFiber, type HookSource, type HooksTree } from "./ReactDebugHooks.js"
+
 // Keep these values in sync with react-reconciler/src/ReactFiberFlags.js and
 // react-reconciler/src/ReactWorkTags.js.
 const PerformedWork = 0b0000000000000000000000000000001
@@ -163,14 +165,17 @@ export type Fiber = {
   alternate: Fiber | null
   child: Fiber | null
   dependencies?: FiberDependencies
+  elementType?: unknown
   effectTag?: number
   flags?: number
   memoizedProps: any
   memoizedState: any
   ref: unknown
+  return?: Fiber | null
   sibling: Fiber | null
   tag: number
   type: unknown
+  updateQueue?: unknown
 }
 
 export type FiberRoot = {
@@ -188,6 +193,9 @@ export type ChangeDescription = {
 
 export type ChangedHook = {
   hookIndex: number
+  hookName?: string | null
+  hookPath?: Array<string> | null
+  hookSource?: HookSource | null
   prev: unknown
   next: unknown
 }
@@ -266,9 +274,65 @@ function didStatefulHookChange(prev: HookState, next: HookState): boolean {
   return false
 }
 
+type HookMetadata = {
+  hookName: string | null
+  hookPath: Array<string> | null
+  hookSource: HookSource | null
+}
+
+function buildHookMetadataByIndex(hooksTree: HooksTree): Map<number, HookMetadata> {
+  const metadataByIndex = new Map<number, HookMetadata>()
+
+  function visit(nodes: HooksTree, customHookPath: Array<string>) {
+    const customHookCounts = new Map<string, number>()
+
+    nodes.forEach((node) => {
+      let nextCustomHookPath = customHookPath
+
+      if (node.hookIndex == null && node.subHooks.length > 0) {
+        const customHookCount = customHookCounts.get(node.name) ?? 0
+        customHookCounts.set(node.name, customHookCount + 1)
+        nextCustomHookPath = [...customHookPath, `${node.name}(${customHookCount})`]
+      }
+
+      if (node.hookIndex != null) {
+        metadataByIndex.set(node.hookIndex, {
+          hookName: node.name,
+          hookPath: [...customHookPath, node.name],
+          hookSource: node.hookSource,
+        })
+      }
+
+      if (node.subHooks.length > 0) {
+        visit(node.subHooks, nextCustomHookPath)
+      }
+    })
+  }
+
+  visit(hooksTree, [])
+  return metadataByIndex
+}
+
+function getHookMetadataByIndex(
+  fiber: Fiber,
+  currentDispatcherRef?: unknown,
+): Map<number, HookMetadata> | null {
+  if (currentDispatcherRef == null) {
+    return null
+  }
+
+  try {
+    const hooksTree = inspectHooksOfFiber(fiber, currentDispatcherRef)
+    return buildHookMetadataByIndex(hooksTree)
+  } catch {
+    return null
+  }
+}
+
 function getChangedHooks(
   prev: HookState | null,
   next: HookState | null,
+  hookMetadataByIndex?: Map<number, HookMetadata> | null,
 ): Array<ChangedHook> | null {
   if (prev == null || next == null) {
     return null
@@ -281,8 +345,12 @@ function getChangedHooks(
 
   while (prevHook !== null && nextHook !== null) {
     if (didStatefulHookChange(prevHook, nextHook)) {
+      const hookMetadata = hookMetadataByIndex?.get(currentIndex)
       changedHooks.push({
         hookIndex: currentIndex,
+        hookName: hookMetadata?.hookName ?? null,
+        hookPath: hookMetadata?.hookPath ?? null,
+        hookSource: hookMetadata?.hookSource ?? null,
         prev: prevHook.memoizedState,
         next: nextHook.memoizedState,
       })
@@ -342,6 +410,7 @@ function didFiberRender(
 function getChangeDescription(
   prevFiber: Fiber | null,
   nextFiber: Fiber,
+  currentDispatcherRef?: unknown,
 ): ChangeDescription | null {
   switch (nextFiber.tag) {
     case ClassComponent:
@@ -378,9 +447,14 @@ function getChangeDescription(
         }
       }
 
+      const hookMetadataByIndex = getHookMetadataByIndex(
+        nextFiber,
+        currentDispatcherRef,
+      )
       const hooks = getChangedHooks(
         prevFiber.memoizedState as HookState | null,
         nextFiber.memoizedState as HookState | null,
+        hookMetadataByIndex,
       )
 
       return {
@@ -399,6 +473,7 @@ function getChangeDescription(
 function collectFiberChanges(
   fiber: Fiber | null,
   changes: Array<CommittedFiberChange>,
+  currentDispatcherRef?: unknown,
 ): void {
   if (fiber === null) {
     return
@@ -406,7 +481,11 @@ function collectFiberChanges(
 
   const prevFiber = fiber.alternate
   if (prevFiber === null || didFiberRender(prevFiber, fiber)) {
-    const changeDescription = getChangeDescription(prevFiber, fiber)
+    const changeDescription = getChangeDescription(
+      prevFiber,
+      fiber,
+      currentDispatcherRef,
+    )
     if (changeDescription !== null) {
       changes.push({
         changeDescription,
@@ -417,16 +496,19 @@ function collectFiberChanges(
     }
   }
 
-  collectFiberChanges(fiber.child, changes)
-  collectFiberChanges(fiber.sibling, changes)
+  collectFiberChanges(fiber.child, changes, currentDispatcherRef)
+  collectFiberChanges(fiber.sibling, changes, currentDispatcherRef)
 }
 
-export function onCommitFiber(root: FiberRoot): Array<CommittedFiberChange> {
+export function onCommitFiber(
+  root: FiberRoot,
+  currentDispatcherRef?: unknown,
+): Array<CommittedFiberChange> {
   if (root.current == null || root.current.child == null) {
     return []
   }
-
+  
   const changes: Array<CommittedFiberChange> = []
-  collectFiberChanges(root.current, changes)
+  collectFiberChanges(root.current, changes, currentDispatcherRef)
   return changes
 }

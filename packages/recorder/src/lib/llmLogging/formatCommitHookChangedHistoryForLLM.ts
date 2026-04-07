@@ -8,6 +8,8 @@ import {
 type CommitEntry = {
   componentName: string;
   hookIndex: number;
+  hookName?: string | null;
+  hookPath?: Array<string> | null;
   prev: unknown;
   next: unknown;
 };
@@ -65,6 +67,8 @@ function buildCommitEntries(fiberChangesByCommit: CommittedFiberChange[][]): Map
           nextEntries.push({
             componentName: displayName,
             hookIndex: hook.hookIndex,
+            hookName: hook.hookName ?? null,
+            hookPath: hook.hookPath ?? null,
             prev: hook.prev,
             next: hook.next,
           });
@@ -127,8 +131,15 @@ export function formatCommitHookChangedHistoryForLLM(
       `- Hook change events: ${entries.length}`,
     );
 
-    entries.forEach(({ componentName, hookIndex, prev, next }) => {
-      lines.push(`- Component ${componentName}, Hook ${hookIndex}`);
+    entries.forEach(({ componentName, hookIndex, hookName, hookPath, prev, next }) => {
+      const hookLabel =
+        hookPath != null && hookPath.length > 0
+          ? `${hookIndex} (${hookPath.join(" > ")})`
+          : hookName != null
+            ? `${hookIndex} (${hookName})`
+            : String(hookIndex);
+
+      lines.push(`- Component ${componentName}, Hook ${hookLabel}`);
       lines.push(`  - ${formatValueForLLM(prev)} -> ${formatValueForLLM(next)}`);
     });
   });

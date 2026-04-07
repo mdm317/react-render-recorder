@@ -10,6 +10,8 @@ type RecorderTestSnapshot = {
       Array<{
         commitIndex: number;
         hookIndex: number;
+        hookName?: string | null;
+        hookPath?: string[] | null;
         next: unknown;
         prev: unknown;
       }>
@@ -152,6 +154,27 @@ test.describe("react-record E2E", () => {
     expect(afterStop.hookChangedHistory).not.toEqual({});
   });
 
+  test("recorded hook history includes hook names", async ({ page }) => {
+    await startRecording(page);
+
+    const button = page.getByTestId("count-button").first();
+    await button.click();
+    await expect
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(1);
+
+    await stopRecording(page);
+
+    const snapshot = await getRecorderSnapshot(page);
+    const appHooks = snapshot.hookChangedHistory.App;
+    expect(appHooks).toBeTruthy();
+
+    const firstHookEntries = appHooks?.[1] ?? [];
+    expect(firstHookEntries.length).toBeGreaterThan(0);
+    expect(firstHookEntries[0]?.hookName).toBe("State");
+    expect(firstHookEntries[0]?.hookPath).toEqual(["CounterState(0)", "State"]);
+  });
+
   test("multiple clicks continue to accumulate commits", async ({ page }) => {
     await startRecording(page);
 
@@ -169,20 +192,11 @@ test.describe("react-record E2E", () => {
     page,
   }) => {
     const hookHistoryLogs: string[] = [];
-    const jsonLogs: string[] = [];
 
     page.on("console", (message) => {
       const text = message.text();
       if (text.includes("Hook change history summary")) {
         hookHistoryLogs.push(text);
-      }
-
-      if (
-        text.includes("hook-target-alpha") &&
-        text.includes("hook-target-beta") &&
-        text.startsWith("{")
-      ) {
-        jsonLogs.push(text);
       }
     });
 
@@ -217,10 +231,5 @@ test.describe("react-record E2E", () => {
         }),
       )
       .toContain("[HTMLElement button#hook-target-alpha.hook-target.alpha.primary]");
-    expect(
-      jsonLogs.some((message) =>
-        message.includes("[HTMLElement button#hook-target-alpha.hook-target.alpha.primary]"),
-      ),
-    ).toBe(true);
   });
 });

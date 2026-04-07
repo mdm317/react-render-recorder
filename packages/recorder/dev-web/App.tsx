@@ -1,14 +1,27 @@
 import { useState } from "react";
 
+function useCounterState(initialCount: number) {
+  const [count, setCount] = useState(initialCount);
+
+  return {
+    count,
+    increment() {
+      setCount((currentCount) => currentCount + 1);
+    },
+  };
+}
+
 export function App() {
-  const [count, setCount] = useState(0);
+  const [view] = useState("overview");
+  const { count, increment } = useCounterState(0);
 
   return (
     <>
+      <p data-testid="view-label">View: {view}</p>
       <button
         type="button"
         data-testid="count-button"
-        onClick={() => setCount((c) => c + 1)}
+        onClick={increment}
       >
         Count: {count}
       </button>
