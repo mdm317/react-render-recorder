@@ -1,6 +1,6 @@
-import type { CommittedFiberChange, RecorderFiber } from "devtools-api";
+import type { CommittedFiberChange, Fiber } from "devtools-api";
 
-import { sanitizeForJson } from "../logging/safeJson";
+import { sanitizeForJson } from "../utils/safeJson";
 
 type HookChange = NonNullable<
   NonNullable<CommittedFiberChange["changeDescription"]["hooks"]>[number]
@@ -30,12 +30,12 @@ export function buildHookChangedHistory(
     }
   >();
   const displayNameInstanceCounts = new Map<string, number>();
-  const fiberInstanceIds = new WeakMap<RecorderFiber, string>();
+  const fiberInstanceIds = new WeakMap<Fiber, string>();
 
   function getOrCreateInstanceId(
     displayName: string,
-    fiber: RecorderFiber,
-    prevFiber: RecorderFiber | null,
+    fiber: Fiber,
+    prevFiber: Fiber | null,
   ): string {
     const existingInstanceId =
       fiberInstanceIds.get(fiber) ??

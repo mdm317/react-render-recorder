@@ -177,9 +177,6 @@ export type FiberRoot = {
   current: Fiber | null
 }
 
-export type RecorderFiber = Fiber
-export type RecorderFiberRoot = FiberRoot
-
 export type ChangeDescription = {
   context: Array<string> | boolean | null
   didHooksChange: boolean

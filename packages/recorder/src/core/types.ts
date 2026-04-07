@@ -1,9 +1,9 @@
 import type { CommittedFiberChange } from "devtools-api";
-import { RendererID, type RecorderFiberRoot } from "devtools-api";
+import { RendererID, type FiberRoot } from "devtools-api";
 
 export type CommitData = {
   rendererID: RendererID;
-  root: RecorderFiberRoot;
+  root: FiberRoot;
   priorityLevel?: number;
 };
 

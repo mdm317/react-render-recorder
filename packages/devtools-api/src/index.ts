@@ -14,8 +14,8 @@ export {
   onCommitFiber,
   type ChangeDescription,
   type CommittedFiberChange,
-  type RecorderFiber,
-  type RecorderFiberRoot,
+  type Fiber,
+  type FiberRoot,
 } from "./onCommitFiber.js";
 
 export type Handler = (data: unknown) => void;

@@ -1,5 +1,9 @@
 import type { CommittedFiberChange } from "devtools-api";
-import { createSafeJsonReplacer, formatElementSummary, isElementLike } from "./safeJson";
+import {
+  createSafeJsonReplacer,
+  formatElementSummary,
+  isElementLike,
+} from "../../utils/safeJson";
 
 type CommitEntry = {
   componentName: string;

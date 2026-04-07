@@ -1,13 +1,13 @@
 import {
+  type FiberRoot,
   installHook,
   type CommittedFiberChange,
-  type RecorderFiberRoot,
   type RendererID,
 } from "devtools-api";
 
 export type CommitFiberRootCallback = (
   rendererID: RendererID,
-  root: RecorderFiberRoot,
+  root: FiberRoot,
   priorityLevel?: number,
   changes?: CommittedFiberChange[],
 ) => void;
@@ -31,7 +31,7 @@ export function registerOnCommitFiberRoot(
   const original = hook.onCommitFiberRoot;
 
   hook.onCommitFiberRoot = function (rendererID, root, priorityLevel, ...args) {
-    const fiberRoot = root as RecorderFiberRoot;
+    const fiberRoot = root as FiberRoot;
     const result = original.call(this, rendererID, root, priorityLevel, ...args);
     callback(rendererID, fiberRoot, priorityLevel);
     return result;

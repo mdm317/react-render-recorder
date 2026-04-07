@@ -1,5 +1,5 @@
 import type { CommittedFiberChange } from "devtools-api";
-import type { HookChangedHistory } from "../lib/buildHookChangedHistory";
+import type { HookChangedHistory } from "../buildHookChangedHistory";
 import { formatCommitHookChangedHistoryForLLM } from "./formatCommitHookChangedHistoryForLLM";
 import { formatHookChangedHistoryForLLM } from "./formatHookChangedHistoryForLLM";
 
