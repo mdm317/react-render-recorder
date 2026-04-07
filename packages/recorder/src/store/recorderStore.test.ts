@@ -1,8 +1,10 @@
 import type { Fiber } from "devtools-api";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { formatCommitHookChangedHistoryForLLM } from "../logging/formatCommitHookChangedHistoryForLLM";
+import { formatHookChangedHistoryForLLM } from "../logging/formatHookChangedHistoryForLLM";
 import {
-  formatHookChangedHistoryForLLM,
+  logCommitHookChangedHistoryForLLM,
   logHookChangedHistoryForLLM,
 } from "../logging/hookChangedHistoryLogger";
 import { createRecorderStore } from "./recorderStore";
@@ -51,8 +53,7 @@ function createChange({
           return pair;
         })())
       : null;
-  const resolvedFiber =
-    fiber ?? defaultPair?.fiber ?? createFiber(ExampleComponent);
+  const resolvedFiber = fiber ?? defaultPair?.fiber ?? createFiber(ExampleComponent);
   const resolvedPrevFiber = prevFiber ?? defaultPair?.prevFiber ?? null;
 
   resolvedFiber.alternate = resolvedPrevFiber;
@@ -125,9 +126,7 @@ describe("recorderStore", () => {
     const store = createRecorderStore();
 
     store.setRecording(true);
-    recordCommit(1, [
-      createChange({ hooks: [{ hookIndex: 0, prev: 1, next: 2 }] }),
-    ]);
+    recordCommit(1, [createChange({ hooks: [{ hookIndex: 0, prev: 1, next: 2 }] })]);
     store.setRecording(false);
 
     expect(store.getSnapshot().hookChangedHistory).toEqual({
@@ -158,27 +157,35 @@ describe("recorderStore", () => {
 
     store.setRecording(true);
 
-    recordCommit(2, [
-      createChange({ hooks: [{ hookIndex: 0, prev: 1, next: 2 }] }),
-      createChange({
-        displayName: null,
-        hooks: [{ hookIndex: 9, prev: "ignored", next: "ignored" }],
-      }),
-      createChange(),
-    ], 2);
+    recordCommit(
+      2,
+      [
+        createChange({ hooks: [{ hookIndex: 0, prev: 1, next: 2 }] }),
+        createChange({
+          displayName: null,
+          hooks: [{ hookIndex: 9, prev: "ignored", next: "ignored" }],
+        }),
+        createChange(),
+      ],
+      2,
+    );
 
-    recordCommit(3, [
-      createChange({
-        hooks: [
-          { hookIndex: 0, prev: 2, next: 3 },
-          { hookIndex: 1, prev: "a", next: "b" },
-        ],
-      }),
-      createChange({
-        displayName: "OtherComponent",
-        hooks: [{ hookIndex: 0, prev: "x", next: "y" }],
-      }),
-    ], 3);
+    recordCommit(
+      3,
+      [
+        createChange({
+          hooks: [
+            { hookIndex: 0, prev: 2, next: 3 },
+            { hookIndex: 1, prev: "a", next: "b" },
+          ],
+        }),
+        createChange({
+          displayName: "OtherComponent",
+          hooks: [{ hookIndex: 0, prev: "x", next: "y" }],
+        }),
+      ],
+      3,
+    );
 
     expect(store.getSnapshot().hookChangedHistory).toEqual({});
 
@@ -382,6 +389,67 @@ Component OtherComponent
     expect(message).not.toContain('"tagName":"BUTTON"');
   });
 
+  it("formats hookChangedHistory into a commit-oriented LLM log", () => {
+    const message = formatCommitHookChangedHistoryForLLM({
+      OtherComponent: {
+        0: [
+          {
+            hookIndex: 0,
+            prev: { value: "x" },
+            next: undefined,
+            commitIndex: 1,
+          },
+        ],
+      },
+      ExampleComponent: {
+        1: [
+          {
+            hookIndex: 1,
+            prev: "a",
+            next: "b",
+            commitIndex: 1,
+          },
+        ],
+        0: [
+          {
+            hookIndex: 0,
+            prev: 1,
+            next: 2,
+            commitIndex: 0,
+          },
+          {
+            hookIndex: 0,
+            prev: 2,
+            next: 3,
+            commitIndex: 1,
+          },
+        ],
+      },
+    });
+
+    expect(message).toBe(`Commit-oriented hook change history summary
+- Commits with hook changes: 2
+- Components with hook changes: 2
+- Total hook change events: 4
+- Commit indices are zero-based.
+
+Commit 0
+- Components with hook changes: 1
+- Hook change events: 1
+- Component ExampleComponent, Hook 0, change event(s): 1
+  - 1 -> 2
+
+Commit 1
+- Components with hook changes: 2
+- Hook change events: 3
+- Component ExampleComponent, Hook 0, change event(s): 1
+  - 2 -> 3
+- Component ExampleComponent, Hook 1, change event(s): 1
+  - "a" -> "b"
+- Component OtherComponent, Hook 0, change event(s): 1
+  - {"value":"x"} -> undefined`);
+  });
+
   it("logs the formatted hookChangedHistory and returns the message", () => {
     const messages: string[] = [];
 
@@ -405,5 +473,31 @@ Component OtherComponent
 
     expect(messages).toEqual([message]);
     expect(message).toContain("Component ExampleComponent");
+  });
+
+  it("logs the formatted commit-oriented hookChangedHistory and returns the message", () => {
+    const messages: string[] = [];
+
+    const message = logCommitHookChangedHistoryForLLM(
+      {
+        ExampleComponent: {
+          0: [
+            {
+              hookIndex: 0,
+              prev: 1,
+              next: 2,
+              commitIndex: 0,
+            },
+          ],
+        },
+      },
+      (formattedMessage) => {
+        messages.push(formattedMessage);
+      },
+    );
+
+    expect(messages).toEqual([message]);
+    expect(message).toContain("Commit 0");
+    expect(message).toContain("Component ExampleComponent, Hook 0");
   });
 });

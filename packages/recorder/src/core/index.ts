@@ -7,7 +7,9 @@ export type { CommitFiberRootCallback } from "./registerOnCommitFiberRoot";
 export { renderRecorderUI } from "./renderRecorderUI";
 export {
   createRecorderStore,
+  formatCommitHookChangedHistoryForLLM,
   formatHookChangedHistoryForLLM,
+  logCommitHookChangedHistoryForLLM,
   logHookChangedHistoryForLLM,
 } from "../store";
 export type {

@@ -1,8 +1,10 @@
 export { createRecorderStore } from "./recorderStore";
 export {
-  formatHookChangedHistoryForLLM,
+  logCommitHookChangedHistoryForLLM,
   logHookChangedHistoryForLLM,
 } from "../logging/hookChangedHistoryLogger";
+export { formatCommitHookChangedHistoryForLLM } from "../logging/formatCommitHookChangedHistoryForLLM";
+export { formatHookChangedHistoryForLLM } from "../logging/formatHookChangedHistoryForLLM";
 export type {
   CreateRecorderStoreOptions,
   HookChangedHistory,
