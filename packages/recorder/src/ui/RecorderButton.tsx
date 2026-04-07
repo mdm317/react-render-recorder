@@ -5,9 +5,9 @@ import { useRecorderStore } from "./useRecorderStore";
 export function RecorderButton() {
   const { state, setRecording } = useRecorderStore();
   const isRecording = state.isRecording;
-
-  if(!isRecording){
-    console.log(state)
+ 
+  if (!isRecording && state.commits.length > 0) {
+    console.log(JSON.stringify(state.hookChangedHistory));
     logHookChangedHistoryForLLM(state.hookChangedHistory);
   }
 

@@ -169,11 +169,20 @@ test.describe("react-record E2E", () => {
     page,
   }) => {
     const hookHistoryLogs: string[] = [];
+    const jsonLogs: string[] = [];
 
     page.on("console", (message) => {
       const text = message.text();
       if (text.includes("Hook change history summary")) {
         hookHistoryLogs.push(text);
+      }
+
+      if (
+        text.includes("hook-target-alpha") &&
+        text.includes("hook-target-beta") &&
+        text.startsWith("{")
+      ) {
+        jsonLogs.push(text);
       }
     });
 
@@ -196,5 +205,22 @@ test.describe("react-record E2E", () => {
       .toContain(
         "[HTMLElement button#hook-target-alpha.hook-target.alpha.primary] -> [HTMLElement button#hook-target-beta.hook-target.beta.secondary]",
       );
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const testApi = window.__REACT_RECORD_TEST__;
+          if (!testApi) {
+            throw new Error("window.__REACT_RECORD_TEST__ is not available");
+          }
+
+          return JSON.stringify(testApi.getSnapshot().hookChangedHistory);
+        }),
+      )
+      .toContain("[HTMLElement button#hook-target-alpha.hook-target.alpha.primary]");
+    expect(
+      jsonLogs.some((message) =>
+        message.includes("[HTMLElement button#hook-target-alpha.hook-target.alpha.primary]"),
+      ),
+    ).toBe(true);
   });
 });

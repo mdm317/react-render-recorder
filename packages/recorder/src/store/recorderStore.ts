@@ -1,5 +1,6 @@
 import type { CommitFiberChange, Fiber } from "devtools-api";
 import { CommitData } from "../core/types";
+import { sanitizeForJson } from "../logging/safeJson";
 
 type HookChange = NonNullable<
   NonNullable<CommitFiberChange["changeDescription"]["hooks"]>[number]
@@ -113,6 +114,8 @@ function buildHookChangedHistory(
 
         hookHistory.push({
           ...hook,
+          prev: sanitizeForJson(hook.prev),
+          next: sanitizeForJson(hook.next),
           commitIndex,
         });
 
