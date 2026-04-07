@@ -1,4 +1,4 @@
-import type { CommitFiberChange } from "devtools-api";
+import type { CommittedFiberChange } from "devtools-api";
 import type { HookChangedHistory } from "../store/recorderStore";
 import { formatCommitHookChangedHistoryForLLM } from "./formatCommitHookChangedHistoryForLLM";
 import { formatHookChangedHistoryForLLM } from "./formatHookChangedHistoryForLLM";
@@ -17,7 +17,7 @@ export function logHookChangedHistoryForLLM(
 }
 
 export function logCommitHookChangedHistoryForLLM(
-  fiberChangesByCommit: CommitFiberChange[][],
+  fiberChangesByCommit: CommittedFiberChange[][],
   logger: HookChangedHistoryLogger = (message) => {
     console.info(message);
   },

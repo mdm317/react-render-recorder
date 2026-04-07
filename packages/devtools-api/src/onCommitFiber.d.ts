@@ -37,10 +37,10 @@ export type ChangedHook = {
     prev: unknown;
     next: unknown;
 };
-export type CommitFiberChange = {
+export type CommittedFiberChange = {
     changeDescription: ChangeDescription;
     displayName: string | null;
     fiber: Fiber;
     prevFiber: Fiber | null;
 };
-export declare function onCommitFiber(root: FiberRoot): Array<CommitFiberChange>;
+export declare function onCommitFiber(root: FiberRoot): Array<CommittedFiberChange>;

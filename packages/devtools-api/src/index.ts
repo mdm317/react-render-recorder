@@ -13,7 +13,7 @@ type ComponentFilter = unknown;
 export {
   onCommitFiber,
   type ChangeDescription,
-  type CommitFiberChange,
+  type CommittedFiberChange,
   type RecorderFiber,
   type RecorderFiberRoot,
 } from "./onCommitFiber.js";

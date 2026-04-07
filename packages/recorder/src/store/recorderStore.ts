@@ -1,9 +1,9 @@
-import type { CommitFiberChange, Fiber } from "devtools-api";
+import type { CommittedFiberChange, Fiber } from "devtools-api";
 import { CommitData } from "../core/types";
 import { sanitizeForJson } from "../logging/safeJson";
 
 type HookChange = NonNullable<
-  NonNullable<CommitFiberChange["changeDescription"]["hooks"]>[number]
+  NonNullable<CommittedFiberChange["changeDescription"]["hooks"]>[number]
 >;
 
 export type HookHistoryEntry = HookChange & {
@@ -21,14 +21,14 @@ export type HookIndexed = Record<number, HookHistoryEntry[]>;
 export type RecorderStoreState = {
   isRecording: boolean;
   commits: CommitData[];
-  fiberChanges: CommitFiberChange[][];
+  fiberChanges: CommittedFiberChange[][];
   hookChangedHistory: HookChangedHistory;
 };
 
 export type RecorderStore = {
   subscribe: (listener: () => void) => () => void;
   getSnapshot: () => RecorderStoreState;
-  recordCommit: (commit: CommitData & { changes: CommitFiberChange[] }) => void;
+  recordCommit: (commit: CommitData & { changes: CommittedFiberChange[] }) => void;
   setRecording: (value: boolean) => void;
   reset: () => void;
 };
@@ -50,7 +50,7 @@ function createInitialState(isRecording = false): RecorderStoreState {
 }
 
 function buildHookChangedHistory(
-  fiberChanges: CommitFiberChange[][],
+  fiberChanges: CommittedFiberChange[][],
 ): HookChangedHistory {
   const historyByInstance = new Map<string, HookIndexed>();
   const instanceMetadata = new Map<

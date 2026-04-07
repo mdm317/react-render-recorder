@@ -1,4 +1,4 @@
-import type { CommitFiberChange } from "devtools-api";
+import type { CommittedFiberChange } from "devtools-api";
 import { createSafeJsonReplacer, formatElementSummary, isElementLike } from "./safeJson";
 
 type CommitEntry = {
@@ -38,7 +38,7 @@ function formatValueForLLM(value: unknown): string {
   return serialized ?? String(value);
 }
 
-function buildCommitEntries(fiberChangesByCommit: CommitFiberChange[][]): Map<number, CommitEntry[]> {
+function buildCommitEntries(fiberChangesByCommit: CommittedFiberChange[][]): Map<number, CommitEntry[]> {
   const entriesByCommit = new Map<number, CommitEntry[]>();
 
   fiberChangesByCommit.forEach((commitChanges, commitIndex) => {
@@ -76,7 +76,7 @@ function buildCommitEntries(fiberChangesByCommit: CommitFiberChange[][]): Map<nu
 }
 
 export function formatCommitHookChangedHistoryForLLM(
-  fiberChangesByCommit: CommitFiberChange[][],
+  fiberChangesByCommit: CommittedFiberChange[][],
 ): string {
   const commitEntries = buildCommitEntries(fiberChangesByCommit);
   const commitIndices = Array.from(commitEntries.keys()).sort((left, right) => left - right);

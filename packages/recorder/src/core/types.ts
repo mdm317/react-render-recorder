@@ -1,4 +1,4 @@
-import { CommitFiberChange } from "devtools-api";
+import type { CommittedFiberChange } from "devtools-api";
 import { RendererID, type RecorderFiberRoot } from "devtools-api";
 
 export type CommitData = {
@@ -10,5 +10,5 @@ export type CommitData = {
 export type RecorderStoreState = {
   isRecording: boolean;
   commits: CommitData[];
-  fiberChanges: CommitFiberChange[];
+  fiberChanges: CommittedFiberChange[];
 };

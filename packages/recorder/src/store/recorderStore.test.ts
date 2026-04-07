@@ -1,4 +1,4 @@
-import type { CommitFiberChange, Fiber } from "devtools-api";
+import type { CommittedFiberChange, Fiber } from "devtools-api";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { formatCommitHookChangedHistoryForLLM } from "../logging/formatCommitHookChangedHistoryForLLM";
@@ -402,7 +402,7 @@ Component OtherComponent
           hooks: [{ hookIndex: 0, prev: { value: "x" }, next: undefined }],
         }),
       ],
-    ] satisfies CommitFiberChange[][]);
+    ] satisfies CommittedFiberChange[][]);
 
     expect(message).toBe(`Commit-oriented hook change history summary
 - Commits with hook changes: 2

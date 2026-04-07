@@ -1,6 +1,6 @@
 import {
   installHook,
-  type CommitFiberChange,
+  type CommittedFiberChange,
   type RecorderFiberRoot,
   type RendererID,
 } from "devtools-api";
@@ -9,7 +9,7 @@ export type CommitFiberRootCallback = (
   rendererID: RendererID,
   root: RecorderFiberRoot,
   priorityLevel?: number,
-  changes?: CommitFiberChange[],
+  changes?: CommittedFiberChange[],
 ) => void;
 
 function getOrInstallHook(target: object) {

@@ -195,7 +195,7 @@ export type ChangedHook = {
   next: unknown
 }
 
-export type CommitFiberChange = {
+export type CommittedFiberChange = {
   changeDescription: ChangeDescription
   displayName: string | null
   fiber: Fiber
@@ -401,7 +401,7 @@ function getChangeDescription(
 
 function collectFiberChanges(
   fiber: Fiber | null,
-  changes: Array<CommitFiberChange>,
+  changes: Array<CommittedFiberChange>,
 ): void {
   if (fiber === null) {
     return
@@ -424,12 +424,12 @@ function collectFiberChanges(
   collectFiberChanges(fiber.sibling, changes)
 }
 
-export function onCommitFiber(root: FiberRoot): Array<CommitFiberChange> {
+export function onCommitFiber(root: FiberRoot): Array<CommittedFiberChange> {
   if (root.current == null || root.current.child == null) {
     return []
   }
 
-  const changes: Array<CommitFiberChange> = []
+  const changes: Array<CommittedFiberChange> = []
   collectFiberChanges(root.current, changes)
   return changes
 }
