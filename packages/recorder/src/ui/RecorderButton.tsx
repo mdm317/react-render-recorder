@@ -1,22 +1,15 @@
 /** @jsxImportSource preact */
-
-import { useEffect, useRef } from "preact/hooks";
-
 import { logHookChangedHistoryForLLM } from "../logging/hookChangedHistoryLogger";
 import { useRecorderStore } from "./useRecorderStore";
 
 export function RecorderButton() {
   const { state, setRecording } = useRecorderStore();
   const isRecording = state.isRecording;
-  const previousRecordingRef = useRef(isRecording);
 
-  useEffect(() => {
-    if (previousRecordingRef.current && isRecording === false) {
-      logHookChangedHistoryForLLM(state.hookChangedHistory);
-    }
-
-    previousRecordingRef.current = isRecording;
-  }, [isRecording, state.hookChangedHistory]);
+  if(!isRecording){
+    console.log(state)
+    logHookChangedHistoryForLLM(state.hookChangedHistory);
+  }
 
   return (
     <button
