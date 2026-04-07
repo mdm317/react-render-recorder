@@ -1,4 +1,4 @@
-import type { Fiber } from "devtools-api";
+import type { CommitFiberChange, Fiber } from "devtools-api";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { formatCommitHookChangedHistoryForLLM } from "../logging/formatCommitHookChangedHistoryForLLM";
@@ -390,42 +390,19 @@ Component OtherComponent
   });
 
   it("formats hookChangedHistory into a commit-oriented LLM log", () => {
-    const message = formatCommitHookChangedHistoryForLLM({
-      OtherComponent: {
-        0: [
-          {
-            hookIndex: 0,
-            prev: { value: "x" },
-            next: undefined,
-            commitIndex: 1,
-          },
-        ],
-      },
-      ExampleComponent: {
-        1: [
-          {
-            hookIndex: 1,
-            prev: "a",
-            next: "b",
-            commitIndex: 1,
-          },
-        ],
-        0: [
-          {
-            hookIndex: 0,
-            prev: 1,
-            next: 2,
-            commitIndex: 0,
-          },
-          {
-            hookIndex: 0,
-            prev: 2,
-            next: 3,
-            commitIndex: 1,
-          },
-        ],
-      },
-    });
+    const message = formatCommitHookChangedHistoryForLLM([
+      [createChange({ hooks: [{ hookIndex: 0, prev: 1, next: 2 }] })],
+      [
+        createChange({ hooks: [{ hookIndex: 0, prev: 2, next: 3 }] }),
+        createChange({
+          hooks: [{ hookIndex: 1, prev: "a", next: "b" }],
+        }),
+        createChange({
+          displayName: "OtherComponent",
+          hooks: [{ hookIndex: 0, prev: { value: "x" }, next: undefined }],
+        }),
+      ],
+    ] satisfies CommitFiberChange[][]);
 
     expect(message).toBe(`Commit-oriented hook change history summary
 - Commits with hook changes: 2
@@ -436,17 +413,17 @@ Component OtherComponent
 Commit 0
 - Components with hook changes: 1
 - Hook change events: 1
-- Component ExampleComponent, Hook 0, change event(s): 1
+- Component ExampleComponent, Hook 0
   - 1 -> 2
 
 Commit 1
 - Components with hook changes: 2
 - Hook change events: 3
-- Component ExampleComponent, Hook 0, change event(s): 1
+- Component ExampleComponent, Hook 0
   - 2 -> 3
-- Component ExampleComponent, Hook 1, change event(s): 1
+- Component ExampleComponent, Hook 1
   - "a" -> "b"
-- Component OtherComponent, Hook 0, change event(s): 1
+- Component OtherComponent, Hook 0
   - {"value":"x"} -> undefined`);
   });
 
@@ -479,18 +456,7 @@ Commit 1
     const messages: string[] = [];
 
     const message = logCommitHookChangedHistoryForLLM(
-      {
-        ExampleComponent: {
-          0: [
-            {
-              hookIndex: 0,
-              prev: 1,
-              next: 2,
-              commitIndex: 0,
-            },
-          ],
-        },
-      },
+      [[createChange({ hooks: [{ hookIndex: 0, prev: 1, next: 2 }] })]],
       (formattedMessage) => {
         messages.push(formattedMessage);
       },

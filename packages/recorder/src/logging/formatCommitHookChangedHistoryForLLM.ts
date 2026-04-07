@@ -1,11 +1,11 @@
-import type { HookChangedHistory } from "../store/recorderStore";
+import type { CommitFiberChange } from "devtools-api";
 import { createSafeJsonReplacer, formatElementSummary, isElementLike } from "./safeJson";
 
 type CommitEntry = {
   componentName: string;
   hookIndex: number;
-  changeCount: number;
-  entries: HookChangedHistory[string][number];
+  prev: unknown;
+  next: unknown;
 };
 
 function isFormattedElementSummaryString(value: unknown): value is string {
@@ -38,58 +38,65 @@ function formatValueForLLM(value: unknown): string {
   return serialized ?? String(value);
 }
 
-function buildCommitEntries(hookChangedHistory: HookChangedHistory): Map<number, CommitEntry[]> {
+function buildCommitEntries(fiberChangesByCommit: CommitFiberChange[][]): Map<number, CommitEntry[]> {
   const entriesByCommit = new Map<number, CommitEntry[]>();
 
-  Object.keys(hookChangedHistory)
-    .sort((left, right) => left.localeCompare(right))
-    .forEach((componentName) => {
-      const indexedHooks = hookChangedHistory[componentName] ?? {};
+  fiberChangesByCommit.forEach((commitChanges, commitIndex) => {
+    const nextEntries: CommitEntry[] = [];
 
-      Object.keys(indexedHooks)
-        .map(Number)
-        .sort((left, right) => left - right)
-        .forEach((hookIndex) => {
-          const entries = indexedHooks[hookIndex] ?? [];
-          const commitBuckets = new Map<number, typeof entries>();
+    commitChanges.forEach(({ changeDescription, displayName }) => {
+      if (displayName == null) {
+        return;
+      }
 
-          entries.forEach((entry) => {
-            const commitEntries = commitBuckets.get(entry.commitIndex) ?? [];
-            commitEntries.push(entry);
-            commitBuckets.set(entry.commitIndex, commitEntries);
+      const changedHooks = changeDescription.hooks;
+      if (changedHooks == null || changedHooks.length === 0) {
+        return;
+      }
+
+      changedHooks
+        .slice()
+        .sort((left, right) => left.hookIndex - right.hookIndex)
+        .forEach((hook) => {
+          nextEntries.push({
+            componentName: displayName,
+            hookIndex: hook.hookIndex,
+            prev: hook.prev,
+            next: hook.next,
           });
-
-          Array.from(commitBuckets.entries())
-            .sort(([left], [right]) => left - right)
-            .forEach(([commitIndex, commitEntries]) => {
-              const nextEntries = entriesByCommit.get(commitIndex) ?? [];
-              nextEntries.push({
-                componentName,
-                hookIndex,
-                changeCount: commitEntries.length,
-                entries: commitEntries,
-              });
-              entriesByCommit.set(commitIndex, nextEntries);
-            });
         });
     });
+
+    if (nextEntries.length > 0) {
+      entriesByCommit.set(commitIndex, nextEntries);
+    }
+  });
 
   return entriesByCommit;
 }
 
 export function formatCommitHookChangedHistoryForLLM(
-  hookChangedHistory: HookChangedHistory,
+  fiberChangesByCommit: CommitFiberChange[][],
 ): string {
-  const commitEntries = buildCommitEntries(hookChangedHistory);
+  const commitEntries = buildCommitEntries(fiberChangesByCommit);
   const commitIndices = Array.from(commitEntries.keys()).sort((left, right) => left - right);
-  const componentNames = Object.keys(hookChangedHistory).sort((left, right) =>
-    left.localeCompare(right),
-  );
+  const componentNames = Array.from(
+    new Set(
+      fiberChangesByCommit.flatMap((commitChanges) =>
+        commitChanges
+          .map(({ displayName, changeDescription }) =>
+            displayName != null &&
+            changeDescription.hooks != null &&
+            changeDescription.hooks.length > 0
+              ? displayName
+              : null,
+          )
+          .filter((componentName): componentName is string => componentName != null),
+      ),
+    ),
+  ).sort((left, right) => left.localeCompare(right));
   const totalChangeCount = commitIndices.reduce((sum, commitIndex) => {
-    return (
-      sum +
-      (commitEntries.get(commitIndex) ?? []).reduce((count, entry) => count + entry.changeCount, 0)
-    );
+    return sum + (commitEntries.get(commitIndex) ?? []).length;
   }, 0);
 
   const lines = [
@@ -113,15 +120,12 @@ export function formatCommitHookChangedHistoryForLLM(
       "",
       `Commit ${commitIndex}`,
       `- Components with hook changes: ${components.size}`,
-      `- Hook change events: ${entries.reduce((sum, entry) => sum + entry.changeCount, 0)}`,
+      `- Hook change events: ${entries.length}`,
     );
 
-    entries.forEach(({ componentName, hookIndex, changeCount, entries }) => {
-      lines.push(`- Component ${componentName}, Hook ${hookIndex}, change event(s): ${changeCount}`);
-
-      entries.forEach(({ prev, next }) => {
-        lines.push(`  - ${formatValueForLLM(prev)} -> ${formatValueForLLM(next)}`);
-      });
+    entries.forEach(({ componentName, hookIndex, prev, next }) => {
+      lines.push(`- Component ${componentName}, Hook ${hookIndex}`);
+      lines.push(`  - ${formatValueForLLM(prev)} -> ${formatValueForLLM(next)}`);
     });
   });
 

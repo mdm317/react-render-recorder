@@ -1,3 +1,4 @@
+import type { CommitFiberChange } from "devtools-api";
 import type { HookChangedHistory } from "../store/recorderStore";
 import { formatCommitHookChangedHistoryForLLM } from "./formatCommitHookChangedHistoryForLLM";
 import { formatHookChangedHistoryForLLM } from "./formatHookChangedHistoryForLLM";
@@ -16,12 +17,12 @@ export function logHookChangedHistoryForLLM(
 }
 
 export function logCommitHookChangedHistoryForLLM(
-  hookChangedHistory: HookChangedHistory,
+  fiberChangesByCommit: CommitFiberChange[][],
   logger: HookChangedHistoryLogger = (message) => {
     console.info(message);
   },
 ): string {
-  const formattedMessage = formatCommitHookChangedHistoryForLLM(hookChangedHistory);
+  const formattedMessage = formatCommitHookChangedHistoryForLLM(fiberChangesByCommit);
   logger(formattedMessage);
   return formattedMessage;
 }

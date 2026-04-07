@@ -1,5 +1,5 @@
 /** @jsxImportSource preact */
-import { logHookChangedHistoryForLLM } from "../logging/hookChangedHistoryLogger";
+import { logCommitHookChangedHistoryForLLM, logHookChangedHistoryForLLM } from "../logging/hookChangedHistoryLogger";
 import { useRecorderStore } from "./useRecorderStore";
 
 export function RecorderButton() {
@@ -9,6 +9,7 @@ export function RecorderButton() {
   if (!isRecording && state.commits.length > 0) {
     console.log(JSON.stringify(state.hookChangedHistory));
     logHookChangedHistoryForLLM(state.hookChangedHistory);
+    logCommitHookChangedHistoryForLLM(state.fiberChanges)
   }
 
   return (
