@@ -4,6 +4,10 @@ import { formatCommitHookChangedHistoryForLLM } from "./formatCommitHookChangedH
 import { formatHookChangedHistoryForLLM } from "./formatHookChangedHistoryForLLM";
 
 export type HookChangedHistoryLogger = (message: string) => void;
+export {
+  formatCommitHookChangedHistoryForLLM,
+  formatHookChangedHistoryForLLM,
+};
 
 export function logHookChangedHistoryForLLM(
   hookChangedHistory: HookChangedHistory,
