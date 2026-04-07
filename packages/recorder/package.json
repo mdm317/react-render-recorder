@@ -6,7 +6,7 @@
   ],
   "type": "module",
   "sideEffects": false,
-  "main": "./dist/react-record.auto.js",
+  "main": "./dist/react-record.js",
   "scripts": {
     "dev": "vite",
     "dev:lib": "vite build --watch",

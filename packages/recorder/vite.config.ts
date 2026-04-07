@@ -5,7 +5,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 const devtoolsApiEntry = fileURLToPath(new URL("../devtools-api/src/index.ts", import.meta.url));
-const reactRecordAutoEntry = fileURLToPath(new URL("./src/index.ts", import.meta.url));
+const reactRecordEntry = fileURLToPath(new URL("./src/index.ts", import.meta.url));
 
 export default defineConfig({
   plugins: [tailwindcss(), react()],
@@ -17,9 +17,9 @@ export default defineConfig({
   build: {
     outDir: "dist",
     lib: {
-      entry: reactRecordAutoEntry,
+      entry: reactRecordEntry,
       name: "ReactRecord",
-      fileName: () => "react-record.auto.js",
+      fileName: () => "react-record.js",
       formats: ["iife"],
     },
     sourcemap: true,
