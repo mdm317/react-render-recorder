@@ -1,51 +1,65 @@
-import { test, expect, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-type RecorderUIState = {
-  isRecording: boolean;
+type RecorderTestSnapshot = {
   commitCount: number;
-  hasCommits: boolean;
-  latestCommitText: string;
-  priorityText: string;
+  fiberChangeCount: number;
+  hookChangedHistory: Record<
+    string,
+    Record<
+      number,
+      Array<{
+        commitIndex: number;
+        hookIndex: number;
+        next: unknown;
+        prev: unknown;
+      }>
+    >
+  >;
+  isRecording: boolean;
 };
 
-async function getRecorderUIState(page: Page): Promise<RecorderUIState> {
+async function getRecorderSnapshot(page: Page): Promise<RecorderTestSnapshot> {
   return page.evaluate(() => {
-    const root = document.getElementById("recorder-root");
-    const shadow = root?.shadowRoot;
-    if (!shadow) throw new Error("Recorder shadow root not found");
-    const text = shadow.textContent ?? "";
-    return {
-      isRecording: text.includes("Recording in progress"),
-      commitCount: Number.parseInt(text.match(/(\d+) commits captured/)?.[1] ?? "0", 10),
-      hasCommits: !text.includes("No commits captured yet"),
-      latestCommitText: text.match(/Renderer \d+ at .+?(?=Latest)/)?.[0]?.trim() ?? "",
-      priorityText: text.match(/Latest priority: (.+)/)?.[1]?.trim() ?? "",
-    };
+    const testApi = window.__REACT_RECORD_TEST__;
+    if (!testApi) {
+      throw new Error("window.__REACT_RECORD_TEST__ is not available");
+    }
+
+    return testApi.getSnapshot();
   });
 }
 
-async function clickRecorderButton(page: Page, name: "Start recording" | "Stop recording") {
-  await page.evaluate((btnName) => {
+async function clickRecorderButton(
+  page: Page,
+  name: "Start recording" | "Stop recording",
+) {
+  await page.evaluate((buttonName) => {
     const root = document.getElementById("recorder-root");
-    const btns = root?.shadowRoot?.querySelectorAll("button") ?? [];
-    for (const btn of btns) {
-      if (btn.textContent?.trim().includes(btnName)) {
-        btn.click();
+    const buttons = root?.shadowRoot?.querySelectorAll("button") ?? [];
+
+    for (const button of buttons) {
+      if (button.getAttribute("aria-label") === buttonName) {
+        button.click();
         return;
       }
     }
-    throw new Error(`Recorder button "${btnName}" not found in shadow DOM`);
+
+    throw new Error(`Recorder button "${buttonName}" not found in shadow DOM`);
   }, name);
 }
 
 async function startRecording(page: Page) {
   await clickRecorderButton(page, "Start recording");
-  await expect.poll(() => getRecorderUIState(page).then((s) => s.isRecording)).toBe(true);
+  await expect
+    .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.isRecording))
+    .toBe(true);
 }
 
 async function stopRecording(page: Page) {
   await clickRecorderButton(page, "Stop recording");
-  await expect.poll(() => getRecorderUIState(page).then((s) => s.isRecording)).toBe(false);
+  await expect
+    .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.isRecording))
+    .toBe(false);
 }
 
 test.describe("react-record E2E", () => {
@@ -53,84 +67,134 @@ test.describe("react-record E2E", () => {
     await page.goto("/", { waitUntil: "networkidle" });
   });
 
-  test("recorder UI shows idle state initially", async ({ page }) => {
-    const state = await getRecorderUIState(page);
-    expect(state.isRecording).toBe(false);
-    expect(state.commitCount).toBe(0);
-    expect(state.hasCommits).toBe(false);
+  test("recorder starts idle", async ({ page }) => {
+    const snapshot = await getRecorderSnapshot(page);
+
+    expect(snapshot.isRecording).toBe(false);
+    expect(snapshot.commitCount).toBe(0);
+    expect(snapshot.fiberChangeCount).toBe(0);
+    expect(snapshot.hookChangedHistory).toEqual({});
   });
 
-  test("Start recording button transitions UI to recording state", async ({ page }) => {
-    await startRecording(page);
-    const state = await getRecorderUIState(page);
-    expect(state.isRecording).toBe(true);
-  });
-
-  test("clicking the count button produces commits while recording", async ({ page }) => {
+  test("start recording button toggles recorder state", async ({ page }) => {
     await startRecording(page);
 
-    const button = page.locator('[data-testid="count-button"]');
-    await button.click();
-    await expect.poll(() => getRecorderUIState(page).then((s) => s.commitCount)).toBe(1);
-
-    await button.click();
-    await expect.poll(() => getRecorderUIState(page).then((s) => s.commitCount)).toBe(2);
-
-    await button.click();
-    await expect.poll(() => getRecorderUIState(page).then((s) => s.commitCount)).toBe(3);
+    const snapshot = await getRecorderSnapshot(page);
+    expect(snapshot.isRecording).toBe(true);
   });
 
-  test("commits are NOT recorded when recording is off", async ({ page }) => {
-    const button = page.locator('[data-testid="count-button"]');
-    await button.click();
-    await button.click();
-
-    const state = await getRecorderUIState(page);
-    expect(state.commitCount).toBe(0);
-    expect(state.hasCommits).toBe(false);
-  });
-
-  test("Stop recording button halts commit capture", async ({ page }) => {
+  test("commits accumulate while recording", async ({ page }) => {
     await startRecording(page);
 
-    await page.locator('[data-testid="count-button"]').click();
-    await expect.poll(() => getRecorderUIState(page).then((s) => s.commitCount)).toBe(1);
+    const button = page.getByTestId("count-button").first();
+    await button.click();
+    await expect
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(1);
 
-    // Capture the latest commit text before stopping
-    const beforeStop = await getRecorderUIState(page);
+    await button.click();
+    await expect
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(2);
+  });
+
+  test("commits are ignored while recording is off", async ({ page }) => {
+    const button = page.getByTestId("count-button").first();
+    await button.click();
+    await button.click();
+
+    const snapshot = await getRecorderSnapshot(page);
+    expect(snapshot.commitCount).toBe(0);
+    expect(snapshot.fiberChangeCount).toBe(0);
+  });
+
+  test("stop recording halts commit capture and derives hook history", async ({
+    page,
+  }) => {
+    await startRecording(page);
+
+    const button = page.getByTestId("count-button").first();
+    await button.click();
+    await expect
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(1);
 
     await stopRecording(page);
 
-    // Click more after stopping
-    await page.locator('[data-testid="count-button"]').click();
-    await page.locator('[data-testid="count-button"]').click();
+    const snapshotAfterStop = await getRecorderSnapshot(page);
+    expect(snapshotAfterStop.commitCount).toBe(1);
+    expect(snapshotAfterStop.fiberChangeCount).toBe(1);
+    expect(snapshotAfterStop.hookChangedHistory).not.toEqual({});
 
-    const state = await getRecorderUIState(page);
-    expect(state.isRecording).toBe(false);
-    // Latest commit text unchanged — no new commits recorded
-    expect(state.latestCommitText).toBe(beforeStop.latestCommitText);
+    await button.click();
+    await button.click();
+
+    const snapshotAfterExtraClicks = await getRecorderSnapshot(page);
+    expect(snapshotAfterExtraClicks.commitCount).toBe(1);
+    expect(snapshotAfterExtraClicks.fiberChangeCount).toBe(1);
   });
 
-  test("UI displays renderer ID and timestamp from real React commit", async ({ page }) => {
+  test("hook history is only derived after recording stops", async ({ page }) => {
     await startRecording(page);
-    await page.locator('[data-testid="count-button"]').click();
-    await expect.poll(() => getRecorderUIState(page).then((s) => s.hasCommits)).toBe(true);
 
-    const state = await getRecorderUIState(page);
-    expect(state.latestCommitText).toMatch(/Renderer \d+ at /);
-    expect(state.priorityText).not.toBe("n/a");
+    const button = page.getByTestId("count-button").first();
+    await button.click();
+    await expect
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(1);
+
+    const duringRecording = await getRecorderSnapshot(page);
+    expect(duringRecording.hookChangedHistory).toEqual({});
+
+    await stopRecording(page);
+
+    const afterStop = await getRecorderSnapshot(page);
+    expect(afterStop.hookChangedHistory).not.toEqual({});
   });
 
-  test("commit count accumulates across multiple clicks", async ({ page }) => {
+  test("multiple clicks continue to accumulate commits", async ({ page }) => {
     await startRecording(page);
 
-    const button = page.locator('[data-testid="count-button"]');
-    for (let i = 0; i < 5; i++) {
+    const button = page.getByTestId("count-button").first();
+    for (let index = 0; index < 5; index += 1) {
       await button.click();
     }
 
     await expect
-      .poll(() => getRecorderUIState(page).then((s) => s.commitCount))
-      .toBeGreaterThanOrEqual(5);
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(5);
+  });
+
+  test("stop recording logs html element hook changes with concise identifiers", async ({
+    page,
+  }) => {
+    const hookHistoryLogs: string[] = [];
+
+    page.on("console", (message) => {
+      const text = message.text();
+      if (text.includes("Hook change history summary")) {
+        hookHistoryLogs.push(text);
+      }
+    });
+
+    await startRecording(page);
+
+    await page.locator('[data-testid="element-alpha-button"]').click();
+    await expect
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(1);
+
+    await page.locator('[data-testid="element-beta-button"]').click();
+    await expect
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(2);
+
+    await stopRecording(page);
+
+    await expect
+      .poll(() => hookHistoryLogs.at(-1))
+      .toContain(
+        "[HTMLElement button#hook-target-alpha.hook-target.alpha.primary] -> [HTMLElement button#hook-target-beta.hook-target.beta.secondary]",
+      );
   });
 });

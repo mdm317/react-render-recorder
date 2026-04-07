@@ -247,6 +247,37 @@ Component OtherComponent
   - Commit 1: {"value":"x"} -> undefined`);
   });
 
+  it("formats html element hook changes with concise identifiers", () => {
+    const message = formatHookChangedHistoryForLLM({
+      ExampleComponent: {
+        0: [
+          {
+            hookIndex: 0,
+            prev: {
+              nodeType: 1,
+              tagName: "BUTTON",
+              id: "save-button",
+              className: "btn primary large extra",
+            },
+            next: {
+              nodeType: 1,
+              tagName: "BUTTON",
+              id: "cancel-button",
+              className: "btn secondary",
+            },
+            commitIndex: 0,
+          },
+        ],
+      },
+    });
+
+    expect(message).toContain(
+      "Commit 0: [HTMLElement button#save-button.btn.primary.large] -> [HTMLElement button#cancel-button.btn.secondary]",
+    );
+    expect(message).not.toContain('"nodeType":1');
+    expect(message).not.toContain('"tagName":"BUTTON"');
+  });
+
   it("logs the formatted hookChangedHistory and returns the message", () => {
     const messages: string[] = [];
 

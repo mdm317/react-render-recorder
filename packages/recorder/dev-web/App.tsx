@@ -12,9 +12,47 @@ export function App() {
       >
         Count: {count}
       </button>
-      <br/>
+      <br />
+      <ElementStatePanel />
+      <br />
       <Child />
     </>
+  );
+}
+
+function ElementStatePanel() {
+  const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(
+    null,
+  );
+
+  const selectedElementLabel = selectedElement
+    ? `${selectedElement.tagName.toLowerCase()}#${selectedElement.id || "no-id"}`
+    : "none";
+
+  return (
+    <div>
+      <p data-testid="element-state-label">
+        Selected element: {selectedElementLabel}
+      </p>
+      <button
+        type="button"
+        id="hook-target-alpha"
+        className="hook-target alpha primary"
+        data-testid="element-alpha-button"
+        onClick={(event) => setSelectedElement(event.currentTarget)}
+      >
+        Track alpha element
+      </button>
+      <button
+        type="button"
+        id="hook-target-beta"
+        className="hook-target beta secondary"
+        data-testid="element-beta-button"
+        onClick={(event) => setSelectedElement(event.currentTarget)}
+      >
+        Track beta element
+      </button>
+    </div>
   );
 }
 
