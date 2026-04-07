@@ -1,4 +1,4 @@
-import type { CommitFiberChange } from "devtools-api";
+import type { CommitFiberChange, Fiber } from "devtools-api";
 import { CommitData } from "../core/types";
 
 type HookChange = NonNullable<
@@ -9,7 +9,7 @@ export type HookHistoryEntry = HookChange & {
   commitIndex: number;
 };
 
-// key: displayName
+// key: displayName or displayName#instanceOrdinal when duplicate names exist
 // value: hook changes indexed by hook index
 export type HookChangedHistory = Record<string, HookIndexed>;
 
@@ -51,10 +51,51 @@ function createInitialState(isRecording = false): RecorderStoreState {
 function buildHookChangedHistory(
   fiberChanges: CommitFiberChange[][],
 ): HookChangedHistory {
-  const history: HookChangedHistory = {};
+  const historyByInstance = new Map<string, HookIndexed>();
+  const instanceMetadata = new Map<
+    string,
+    {
+      displayName: string;
+      ordinal: number;
+    }
+  >();
+  const displayNameInstanceCounts = new Map<string, number>();
+  const fiberInstanceIds = new WeakMap<Fiber, string>();
+
+  function getOrCreateInstanceId(
+    displayName: string,
+    fiber: Fiber,
+    prevFiber: Fiber | null,
+  ): string {
+    const existingInstanceId =
+      fiberInstanceIds.get(fiber) ??
+      (prevFiber != null ? fiberInstanceIds.get(prevFiber) : undefined);
+
+    if (existingInstanceId != null) {
+      fiberInstanceIds.set(fiber, existingInstanceId);
+      if (prevFiber != null) {
+        fiberInstanceIds.set(prevFiber, existingInstanceId);
+      }
+      return existingInstanceId;
+    }
+
+    const ordinal = (displayNameInstanceCounts.get(displayName) ?? 0) + 1;
+    displayNameInstanceCounts.set(displayName, ordinal);
+
+    const instanceId = `${displayName}::${ordinal}`;
+    instanceMetadata.set(instanceId, {
+      displayName,
+      ordinal,
+    });
+    fiberInstanceIds.set(fiber, instanceId);
+    if (prevFiber != null) {
+      fiberInstanceIds.set(prevFiber, instanceId);
+    }
+    return instanceId;
+  }
 
   fiberChanges.forEach((commitChanges, commitIndex) => {
-    commitChanges.forEach(({ changeDescription, displayName }) => {
+    commitChanges.forEach(({ changeDescription, displayName, fiber, prevFiber }) => {
       if (displayName == null) {
         return;
       }
@@ -64,7 +105,8 @@ function buildHookChangedHistory(
         return;
       }
 
-      const indexedHooks = history[displayName] ?? {};
+      const instanceId = getOrCreateInstanceId(displayName, fiber, prevFiber);
+      const indexedHooks = historyByInstance.get(instanceId) ?? {};
 
       changedHooks.forEach((hook) => {
         const hookHistory = indexedHooks[hook.hookIndex] ?? [];
@@ -77,8 +119,25 @@ function buildHookChangedHistory(
         indexedHooks[hook.hookIndex] = hookHistory;
       });
 
-      history[displayName] = indexedHooks;
+      historyByInstance.set(instanceId, indexedHooks);
     });
+  });
+
+  const history: HookChangedHistory = {};
+
+  historyByInstance.forEach((indexedHooks, instanceId) => {
+    const metadata = instanceMetadata.get(instanceId);
+    if (metadata == null) {
+      return;
+    }
+
+    const hasDuplicateNames =
+      (displayNameInstanceCounts.get(metadata.displayName) ?? 0) > 1;
+    const historyKey = hasDuplicateNames
+      ? `${metadata.displayName}#${metadata.ordinal}`
+      : metadata.displayName;
+
+    history[historyKey] = indexedHooks;
   });
 
   return history;

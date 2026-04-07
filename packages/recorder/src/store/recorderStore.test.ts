@@ -1,3 +1,4 @@
+import type { Fiber } from "devtools-api";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
@@ -7,6 +8,9 @@ import {
 import { createRecorderStore } from "./recorderStore";
 
 function ExampleComponent() {}
+function Item() {}
+
+const defaultFiberPairs = new Map<string, { fiber: Fiber; prevFiber: Fiber }>();
 
 const root = {
   current: {
@@ -27,10 +31,32 @@ const root = {
 function createChange({
   displayName = "ExampleComponent",
   hooks = null,
+  fiber = null,
+  prevFiber = null,
 }: {
   displayName?: string | null;
   hooks?: Array<{ hookIndex: number; prev: unknown; next: unknown }> | null;
+  fiber?: Fiber | null;
+  prevFiber?: Fiber | null;
 } = {}) {
+  const defaultPair =
+    fiber == null && prevFiber == null
+      ? (defaultFiberPairs.get(displayName ?? "__anonymous__") ??
+        (() => {
+          const nextFiber = createFiber(ExampleComponent);
+          const previousFiber = createFiber(ExampleComponent);
+          linkAlternates(nextFiber, previousFiber);
+          const pair = { fiber: nextFiber, prevFiber: previousFiber };
+          defaultFiberPairs.set(displayName ?? "__anonymous__", pair);
+          return pair;
+        })())
+      : null;
+  const resolvedFiber =
+    fiber ?? defaultPair?.fiber ?? createFiber(ExampleComponent);
+  const resolvedPrevFiber = prevFiber ?? defaultPair?.prevFiber ?? null;
+
+  resolvedFiber.alternate = resolvedPrevFiber;
+
   return {
     changeDescription: {
       context: false,
@@ -41,19 +67,28 @@ function createChange({
       state: null,
     },
     displayName,
-    fiber: {
-      alternate: null,
-      child: null,
-      flags: 1,
-      memoizedProps: {},
-      memoizedState: null,
-      ref: null,
-      sibling: null,
-      tag: 0,
-      type: ExampleComponent,
-    },
-    prevFiber: null,
+    fiber: resolvedFiber,
+    prevFiber: resolvedPrevFiber,
   };
+}
+
+function createFiber(type: unknown = ExampleComponent): Fiber {
+  return {
+    alternate: null,
+    child: null,
+    flags: 1,
+    memoizedProps: {},
+    memoizedState: null,
+    ref: null,
+    sibling: null,
+    tag: 0,
+    type,
+  };
+}
+
+function linkAlternates(left: Fiber, right: Fiber) {
+  left.alternate = right;
+  right.alternate = left;
 }
 
 function recordCommit(
@@ -72,6 +107,7 @@ function recordCommit(
 describe("recorderStore", () => {
   beforeEach(() => {
     createRecorderStore().reset();
+    defaultFiberPairs.clear();
   });
 
   it("ignores commits while recording is off", () => {
@@ -189,6 +225,74 @@ describe("recorderStore", () => {
     });
     expect(store.getSnapshot().commits).toHaveLength(2);
     expect(store.getSnapshot().fiberChanges).toHaveLength(2);
+  });
+
+  it("separates duplicate component names by instance", () => {
+    const store = createRecorderStore();
+    const firstItemCurrent = createFiber(Item);
+    const firstItemPrevious = createFiber(Item);
+    const secondItemCurrent = createFiber(Item);
+    const secondItemPrevious = createFiber(Item);
+
+    linkAlternates(firstItemCurrent, firstItemPrevious);
+    linkAlternates(secondItemCurrent, secondItemPrevious);
+
+    store.setRecording(true);
+
+    recordCommit(5, [
+      createChange({
+        displayName: "Item",
+        hooks: [{ hookIndex: 0, prev: 0, next: 1 }],
+        fiber: firstItemCurrent,
+        prevFiber: firstItemPrevious,
+      }),
+      createChange({
+        displayName: "Item",
+        hooks: [{ hookIndex: 0, prev: "a", next: "b" }],
+        fiber: secondItemCurrent,
+        prevFiber: secondItemPrevious,
+      }),
+    ]);
+
+    recordCommit(5, [
+      createChange({
+        displayName: "Item",
+        hooks: [{ hookIndex: 0, prev: 1, next: 2 }],
+        fiber: firstItemPrevious,
+        prevFiber: firstItemCurrent,
+      }),
+    ]);
+
+    store.setRecording(false);
+
+    expect(store.getSnapshot().hookChangedHistory).toEqual({
+      "Item#1": {
+        0: [
+          {
+            hookIndex: 0,
+            prev: 0,
+            next: 1,
+            commitIndex: 0,
+          },
+          {
+            hookIndex: 0,
+            prev: 1,
+            next: 2,
+            commitIndex: 1,
+          },
+        ],
+      },
+      "Item#2": {
+        0: [
+          {
+            hookIndex: 0,
+            prev: "a",
+            next: "b",
+            commitIndex: 0,
+          },
+        ],
+      },
+    });
   });
 
   it("formats hookChangedHistory into an LLM-friendly log", () => {
