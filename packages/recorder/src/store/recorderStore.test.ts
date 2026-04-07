@@ -1,4 +1,4 @@
-import type { CommittedFiberChange, Fiber } from "devtools-api";
+import type { CommittedFiberChange, RecorderFiber } from "devtools-api";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { formatCommitHookChangedHistoryForLLM } from "../logging/formatCommitHookChangedHistoryForLLM";
@@ -12,7 +12,10 @@ import { createRecorderStore } from "./recorderStore";
 function ExampleComponent() {}
 function Item() {}
 
-const defaultFiberPairs = new Map<string, { fiber: Fiber; prevFiber: Fiber }>();
+const defaultFiberPairs = new Map<
+  string,
+  { fiber: RecorderFiber; prevFiber: RecorderFiber }
+>();
 
 const root = {
   current: {
@@ -38,8 +41,8 @@ function createChange({
 }: {
   displayName?: string | null;
   hooks?: Array<{ hookIndex: number; prev: unknown; next: unknown }> | null;
-  fiber?: Fiber | null;
-  prevFiber?: Fiber | null;
+  fiber?: RecorderFiber | null;
+  prevFiber?: RecorderFiber | null;
 } = {}) {
   const defaultPair =
     fiber == null && prevFiber == null
@@ -73,7 +76,7 @@ function createChange({
   };
 }
 
-function createFiber(type: unknown = ExampleComponent): Fiber {
+function createFiber(type: unknown = ExampleComponent): RecorderFiber {
   return {
     alternate: null,
     child: null,
@@ -87,7 +90,7 @@ function createFiber(type: unknown = ExampleComponent): Fiber {
   };
 }
 
-function linkAlternates(left: Fiber, right: Fiber) {
+function linkAlternates(left: RecorderFiber, right: RecorderFiber) {
   left.alternate = right;
   right.alternate = left;
 }

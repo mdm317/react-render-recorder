@@ -6,10 +6,12 @@ export {
 export { formatCommitHookChangedHistoryForLLM } from "../logging/formatCommitHookChangedHistoryForLLM";
 export { formatHookChangedHistoryForLLM } from "../logging/formatHookChangedHistoryForLLM";
 export type {
-  CreateRecorderStoreOptions,
   HookChangedHistory,
   HookHistoryEntry,
   HookIndexed,
+} from "../lib/buildHookChangedHistory";
+export type {
+  CreateRecorderStoreOptions,
   RecorderStore,
   RecorderStoreState,
 } from "./recorderStore";

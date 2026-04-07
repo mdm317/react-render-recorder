@@ -1,4 +1,4 @@
-import type { HookChangedHistory } from "../store/recorderStore";
+import type { HookChangedHistory } from "../lib/buildHookChangedHistory";
 import { createSafeJsonReplacer, formatElementSummary, isElementLike } from "./safeJson";
 
 function isFormattedElementSummaryString(value: unknown): value is string {
