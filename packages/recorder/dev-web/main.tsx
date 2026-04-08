@@ -1,10 +1,11 @@
 import "./index.css";
+import "./installRecorder";
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { App } from "./App";
-import { createRecorderStore } from "../src";
+import { createRecorderStore } from "../src/store";
 
 declare global {
   interface Window {

@@ -7,8 +7,8 @@ export function installReactRecordCommitLogger(): () => void {
   const recorderStore = createRecorderStore();
 
   renderRecorderUI();
-  registerOnCommitFiberRoot((rendererID, root, priorityLevel) => {
-    const changes = onCommitFiber(root);
+  registerOnCommitFiberRoot((hook, rendererID, root,  priorityLevel, ) => {
+    const changes = onCommitFiber(root, hook?.renderers.get(rendererID)?.currentDispatcherRef);
     recorderStore.recordCommit({
       changes,
       rendererID,
