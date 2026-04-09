@@ -169,9 +169,9 @@ test.describe("react-record E2E", () => {
     await stopRecording(page);
 
     await expectRecorderCommitCount(page, 1);
-    await expect.poll(() => getRecorderTextContent(page, "component-filter-result")).toContain(
-      "Component App",
-    );
+    await expect
+      .poll(() => getRecorderTextContent(page, "component-filter-result"))
+      .toContain("Component App");
     await expect
       .poll(() => getRecorderTextContent(page, "component-filter-result"))
       .not.toContain("No hook changes were recorded.");
@@ -186,12 +186,12 @@ test.describe("react-record E2E", () => {
     await stopRecording(page);
 
     await expectRecorderCommitCount(page, 1);
-    await expect.poll(() => getRecorderTextContent(page, "component-filter-result")).toContain(
-      "Hook 1 (CounterState(0) > State)",
-    );
-    await expect.poll(() => getRecorderTextContent(page, "component-filter-result")).toContain(
-      'Commit 0: 0 -> 1',
-    );
+    await expect
+      .poll(() => getRecorderTextContent(page, "component-filter-result"))
+      .toContain("Hook 1 (CounterState(0) > State)");
+    await expect
+      .poll(() => getRecorderTextContent(page, "component-filter-result"))
+      .toContain("Commit 0: 0 -> 1");
   });
 
   test("multiple clicks continue to accumulate commits", async ({ page }) => {
@@ -320,7 +320,9 @@ test.describe("react-record E2E", () => {
       .toContain("Commit 0");
   });
 
-  test("commit history panel can be collapsed and expanded when results exist", async ({ page }) => {
+  test("commit history panel can be collapsed and expanded when results exist", async ({
+    page,
+  }) => {
     await startRecording(page);
 
     await page.locator('[data-testid="element-alpha-button"]').click();
@@ -343,9 +345,7 @@ test.describe("react-record E2E", () => {
     await expect
       .poll(() => getRecorderAttribute(page, "commit-history-panel-content", "aria-hidden"))
       .toBe("true");
-    await expect
-      .poll(() => getRecorderElementHeight(page, "commit-history-panel-content"))
-      .toBe(0);
+    await expect.poll(() => getRecorderElementHeight(page, "commit-history-panel-content")).toBe(0);
 
     await clickRecorderElementByTestId(page, "commit-history-toggle");
 
