@@ -324,9 +324,7 @@ test.describe("react-record E2E", () => {
     await startRecording(page);
 
     await page.locator('[data-testid="element-alpha-button"]').click();
-    await expect
-      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
-      .toBe(1);
+    await expect(page.getByTestId("element-state-label")).toContainText("button#hook-target-alpha");
 
     await stopRecording(page);
 
