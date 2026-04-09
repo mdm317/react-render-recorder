@@ -1,6 +1,6 @@
 import type { CommittedFiberChange } from "devtools-api";
 
-import type { HookChangedHistory } from "./buildHookChangedHistory";
+import type { HookChangedHistory } from "./build-hook-changed-history";
 
 function normalizeComponentName(value: string): string {
   return value.trim().toLowerCase();
@@ -20,27 +20,20 @@ function matchesComponentQuery(componentName: string, query: string): boolean {
 
   return candidateNames.some((candidateName) => {
     const normalizedCandidate = normalizeComponentName(candidateName);
-    return (
-      normalizedCandidate === normalizedQuery ||
-      normalizedCandidate.includes(normalizedQuery)
-    );
+    return normalizedCandidate === normalizedQuery || normalizedCandidate.includes(normalizedQuery);
   });
 }
 
-export function getComponentNamesFromHistory(
-  hookChangedHistory: HookChangedHistory,
-): string[] {
-  return Object.keys(hookChangedHistory).sort((left, right) =>
-    left.localeCompare(right),
-  );
+export function getComponentNamesFromHistory(hookChangedHistory: HookChangedHistory): string[] {
+  return Object.keys(hookChangedHistory).sort((left, right) => left.localeCompare(right));
 }
 
 export function getMatchingComponentNames(
   hookChangedHistory: HookChangedHistory,
   query: string,
 ): string[] {
-  return getComponentNamesFromHistory(hookChangedHistory).filter(
-    (componentName) => matchesComponentQuery(componentName, query),
+  return getComponentNamesFromHistory(hookChangedHistory).filter((componentName) =>
+    matchesComponentQuery(componentName, query),
   );
 }
 
@@ -70,8 +63,7 @@ export function filterFiberChangesByComponent(
   return fiberChangesByCommit
     .map((commitChanges) =>
       commitChanges.filter(
-        ({ displayName }) =>
-          displayName != null && matchesComponentQuery(displayName, query),
+        ({ displayName }) => displayName != null && matchesComponentQuery(displayName, query),
       ),
     )
     .filter((commitChanges) => commitChanges.length > 0);

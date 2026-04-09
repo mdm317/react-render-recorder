@@ -31,10 +31,7 @@ async function getRecorderSnapshot(page: Page): Promise<RecorderTestSnapshot> {
   });
 }
 
-async function clickRecorderButton(
-  page: Page,
-  name: "Start recording" | "Stop recording",
-) {
+async function clickRecorderButton(page: Page, name: "Start recording" | "Stop recording") {
   await page.evaluate((buttonName) => {
     const root = document.getElementById("recorder-root");
     const buttons = root?.shadowRoot?.querySelectorAll("button") ?? [];
@@ -53,9 +50,7 @@ async function clickRecorderButton(
 async function fillRecorderComponentFilter(page: Page, value: string) {
   await page.evaluate((nextValue) => {
     const root = document.getElementById("recorder-root");
-    const input = root?.shadowRoot?.querySelector(
-      '[data-testid="component-filter-input"]',
-    );
+    const input = root?.shadowRoot?.querySelector('[data-testid="component-filter-input"]');
 
     if (!(input instanceof HTMLInputElement)) {
       throw new Error("Recorder component filter input not found in shadow DOM");
@@ -66,26 +61,28 @@ async function fillRecorderComponentFilter(page: Page, value: string) {
   }, value);
 }
 
-async function getRecorderTextContent(
-  page: Page,
-  testId: string,
-): Promise<string | null> {
+async function getRecorderTextContent(page: Page, testId: string): Promise<string | null> {
   return page.evaluate((targetTestId) => {
     const root = document.getElementById("recorder-root");
-    const target = root?.shadowRoot?.querySelector(
-      `[data-testid="${targetTestId}"]`,
-    );
+    const target = root?.shadowRoot?.querySelector(`[data-testid="${targetTestId}"]`);
 
     return target?.textContent ?? null;
   }, testId);
 }
 
+async function getRecorderFilterInputValue(page: Page): Promise<string | null> {
+  return page.evaluate(() => {
+    const root = document.getElementById("recorder-root");
+    const input = root?.shadowRoot?.querySelector('[data-testid="component-filter-input"]');
+
+    return input instanceof HTMLInputElement ? input.value : null;
+  });
+}
+
 async function clickRecorderElementByTestId(page: Page, testId: string) {
   await page.evaluate((targetTestId) => {
     const root = document.getElementById("recorder-root");
-    const target = root?.shadowRoot?.querySelector(
-      `[data-testid="${targetTestId}"]`,
-    );
+    const target = root?.shadowRoot?.querySelector(`[data-testid="${targetTestId}"]`);
 
     if (!(target instanceof HTMLElement)) {
       throw new Error(`Recorder element "${targetTestId}" not found in shadow DOM`);
@@ -112,11 +109,7 @@ async function stopRecording(page: Page) {
 test.describe("react-record E2E", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect
-      .poll(() =>
-        page.evaluate(() => Boolean(window.__REACT_RECORD_TEST__)),
-      )
-      .toBe(true);
+    await expect.poll(() => page.evaluate(() => Boolean(window.__REACT_RECORD_TEST__))).toBe(true);
   });
 
   test("recorder starts idle", async ({ page }) => {
@@ -160,9 +153,7 @@ test.describe("react-record E2E", () => {
     expect(snapshot.fiberChangeCount).toBe(0);
   });
 
-  test("stop recording halts commit capture and derives hook history", async ({
-    page,
-  }) => {
+  test("stop recording halts commit capture and derives hook history", async ({ page }) => {
     await startRecording(page);
 
     const button = page.getByTestId("count-button").first();
@@ -238,18 +229,9 @@ test.describe("react-record E2E", () => {
       .toBe(5);
   });
 
-  test("stop recording logs html element hook changes with concise identifiers", async ({
+  test("stop recording preserves html element hook changes with concise identifiers", async ({
     page,
   }) => {
-    const hookHistoryLogs: string[] = [];
-
-    page.on("console", (message) => {
-      const text = message.text();
-      if (text.includes("Hook change history summary")) {
-        hookHistoryLogs.push(text);
-      }
-    });
-
     await startRecording(page);
 
     await page.locator('[data-testid="element-alpha-button"]').click();
@@ -264,8 +246,10 @@ test.describe("react-record E2E", () => {
 
     await stopRecording(page);
 
+    await fillRecorderComponentFilter(page, "elementstate");
+
     await expect
-      .poll(() => hookHistoryLogs.at(-1))
+      .poll(() => getRecorderTextContent(page, "component-filter-result"))
       .toContain(
         "[HTMLElement button#hook-target-alpha.hook-target.alpha.primary] -> [HTMLElement button#hook-target-beta.hook-target.beta.secondary]",
       );
@@ -283,9 +267,7 @@ test.describe("react-record E2E", () => {
       .toContain("[HTMLElement button#hook-target-alpha.hook-target.alpha.primary]");
   });
 
-  test("stop recording shows filtered data for a specific component input", async ({
-    page,
-  }) => {
+  test("stop recording shows filtered data for a specific component input", async ({ page }) => {
     await startRecording(page);
 
     await page.locator('[data-testid="element-alpha-button"]').click();
@@ -299,9 +281,6 @@ test.describe("react-record E2E", () => {
 
     await expect
       .poll(() => getRecorderTextContent(page, "component-filter-result"))
-      .toContain("Showing: ElementStatePanel");
-    await expect
-      .poll(() => getRecorderTextContent(page, "component-filter-result"))
       .toContain("Component ElementStatePanel");
     await expect
       .poll(() => getRecorderTextContent(page, "component-filter-result"))
@@ -312,6 +291,93 @@ test.describe("react-record E2E", () => {
     await expect
       .poll(() => getRecorderTextContent(page, "component-filter-result"))
       .not.toContain("Component Child");
+  });
+
+  test("starting a new recording resets the previous component filter", async ({ page }) => {
+    await startRecording(page);
+
+    await page.locator('[data-testid="element-alpha-button"]').click();
+    await expect
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(1);
+
+    await stopRecording(page);
+    await fillRecorderComponentFilter(page, "elementstate");
+
+    await expect.poll(() => getRecorderFilterInputValue(page)).toBe("elementstate");
+
+    await startRecording(page);
+
+    await page.getByTestId("count-button").first().click();
+    await expect
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(1);
+
+    await stopRecording(page);
+
+    await expect.poll(() => getRecorderFilterInputValue(page)).toBe("");
+    await expect
+      .poll(() => getRecorderTextContent(page, "component-filter-result"))
+      .toContain("Component App");
+  });
+
+  test("empty filter shows the combined data for all recorded components", async ({ page }) => {
+    await startRecording(page);
+
+    await page.getByTestId("count-button").first().click();
+    await expect
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(1);
+
+    await page.locator('[data-testid="element-alpha-button"]').click();
+    await expect
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(2);
+
+    await page.getByTestId("count-button").nth(1).click();
+    await expect
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(3);
+
+    await stopRecording(page);
+
+    await expect
+      .poll(() => getRecorderTextContent(page, "component-filter-available"))
+      .not.toContain("Total");
+
+    await expect
+      .poll(() => getRecorderTextContent(page, "component-filter-result"))
+      .toContain("Component App");
+    await expect
+      .poll(() => getRecorderTextContent(page, "component-filter-result"))
+      .toContain("Component ElementStatePanel");
+    await expect
+      .poll(() => getRecorderTextContent(page, "component-filter-result"))
+      .toContain("Component Child");
+  });
+
+  test("commit without hook changes shows empty summary instead of no-match", async ({ page }) => {
+    await startRecording(page);
+
+    await page.evaluate(() => {
+      const testApi = window.__REACT_RECORD_TEST__;
+      if (!testApi) {
+        throw new Error("window.__REACT_RECORD_TEST__ is not available");
+      }
+
+      testApi.rerenderApp();
+    });
+
+    await expect
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(1);
+
+    await stopRecording(page);
+
+    await expect.poll(() => getRecorderTextContent(page, "component-filter-no-match")).toBe(null);
+    await expect
+      .poll(() => getRecorderTextContent(page, "component-filter-result"))
+      .toContain("No hook changes were recorded.");
   });
 
   test("copy buttons copy hook and commit history", async ({ page, context }) => {

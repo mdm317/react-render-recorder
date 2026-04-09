@@ -16,15 +16,11 @@ export function isElementLike(value: unknown): value is ElementLike {
   }
 
   return (
-    (value as ElementLike).nodeType === 1 &&
-    typeof (value as ElementLike).tagName === "string"
+    (value as ElementLike).nodeType === 1 && typeof (value as ElementLike).tagName === "string"
   );
 }
 
-function readElementStringField(
-  element: ElementLike,
-  fieldName: "class" | "id",
-): string {
+function readElementStringField(element: ElementLike, fieldName: "class" | "id"): string {
   const directValue = fieldName === "class" ? element.className : element.id;
   if (typeof directValue === "string") {
     return directValue.trim();

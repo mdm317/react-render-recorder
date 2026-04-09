@@ -1,10 +1,10 @@
 import "./index.css";
-import "./installRecorder";
+import "./install-recorder";
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { App } from "./App";
+import { App } from "./app";
 import { createRecorderStore } from "../src/store";
 
 declare global {
@@ -18,12 +18,30 @@ declare global {
         >["hookChangedHistory"];
         isRecording: boolean;
       };
+      rerenderApp: () => void;
     };
   }
 }
 
+const container = document.getElementById("root");
+
+if (!container) {
+  throw new Error("Root container #root was not found.");
+}
+
+const root = createRoot(container);
+const recorderStore = createRecorderStore();
+let renderTick = 0;
+
+function renderApp() {
+  root.render(
+    <StrictMode>
+      <App renderTick={renderTick} />
+    </StrictMode>,
+  );
+}
+
 if (import.meta.env.DEV) {
-  const recorderStore = createRecorderStore();
   window.__REACT_RECORD_TEST__ = {
     getSnapshot: () => {
       const snapshot = recorderStore.getSnapshot();
@@ -34,22 +52,14 @@ if (import.meta.env.DEV) {
         hookChangedHistory: snapshot.hookChangedHistory,
       };
     },
+    rerenderApp: () => {
+      renderTick += 1;
+      renderApp();
+    },
   };
 }
 
-const container = document.getElementById("root");
-
-if (!container) {
-  throw new Error("Root container #root was not found.");
-}
-
-const root = createRoot(container);
-
-root.render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+renderApp();
 
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {

@@ -1,6 +1,6 @@
 import type { CommittedFiberChange, Fiber } from "devtools-api";
 
-import { sanitizeForJson } from "../utils/safeJson";
+import { sanitizeForJson } from "../utils/safe-json";
 
 type HookChange = NonNullable<
   NonNullable<CommittedFiberChange["changeDescription"]["hooks"]>[number]
@@ -103,8 +103,7 @@ export function buildHookChangedHistory(
       return;
     }
 
-    const hasDuplicateNames =
-      (displayNameInstanceCounts.get(metadata.displayName) ?? 0) > 1;
+    const hasDuplicateNames = (displayNameInstanceCounts.get(metadata.displayName) ?? 0) > 1;
     const historyKey = hasDuplicateNames
       ? `${metadata.displayName}#${metadata.ordinal}`
       : metadata.displayName;

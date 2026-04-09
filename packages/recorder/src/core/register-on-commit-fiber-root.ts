@@ -1,9 +1,4 @@
-import {
-  type FiberRoot,
-  installHook,
-  type ReactRenderer,
-  type RendererID,
-} from "devtools-api";
+import { type FiberRoot, installHook, type ReactRenderer, type RendererID } from "devtools-api";
 
 export type CommitFiberRootCallback = (
   hook: ReturnType<typeof installHook>,
@@ -13,9 +8,11 @@ export type CommitFiberRootCallback = (
 ) => void;
 
 function getOrInstallHook(target: object) {
-  const existingHook = (target as {
-    __REACT_DEVTOOLS_GLOBAL_HOOK__?: ReturnType<typeof installHook>;
-  }).__REACT_DEVTOOLS_GLOBAL_HOOK__;
+  const existingHook = (
+    target as {
+      __REACT_DEVTOOLS_GLOBAL_HOOK__?: ReturnType<typeof installHook>;
+    }
+  ).__REACT_DEVTOOLS_GLOBAL_HOOK__;
 
   return ensureRendererRegistry(existingHook ?? installHook(target));
 }
@@ -61,13 +58,7 @@ export function registerOnCommitFiberRoot(
 
   hook.onCommitFiberRoot = function (rendererID, root, priorityLevel, ...args) {
     const fiberRoot = root as FiberRoot;
-    const result = original.call(
-      this,
-      rendererID,
-      root,
-      priorityLevel,
-      ...args,
-    );
+    const result = original.call(this, rendererID, root, priorityLevel, ...args);
     callback(hook, rendererID, fiberRoot, priorityLevel);
     return result;
   };

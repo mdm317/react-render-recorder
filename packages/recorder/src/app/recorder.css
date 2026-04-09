@@ -3,7 +3,9 @@
 :host {
   color: #0f172a;
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
-  font-feature-settings: "ss01" on, "cv05" on;
+  font-feature-settings:
+    "ss01" on,
+    "cv05" on;
 }
 
 @keyframes rec-pulse {

@@ -1,9 +1,5 @@
 import type { CommittedFiberChange } from "devtools-api";
-import {
-  createSafeJsonReplacer,
-  formatElementSummary,
-  isElementLike,
-} from "../../utils/safeJson";
+import { createSafeJsonReplacer, formatElementSummary, isElementLike } from "../../utils/safe-json";
 
 type CommitEntry = {
   componentName: string;
@@ -44,7 +40,9 @@ function formatValueForLLM(value: unknown): string {
   return serialized ?? String(value);
 }
 
-function buildCommitEntries(fiberChangesByCommit: CommittedFiberChange[][]): Map<number, CommitEntry[]> {
+function buildCommitEntries(
+  fiberChangesByCommit: CommittedFiberChange[][],
+): Map<number, CommitEntry[]> {
   const entriesByCommit = new Map<number, CommitEntry[]>();
 
   fiberChangesByCommit.forEach((commitChanges, commitIndex) => {

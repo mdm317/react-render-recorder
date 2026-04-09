@@ -1,18 +1,10 @@
-export { createRecorderStore } from "./recorderStore";
-export {
-  logCommitHookChangedHistoryForLLM,
-  logHookChangedHistoryForLLM,
-} from "../lib/llmLogging";
-export { formatCommitHookChangedHistoryForLLM } from "../lib/llmLogging/formatCommitHookChangedHistoryForLLM";
-export { formatHookChangedHistoryForLLM } from "../lib/llmLogging/formatHookChangedHistoryForLLM";
+export { createRecorderStore } from "./recorder-store";
+export { useRecorderStore } from "./use-recorder-store";
+export { formatCommitHookChangedHistoryForLLM } from "../lib/llm-logging/format-commit-hook-changed-history-for-llm";
+export { formatHookChangedHistoryForLLM } from "../lib/llm-logging/format-hook-changed-history-for-llm";
 export type {
   HookChangedHistory,
   HookHistoryEntry,
   HookIndexed,
-} from "../lib/buildHookChangedHistory";
-export type {
-  CreateRecorderStoreOptions,
-  RecorderStore,
-  RecorderStoreState,
-} from "./recorderStore";
-export type { HookChangedHistoryLogger } from "../lib/llmLogging";
+} from "../lib/build-hook-changed-history";
+export type { RecorderStore, RecorderStoreState } from "./recorder-store";

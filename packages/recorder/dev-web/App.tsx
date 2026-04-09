@@ -1,5 +1,9 @@
 import { useState } from "react";
 
+type AppProps = {
+  renderTick?: number;
+};
+
 function useCounterState(initialCount: number) {
   const [count, setCount] = useState(initialCount);
 
@@ -11,18 +15,14 @@ function useCounterState(initialCount: number) {
   };
 }
 
-export function App() {
+export function App(_props: AppProps) {
   const [view] = useState("overview");
   const { count, increment } = useCounterState(0);
 
   return (
     <>
       <p data-testid="view-label">View: {view}</p>
-      <button
-        type="button"
-        data-testid="count-button"
-        onClick={increment}
-      >
+      <button type="button" data-testid="count-button" onClick={increment}>
         Count: {count}
       </button>
       <br />
@@ -34,9 +34,7 @@ export function App() {
 }
 
 function ElementStatePanel() {
-  const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(
-    null,
-  );
+  const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
 
   const selectedElementLabel = selectedElement
     ? `${selectedElement.tagName.toLowerCase()}#${selectedElement.id || "no-id"}`
@@ -44,9 +42,7 @@ function ElementStatePanel() {
 
   return (
     <div>
-      <p data-testid="element-state-label">
-        Selected element: {selectedElementLabel}
-      </p>
+      <p data-testid="element-state-label">Selected element: {selectedElementLabel}</p>
       <button
         type="button"
         id="hook-target-alpha"
@@ -73,11 +69,7 @@ function Child() {
   const [count, setCount] = useState(0);
 
   return (
-    <button
-      type="button"
-      data-testid="count-button"
-      onClick={() => setCount((c) => c + 1)}
-    >
+    <button type="button" data-testid="count-button" onClick={() => setCount((c) => c + 1)}>
       child Count: {count}
     </button>
   );

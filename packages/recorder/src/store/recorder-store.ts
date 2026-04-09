@@ -4,13 +4,13 @@ import { CommitData } from "../core/types";
 import {
   buildHookChangedHistory,
   type HookChangedHistory,
-} from "../lib/buildHookChangedHistory";
+} from "../lib/build-hook-changed-history";
 
 export type RecorderStoreState = {
-  isRecording: boolean;
   commits: CommitData[];
   fiberChanges: CommittedFiberChange[][];
   hookChangedHistory: HookChangedHistory;
+  isRecording: boolean;
 };
 
 export type RecorderStore = {
@@ -21,32 +21,18 @@ export type RecorderStore = {
   reset: () => void;
 };
 
-export type CreateRecorderStoreOptions = {
-  initialRecording?: boolean;
-  maxRecentCommits?: number;
-};
-
-const DEFAULT_MAX_RECENT_COMMITS = 20;
-
-function createInitialState(isRecording = false): RecorderStoreState {
+function createInitialState(): RecorderStoreState {
   return {
-    isRecording,
     commits: [],
     fiberChanges: [],
     hookChangedHistory: {},
+    isRecording: false,
   };
 }
 
-function createRecorderStoreInstance(
-  options: CreateRecorderStoreOptions = {},
-): RecorderStore {
+function createRecorderStoreInstance(): RecorderStore {
   const listeners = new Set<() => void>();
-  
-  // oxlint-disable-next-line no-unused-vars todo
-  const maxRecentCommits =
-    options.maxRecentCommits ?? DEFAULT_MAX_RECENT_COMMITS;
-
-  let state: RecorderStoreState = createInitialState(options.initialRecording);
+  let state: RecorderStoreState = createInitialState();
 
   function emit() {
     for (const listener of listeners) {
@@ -57,6 +43,21 @@ function createRecorderStoreInstance(
   function setState(nextState: RecorderStoreState) {
     state = nextState;
     emit();
+  }
+
+  function startRecording() {
+    setState({
+      ...createInitialState(),
+      isRecording: true,
+    });
+  }
+
+  function endRecording() {
+    setState({
+      ...state,
+      isRecording: false,
+      hookChangedHistory: buildHookChangedHistory(state.fiberChanges),
+    });
   }
 
   return {
@@ -87,15 +88,10 @@ function createRecorderStoreInstance(
       }
 
       if (value) {
-        setState(createInitialState(true));
-        return;
+        startRecording();
+      } else {
+        endRecording();
       }
-
-      setState({
-        ...state,
-        isRecording: value,
-        hookChangedHistory: buildHookChangedHistory(state.fiberChanges),
-      });
     },
 
     reset() {
@@ -106,11 +102,9 @@ function createRecorderStoreInstance(
 
 let recorderStoreSingleton: RecorderStore | null = null;
 
-export function createRecorderStore(
-  options: CreateRecorderStoreOptions = {},
-): RecorderStore {
+export function createRecorderStore(): RecorderStore {
   if (recorderStoreSingleton == null) {
-    recorderStoreSingleton = createRecorderStoreInstance(options);
+    recorderStoreSingleton = createRecorderStoreInstance();
   }
 
   return recorderStoreSingleton;

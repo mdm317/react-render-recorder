@@ -1,9 +1,6 @@
 import { useSyncExternalStore } from "preact/compat";
 
-import {
-  createRecorderStore,
-  type RecorderStoreState,
-} from "../store";
+import { createRecorderStore, type RecorderStoreState } from "./recorder-store";
 
 type UseRecorderStoreResult = {
   setRecording: (value: boolean) => void;

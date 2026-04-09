@@ -247,12 +247,12 @@ function pushHookLog({
   primitive,
   value,
 }: {
-  debugInfo?: unknown
-  displayName?: string | null
-  dispatcherHookName: string
-  hookIndex: number | null
-  primitive: string
-  value: unknown
+  debugInfo?: unknown;
+  displayName?: string | null;
+  dispatcherHookName: string;
+  hookIndex: number | null;
+  primitive: string;
+  value: unknown;
 }): void {
   hookLog.push({
     debugInfo,
@@ -273,7 +273,7 @@ function defineThenable<T extends object>(target: T): T & { then: () => void } {
     value() {},
   });
 
-  return target as T & { then: () => void }
+  return target as T & { then: () => void };
 }
 
 function getPrimitiveStackCache(): Map<string, Array<ParsedStackFrame>> {
@@ -313,10 +313,12 @@ function getPrimitiveStackCache(): Map<string, Array<ParsedStackFrame>> {
       $$typeof: REACT_CONTEXT_TYPE,
       _currentValue: null,
     });
-    Dispatcher.use?.(defineThenable({
-      status: "fulfilled",
-      value: null,
-    }));
+    Dispatcher.use?.(
+      defineThenable({
+        status: "fulfilled",
+        value: null,
+      }),
+    );
     try {
       Dispatcher.use?.(defineThenable({}));
     } catch {}
@@ -456,7 +458,7 @@ function useReducer<S, I, A>(
       ? (hook.memoizedState as S)
       : init !== undefined
         ? init(initialArg)
-        : (initialArg as unknown as S)
+        : (initialArg as unknown as S);
 
   pushHookLog({
     dispatcherHookName: "Reducer",
@@ -494,7 +496,7 @@ function useCacheRefresh(): () => void {
     dispatcherHookName: "CacheRefresh",
     hookIndex,
     primitive: "CacheRefresh",
-    value: hook !== null ? hook.memoizedState : (() => {}),
+    value: hook !== null ? hook.memoizedState : () => {},
   });
 
   return () => {};
@@ -919,7 +921,10 @@ function findSharedIndex(
   return -1;
 }
 
-function findCommonAncestorIndex(rootStack: ParsedStackFrame[], hookStack: ParsedStackFrame[]): number {
+function findCommonAncestorIndex(
+  rootStack: ParsedStackFrame[],
+  hookStack: ParsedStackFrame[],
+): number {
   let rootIndex = findSharedIndex(hookStack, rootStack, mostLikelyAncestorIndex);
   if (rootIndex !== -1) {
     return rootIndex;
@@ -1020,10 +1025,7 @@ function parseTrimmedStack(
     return [hookStack[primitiveIndex - 1] ?? null, null];
   }
 
-  return [
-    hookStack[primitiveIndex - 1] ?? null,
-    hookStack.slice(primitiveIndex, rootIndex - 1),
-  ];
+  return [hookStack[primitiveIndex - 1] ?? null, hookStack.slice(primitiveIndex, rootIndex - 1)];
 }
 
 function buildTree(rootStack: ParsedStackFrame[], readHookLog: Array<HookLogEntry>): HooksTree {
@@ -1178,10 +1180,16 @@ function inspectHooks<Props>(
     currentDispatcher.H = previousDispatcher;
   }
 
-  return buildTree(ancestorStackError != null ? parseErrorStack(ancestorStackError) : [], readHookLog);
+  return buildTree(
+    ancestorStackError != null ? parseErrorStack(ancestorStackError) : [],
+    readHookLog,
+  );
 }
 
-function setupContexts(contextMap: Map<ReactContext<unknown>, unknown>, fiber: FiberWithDebug): void {
+function setupContexts(
+  contextMap: Map<ReactContext<unknown>, unknown>,
+  fiber: FiberWithDebug,
+): void {
   let current: FiberWithDebug | null | undefined = fiber;
   while (current != null) {
     if (current.tag === ContextProvider) {
@@ -1229,7 +1237,10 @@ function inspectHooksOfForwardRef<Props, Ref>(
     currentDispatcher.H = previousDispatcher;
   }
 
-  return buildTree(ancestorStackError != null ? parseErrorStack(ancestorStackError) : [], readHookLog);
+  return buildTree(
+    ancestorStackError != null ? parseErrorStack(ancestorStackError) : [],
+    readHookLog,
+  );
 }
 
 function resolveDefaultProps<ComponentProps extends Record<string, unknown>>(

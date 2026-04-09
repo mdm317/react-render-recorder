@@ -1,9 +1,5 @@
-import type { HookChangedHistory } from "../buildHookChangedHistory";
-import {
-  createSafeJsonReplacer,
-  formatElementSummary,
-  isElementLike,
-} from "../../utils/safeJson";
+import type { HookChangedHistory } from "../build-hook-changed-history";
+import { createSafeJsonReplacer, formatElementSummary, isElementLike } from "../../utils/safe-json";
 
 function isFormattedElementSummaryString(value: unknown): value is string {
   return typeof value === "string" && value.startsWith("[HTMLElement ") && value.endsWith("]");

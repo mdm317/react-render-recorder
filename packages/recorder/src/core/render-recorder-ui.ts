@@ -1,7 +1,7 @@
 import { h, render } from "preact";
 
-import { RecorderButton } from "../ui/RecorderButton";
-import recorderStyles from "../ui/recorder.css?inline";
+import { App } from "../app/app";
+import recorderStyles from "../app/recorder.css?inline";
 
 function attachRecorderStyles(shadowRoot: ShadowRoot): () => void {
   let cleanupStyles: () => void;
@@ -55,7 +55,7 @@ function initRecorderRoot(): {
 
 export function renderRecorderUI(): () => void {
   const { rootContainer, rootTarget, cleanupStyles } = initRecorderRoot();
-  render(h(RecorderButton, {}), rootTarget);
+  render(h(App, {}), rootTarget);
 
   function cleanupRecorderUI() {
     render(null, rootTarget);
