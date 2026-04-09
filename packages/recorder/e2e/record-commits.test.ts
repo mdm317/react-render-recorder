@@ -48,6 +48,35 @@ async function getRecorderTextContent(page: Page, testId: string): Promise<strin
   }, testId);
 }
 
+async function getRecorderAttribute(
+  page: Page,
+  testId: string,
+  attributeName: string,
+): Promise<string | null> {
+  return page.evaluate(
+    ({ attributeName, targetTestId }) => {
+      const root = document.getElementById("recorder-root");
+      const target = root?.shadowRoot?.querySelector(`[data-testid="${targetTestId}"]`);
+
+      return target?.getAttribute(attributeName) ?? null;
+    },
+    { attributeName, targetTestId: testId },
+  );
+}
+
+async function getRecorderElementHeight(page: Page, testId: string): Promise<number | null> {
+  return page.evaluate((targetTestId) => {
+    const root = document.getElementById("recorder-root");
+    const target = root?.shadowRoot?.querySelector(`[data-testid="${targetTestId}"]`);
+
+    if (!(target instanceof HTMLElement)) {
+      return null;
+    }
+
+    return Math.round(target.getBoundingClientRect().height);
+  }, testId);
+}
+
 async function getRecorderFilterInputValue(page: Page): Promise<string | null> {
   return page.evaluate(() => {
     const root = document.getElementById("recorder-root");
@@ -289,5 +318,50 @@ test.describe("react-record E2E", () => {
     await expect
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
       .toContain("Commit 0");
+  });
+
+  test("commit history panel can be collapsed and expanded when results exist", async ({ page }) => {
+    await startRecording(page);
+
+    await page.locator('[data-testid="element-alpha-button"]').click();
+    await expect
+      .poll(() => getRecorderSnapshot(page).then((snapshot) => snapshot.commitCount))
+      .toBe(1);
+
+    await stopRecording(page);
+
+    await expect
+      .poll(() => getRecorderAttribute(page, "commit-history-toggle", "aria-expanded"))
+      .toBe("true");
+    await expect
+      .poll(() => getRecorderTextContent(page, "component-filter-result"))
+      .toContain("Component ElementStatePanel");
+
+    await clickRecorderElementByTestId(page, "commit-history-toggle");
+
+    await expect
+      .poll(() => getRecorderAttribute(page, "commit-history-toggle", "aria-expanded"))
+      .toBe("false");
+    await expect
+      .poll(() => getRecorderAttribute(page, "commit-history-panel-content", "aria-hidden"))
+      .toBe("true");
+    await expect
+      .poll(() => getRecorderElementHeight(page, "commit-history-panel-content"))
+      .toBe(0);
+
+    await clickRecorderElementByTestId(page, "commit-history-toggle");
+
+    await expect
+      .poll(() => getRecorderAttribute(page, "commit-history-toggle", "aria-expanded"))
+      .toBe("true");
+    await expect
+      .poll(() => getRecorderAttribute(page, "commit-history-panel-content", "aria-hidden"))
+      .toBe("false");
+    await expect
+      .poll(() => getRecorderElementHeight(page, "commit-history-panel-content"))
+      .toBeGreaterThan(0);
+    await expect
+      .poll(() => getRecorderTextContent(page, "component-filter-result"))
+      .toContain("Component ElementStatePanel");
   });
 });
