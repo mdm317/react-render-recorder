@@ -1,9 +1,5 @@
 import { useState } from "react";
 
-type AppProps = {
-  renderTick?: number;
-};
-
 function useCounterState(initialCount: number) {
   const [count, setCount] = useState(initialCount);
 
@@ -15,7 +11,7 @@ function useCounterState(initialCount: number) {
   };
 }
 
-export function App(_props: AppProps) {
+export function App() {
   const [view] = useState("overview");
   const { count, increment } = useCounterState(0);
 

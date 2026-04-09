@@ -60,8 +60,8 @@ function CommitHistoryHeader({ commitCount, componentCount }: CommitHistoryHeade
         </p>
       </div>
       <div className="text-right text-[0.7rem] text-white/45">
-        <p>{commitCount} commit(s)</p>
-        <p>{componentCount} component(s)</p>
+        <p data-testid="commit-count">{commitCount} commit(s)</p>
+        <p data-testid="component-count">{componentCount} component(s)</p>
       </div>
     </div>
   );

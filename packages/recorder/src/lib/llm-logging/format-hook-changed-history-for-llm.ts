@@ -59,7 +59,6 @@ export function formatHookChangedHistoryForLLM(hookChangedHistory: HookChangedHi
   ];
 
   if (componentNames.length === 0) {
-    lines.push("- No hook changes were recorded.");
     return lines.join("\n");
   }
 

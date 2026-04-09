@@ -114,7 +114,6 @@ export function formatCommitHookChangedHistoryForLLM(
   ];
 
   if (commitIndices.length === 0) {
-    lines.push("- No hook changes were recorded.");
     return lines.join("\n");
   }
 
