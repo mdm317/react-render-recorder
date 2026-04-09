@@ -1,8 +1,12 @@
 /** @jsxImportSource preact */
+import type { ComponentChildren } from "preact";
+import { useState } from "preact/hooks";
+
 import { useCommitHistoryFilter } from "../../../hooks/use-commit-history-filter";
 import { CommitHistoryContent } from "./component/commit-history-content";
 
 export function CommitHistoryPanel() {
+  const [isOpen, setIsOpen] = useState(true);
   const {
     availableComponentNames,
     commitCount,
@@ -22,23 +26,49 @@ export function CommitHistoryPanel() {
       <CommitHistoryHeader
         commitCount={commitCount}
         componentCount={availableComponentNames.length}
-      />
-
-      <CommitHistoryFilterInput
-        helperText={
-          availableComponentNames.length > 0
-            ? `Available: ${availableComponentNames.join(", ")}`
-            : null
+        headerAction={
+          <button
+            data-testid="commit-history-toggle"
+            type="button"
+            aria-controls="commit-history-panel-content"
+            aria-expanded={isOpen}
+            onClick={() => {
+              setIsOpen((prev) => !prev);
+            }}
+            className="mt-3 inline-flex min-w-20 items-center justify-center rounded-full border border-white/12 bg-white/6 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-white/72 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+          >
+            {isOpen ? "닫기" : "열기"}
+          </button>
         }
-        setValue={setComponentNameFilter}
-        value={componentNameFilter}
       />
 
-      <CommitHistoryContent
-        commitHistoryText={commitHistoryText}
-        hookHistoryText={hookHistoryText}
-        showNoMatchMessage={showNoMatchMessage}
-      />
+      <div
+        id="commit-history-panel-content"
+        data-testid="commit-history-panel-content"
+        aria-hidden={!isOpen}
+        className={[
+          "grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-out",
+          isOpen ? "mt-1 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        ].join(" ")}
+      >
+        <div className="min-h-0">
+          <CommitHistoryFilterInput
+            helperText={
+              availableComponentNames.length > 0
+                ? `Available: ${availableComponentNames.join(", ")}`
+                : null
+            }
+            setValue={setComponentNameFilter}
+            value={componentNameFilter}
+          />
+
+          <CommitHistoryContent
+            commitHistoryText={commitHistoryText}
+            hookHistoryText={hookHistoryText}
+            showNoMatchMessage={showNoMatchMessage}
+          />
+        </div>
+      </div>
     </section>
   );
 }
@@ -46,9 +76,14 @@ export function CommitHistoryPanel() {
 type CommitHistoryHeaderProps = {
   commitCount: number;
   componentCount: number;
+  headerAction: ComponentChildren;
 };
 
-function CommitHistoryHeader({ commitCount, componentCount }: CommitHistoryHeaderProps) {
+function CommitHistoryHeader({
+  commitCount,
+  componentCount,
+  headerAction,
+}: CommitHistoryHeaderProps) {
   return (
     <div className="mb-3 flex items-start justify-between gap-4">
       <div>
@@ -62,6 +97,7 @@ function CommitHistoryHeader({ commitCount, componentCount }: CommitHistoryHeade
       <div className="text-right text-[0.7rem] text-white/45">
         <p>{commitCount} commit(s)</p>
         <p>{componentCount} component(s)</p>
+        {headerAction}
       </div>
     </div>
   );
