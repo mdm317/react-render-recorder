@@ -3,7 +3,7 @@ import { renderRecorderUI } from "./render-recorder-ui";
 import { createRecorderStore } from "../store";
 import { onCommitFiber } from "@react-record/devtools-api";
 
-export function installReactRecordCommitLogger(): () => void {
+export function installReactRenderRecorderCommitLogger(): () => void {
   const recorderStore = createRecorderStore();
 
   renderRecorderUI();

@@ -1,12 +1,12 @@
 {
-  "name": "react-record",
+  "name": "react-render-recorder",
   "version": "0.0.1",
   "files": [
     "dist"
   ],
   "type": "module",
   "sideEffects": false,
-  "main": "./dist/react-record.js",
+  "main": "./dist/react-render-recorder.js",
   "scripts": {
     "dev": "vite",
     "dev:lib": "vite build --watch",

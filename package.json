@@ -1,19 +1,19 @@
 {
-  "name": "react-record-workspace",
+  "name": "react-render-recorder-workspace",
   "private": true,
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "dev": "pnpm --filter react-record dev",
-    "build": "pnpm --filter react-record build",
-    "build:react-record": "pnpm --filter react-record build",
+    "dev": "pnpm --filter react-render-recorder dev",
+    "build": "pnpm --filter react-render-recorder build",
+    "build:react-render-recorder": "pnpm --filter react-render-recorder build",
     "format": "oxfmt --config .oxfmtrc.json .",
     "format:check": "oxfmt --config .oxfmtrc.json --check .",
     "lint": "oxlint --config .oxlintrc.json --deny-warnings packages",
     "lint:fix": "oxlint --config .oxlintrc.json --deny-warnings --fix packages",
-    "verify:recorder": "pnpm --filter react-record build && pnpm --filter react-record test:unit",
-    "test:e2e": "pnpm --filter react-record test:e2e"
+    "verify:recorder": "pnpm --filter react-render-recorder build && pnpm --filter react-render-recorder test:unit",
+    "test:e2e": "pnpm --filter react-render-recorder test:e2e"
   },
   "devDependencies": {
     "oxfmt": "^0.43.0",

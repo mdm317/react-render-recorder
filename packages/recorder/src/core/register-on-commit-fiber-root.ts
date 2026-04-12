@@ -24,14 +24,14 @@ function ensureRendererRegistry(hook: ReturnType<typeof installHook>) {
   }
 
   const patchedHook = hook as ReturnType<typeof installHook> & {
-    __reactRecordInjectPatched__?: boolean;
+    __reactRenderRecorderInjectPatched__?: boolean;
   };
 
   if (!(hook.renderers instanceof Map)) {
     hook.renderers = new Map();
   }
 
-  if (patchedHook.__reactRecordInjectPatched__ || typeof hook.inject !== "function") {
+  if (patchedHook.__reactRenderRecorderInjectPatched__ || typeof hook.inject !== "function") {
     return hook;
   }
 
@@ -41,7 +41,7 @@ function ensureRendererRegistry(hook: ReturnType<typeof installHook>) {
     hook.renderers.set(rendererID, renderer);
     return rendererID;
   };
-  patchedHook.__reactRecordInjectPatched__ = true;
+  patchedHook.__reactRenderRecorderInjectPatched__ = true;
 
   return hook;
 }

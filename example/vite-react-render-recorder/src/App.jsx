@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 const initialEvents = [
-  "Recorder bundle loaded from /packages/recorder/dist/react-record.js",
+  "Recorder bundle loaded from /packages/recorder/dist/react-render-recorder.js",
   "Click the buttons to generate real React commits",
 ];
 

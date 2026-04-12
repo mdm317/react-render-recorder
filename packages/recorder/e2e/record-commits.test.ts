@@ -120,7 +120,7 @@ async function expectRecorderCommitCount(page: Page, count: number) {
   await expect.poll(() => getRecorderTextContent(page, "commit-count")).toBe(`${count} commit(s)`);
 }
 
-test.describe("react-record E2E", () => {
+test.describe("react-render-recorder E2E", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect.poll(() => getRecorderButtonLabel(page)).toBe("Start recording");
