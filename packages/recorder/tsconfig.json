@@ -1,9 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "paths": {
-      "devtools-api": ["../devtools-api/src/index.ts"]
-    },
     "types": ["vite/client"]
   },
   "include": ["src", "dev-web"]

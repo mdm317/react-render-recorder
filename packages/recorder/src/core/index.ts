@@ -1,7 +1,7 @@
 import { registerOnCommitFiberRoot } from "./register-on-commit-fiber-root";
 import { renderRecorderUI } from "./render-recorder-ui";
 import { createRecorderStore } from "../store";
-import { onCommitFiber } from "devtools-api";
+import { onCommitFiber } from "@react-record/devtools-api";
 
 export function installReactRecordCommitLogger(): () => void {
   const recorderStore = createRecorderStore();

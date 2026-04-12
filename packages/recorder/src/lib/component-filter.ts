@@ -1,4 +1,4 @@
-import type { CommittedFiberChange } from "devtools-api";
+import type { CommittedFiberChange } from "@react-record/devtools-api";
 
 import type { HookChangedHistory } from "./build-hook-changed-history";
 

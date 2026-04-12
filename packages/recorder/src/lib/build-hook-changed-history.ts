@@ -1,4 +1,4 @@
-import type { CommittedFiberChange, Fiber } from "devtools-api";
+import type { CommittedFiberChange, Fiber } from "@react-record/devtools-api";
 
 import { sanitizeForJson } from "../utils/safe-json";
 

@@ -1,4 +1,4 @@
-import { RendererID, type FiberRoot } from "devtools-api";
+import type { FiberRoot, RendererID } from "@react-record/devtools-api";
 
 export type CommitData = {
   rendererID: RendererID;

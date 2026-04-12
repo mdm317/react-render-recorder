@@ -1,4 +1,5 @@
-import { type FiberRoot, installHook, type ReactRenderer, type RendererID } from "devtools-api";
+import { installHook } from "@react-record/devtools-api";
+import type { FiberRoot, ReactRenderer, RendererID } from "@react-record/devtools-api";
 
 export type CommitFiberRootCallback = (
   hook: ReturnType<typeof installHook>,
@@ -14,7 +15,7 @@ function getOrInstallHook(target: object) {
     }
   ).__REACT_DEVTOOLS_GLOBAL_HOOK__;
 
-  return ensureRendererRegistry(existingHook ?? installHook(target));
+  return ensureRendererRegistry(existingHook ?? installHook(target, []));
 }
 
 function ensureRendererRegistry(hook: ReturnType<typeof installHook>) {

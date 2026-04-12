@@ -1,4 +1,4 @@
-import type { CommittedFiberChange } from "devtools-api";
+import type { CommittedFiberChange } from "@react-record/devtools-api";
 
 import { CommitData } from "../core/types";
 import {

@@ -6,14 +6,13 @@
   ],
   "scripts": {
     "dev": "pnpm --filter react-record dev",
-    "build": "pnpm --filter devtools-api build && pnpm --filter react-record build",
-    "build:devtools-api": "pnpm --filter devtools-api build",
+    "build": "pnpm --filter react-record build",
     "build:react-record": "pnpm --filter react-record build",
     "format": "oxfmt --config .oxfmtrc.json .",
     "format:check": "oxfmt --config .oxfmtrc.json --check .",
     "lint": "oxlint --config .oxlintrc.json --deny-warnings packages",
     "lint:fix": "oxlint --config .oxlintrc.json --deny-warnings --fix packages",
-    "verify:recorder": "pnpm --filter devtools-api build && pnpm --filter react-record build && pnpm --filter react-record test:unit",
+    "verify:recorder": "pnpm --filter react-record build && pnpm --filter react-record test:unit",
     "test:e2e": "pnpm --filter react-record test:e2e"
   },
   "devDependencies": {

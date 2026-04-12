@@ -15,7 +15,7 @@
     "test:e2e": "playwright test --config e2e/playwright.config.ts"
   },
   "dependencies": {
-    "devtools-api": "workspace:*",
+    "@react-record/devtools-api": "https://github.com/mdm317/react/releases/download/react-devtools-custom-v0.0.0/react-devtools-custom-0.0.0.tgz",
     "preact": "^10.29.1"
   },
   "devDependencies": {
