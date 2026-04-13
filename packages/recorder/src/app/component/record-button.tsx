@@ -57,7 +57,7 @@ export function RecordButton() {
             "relative transition-all duration-300",
             isRecording
               ? "size-3 rounded-[2px] bg-rose-500 shadow-[0_0_10px_rgba(225,29,72,0.7),0_0_20px_rgba(225,29,72,0.3)] animate-[rec-pulse_1.5s_ease-in-out_infinite]"
-              : "size-2.5 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 shadow-[0_0_6px_rgba(225,29,72,0.3)]",
+              : "size-2.5 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(225,29,72,0.3)]",
           ].join(" ")}
         />
       </span>
