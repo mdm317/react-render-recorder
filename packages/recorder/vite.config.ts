@@ -8,6 +8,9 @@ const reactRenderRecorderEntry = fileURLToPath(new URL("./src/index.ts", import.
 
 export default defineConfig({
   plugins: [tailwindcss(), react()],
+  define: {
+    "process.env.NODE_ENV": JSON.stringify("production"),
+  },
   build: {
     outDir: "dist",
     lib: {
@@ -16,6 +19,7 @@ export default defineConfig({
       fileName: () => "react-render-recorder.js",
       formats: ["iife"],
     },
+    minify: false,
     sourcemap: true,
   },
   test: {
