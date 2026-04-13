@@ -13,7 +13,7 @@ export function RecordButton() {
         setRecording(!isRecording);
       }}
       className={[
-        "recorder-btn group relative inline-flex items-center gap-2.5 rounded-full px-4 py-2.5 text-[0.65rem] font-bold uppercase tracking-[0.2em] transition-all duration-300 ease-out",
+        "recorder-btn group relative inline-flex shrink-0 items-center gap-2.5 rounded-full px-4 py-2.5 text-[0.65rem] font-bold uppercase tracking-[0.2em] transition-all duration-300 ease-out",
         isRecording
           ? "recorder-btn--active border border-rose-400/30 bg-[linear-gradient(180deg,#1a0a0e_0%,#0d0608_100%)] text-white shadow-[0_0_32px_rgba(225,29,72,0.25),0_12px_36px_rgba(0,0,0,0.5)] hover:shadow-[0_0_40px_rgba(225,29,72,0.35),0_16px_44px_rgba(0,0,0,0.55)]"
           : "border border-white/10 bg-[linear-gradient(180deg,#18181b_0%,#09090b_100%)] text-white/70 shadow-[0_8px_24px_rgba(0,0,0,0.3)] hover:-translate-y-0.5 hover:border-white/16 hover:text-white/90 hover:shadow-[0_14px_32px_rgba(0,0,0,0.4)]",

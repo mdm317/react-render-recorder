@@ -8,6 +8,27 @@
     "cv05" on;
 }
 
+.recorder-scrollbar-hidden {
+  scrollbar-width: none;
+}
+
+.recorder-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+.recorder-scrollbar-stable {
+  scrollbar-gutter: stable;
+  scrollbar-width: none;
+}
+
+.recorder-scrollbar-stable::-webkit-scrollbar {
+  display: none;
+}
+
+.recorder-scrollbar-stable > .recorder-scrollbar-overlay {
+  right: 0.875rem;
+}
+
 @keyframes rec-pulse {
   0%,
   100% {
