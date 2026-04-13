@@ -1,7 +1,7 @@
 import { installHook } from "@react-record/devtools-api";
 import type { FiberRoot, ReactRenderer, RendererID } from "@react-record/devtools-api";
 
-export type CommitFiberRootCallback = (
+export type ReactCommitCallback = (
   hook: ReturnType<typeof installHook>,
   rendererID: RendererID,
   root: FiberRoot,
@@ -46,8 +46,8 @@ function ensureRendererRegistry(hook: ReturnType<typeof installHook>) {
   return hook;
 }
 
-export function registerOnCommitFiberRoot(
-  callback: CommitFiberRootCallback,
+export function onReactCommit(
+  callback: ReactCommitCallback,
   target: object = globalThis,
 ): () => void {
   const hook = getOrInstallHook(target);

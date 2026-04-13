@@ -1,3 +1,3 @@
-import { installReactRenderRecorderCommitLogger } from "../src/core";
+import { installReactRenderRecorder } from "../src/core";
 
-installReactRenderRecorderCommitLogger();
+installReactRenderRecorder();
