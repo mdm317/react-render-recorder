@@ -1,4 +1,5 @@
 import { onReactCommit } from "./on-react-commit";
+import { onReactPaint } from "./on-react-paint";
 import { renderRecorderUI } from "./render-recorder-ui";
 import { createRecorderStore } from "../store";
 import { onCommitFiber } from "@react-record/devtools-api";
@@ -15,6 +16,9 @@ export function installReactRenderRecorder(): () => void {
       root,
       priorityLevel,
     });
+  });
+  onReactPaint(() => {
+    recorderStore.recordPaint();
   });
 
   return () => {};

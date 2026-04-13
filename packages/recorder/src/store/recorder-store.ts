@@ -11,12 +11,14 @@ export type RecorderStoreState = {
   fiberChanges: CommittedFiberChange[][];
   hookChangedHistory: HookChangedHistory;
   isRecording: boolean;
+  paintCommitIndices: number[];
 };
 
 export type RecorderStore = {
   subscribe: (listener: () => void) => () => void;
   getSnapshot: () => RecorderStoreState;
   recordCommit: (commit: CommitData & { changes: CommittedFiberChange[] }) => void;
+  recordPaint: () => void;
   setRecording: (value: boolean) => void;
   reset: () => void;
 };
@@ -27,6 +29,7 @@ function createInitialState(): RecorderStoreState {
     fiberChanges: [],
     hookChangedHistory: {},
     isRecording: false,
+    paintCommitIndices: [],
   };
 }
 
@@ -80,6 +83,19 @@ function createRecorderStoreInstance(): RecorderStore {
 
       state.commits.push(args);
       state.fiberChanges.push(changes);
+    },
+
+    recordPaint() {
+      if (!state.isRecording || state.commits.length === 0) {
+        return;
+      }
+
+      const paintCommitIndex = state.commits.length - 1;
+      if (state.paintCommitIndices[state.paintCommitIndices.length - 1] === paintCommitIndex) {
+        return;
+      }
+
+      state.paintCommitIndices.push(paintCommitIndex);
     },
 
     setRecording(value) {

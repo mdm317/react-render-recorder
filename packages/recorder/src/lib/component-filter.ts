@@ -60,11 +60,22 @@ export function filterFiberChangesByComponent(
     return fiberChangesByCommit;
   }
 
-  return fiberChangesByCommit
-    .map((commitChanges) =>
-      commitChanges.filter(
-        ({ displayName }) => displayName != null && matchesComponentQuery(displayName, query),
-      ),
-    )
-    .filter((commitChanges) => commitChanges.length > 0);
+  return filterFiberChangesByComponentPreservingCommitIndices(fiberChangesByCommit, query).filter(
+    (commitChanges) => commitChanges.length > 0,
+  );
+}
+
+export function filterFiberChangesByComponentPreservingCommitIndices(
+  fiberChangesByCommit: CommittedFiberChange[][],
+  query: string,
+): CommittedFiberChange[][] {
+  if (normalizeComponentName(query).length === 0) {
+    return fiberChangesByCommit;
+  }
+
+  return fiberChangesByCommit.map((commitChanges) =>
+    commitChanges.filter(
+      ({ displayName }) => displayName != null && matchesComponentQuery(displayName, query),
+    ),
+  );
 }

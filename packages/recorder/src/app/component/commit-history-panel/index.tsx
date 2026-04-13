@@ -2,27 +2,36 @@
 import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
 
-import { useCommitHistoryFilter } from "../../../hooks/use-commit-history-filter";
-import { CommitHistoryContent } from "./component/commit-history-content";
+import { useCommitHistory } from "../../../hooks/use-commit-history";
+import { CommitHistoryFilterInput } from "./component/component-filter-input";
+import { CommitHistoryContent } from "./component/history-view";
+import { PaintCommitHistoryContent } from "./component/paint-view";
+import { PaintViewToggleButton } from "./component/paint-view-toggle";
 
 export function CommitHistoryPanel() {
   const [isOpen, setIsOpen] = useState(true);
+  const [showPaintView, setShowPaintView] = useState(false);
   const {
     availableComponentNames,
     commitCount,
     commitHistoryText,
+    commitSegmentsByPaint,
     componentNameFilter,
     hookHistoryText,
+    matchingComponents,
+    commitHistoryWithPaintText,
     setComponentNameFilter,
-    showNoMatchMessage,
-  } = useCommitHistoryFilter();
+  } = useCommitHistory();
 
   if (commitCount === 0) {
     return null;
   }
 
+  const hasNoMatchingComponent =
+    componentNameFilter.trim().length > 0 && matchingComponents.length === 0;
+
   return (
-    <section className="w-full overflow-hidden rounded-[1.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(24,24,27,0.96)_0%,rgba(9,9,11,0.98)_100%)] p-4 text-white shadow-[0_20px_48px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+    <section className="flex min-h-0 w-full flex-col overflow-hidden rounded-[1.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(24,24,27,0.96)_0%,rgba(9,9,11,0.98)_100%)] p-4 text-white shadow-[0_20px_48px_rgba(0,0,0,0.45)] backdrop-blur-xl">
       <CommitHistoryHeader
         commitCount={commitCount}
         componentCount={availableComponentNames.length}
@@ -42,33 +51,44 @@ export function CommitHistoryPanel() {
         }
       />
 
-      <div
-        id="commit-history-panel-content"
-        data-testid="commit-history-panel-content"
-        aria-hidden={!isOpen}
-        className={[
-          "grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-out",
-          isOpen ? "mt-1 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
-        ].join(" ")}
-      >
-        <div className="min-h-0">
-          <CommitHistoryFilterInput
-            helperText={
-              availableComponentNames.length > 0
-                ? `Available: ${availableComponentNames.join(", ")}`
-                : null
-            }
-            setValue={setComponentNameFilter}
-            value={componentNameFilter}
-          />
+      <PaintViewToggleButton
+        isPressed={showPaintView}
+        onToggle={() => {
+          setShowPaintView((prev) => !prev);
+        }}
+        text={showPaintView ? "Show history" : "Show paint"}
+      />
 
+      <CollapsibleContent
+        className="min-h-0"
+        id="commit-history-panel-content"
+        isOpen={isOpen}
+        openClassName="mt-3"
+      >
+        <CommitHistoryFilterInput
+          helperText={
+            availableComponentNames.length > 0
+              ? `Available: ${availableComponentNames.join(", ")}`
+              : null
+          }
+          setValue={setComponentNameFilter}
+          value={componentNameFilter}
+        />
+
+        {hasNoMatchingComponent ? (
+          <NoMatchMessage />
+        ) : showPaintView ? (
+          <PaintCommitHistoryContent
+            commitSegmentsByPaint={commitSegmentsByPaint}
+            commitHistoryWithPaintText={commitHistoryWithPaintText}
+          />
+        ) : (
           <CommitHistoryContent
             commitHistoryText={commitHistoryText}
             hookHistoryText={hookHistoryText}
-            showNoMatchMessage={showNoMatchMessage}
           />
-        </div>
-      </div>
+        )}
+      </CollapsibleContent>
     </section>
   );
 }
@@ -103,39 +123,50 @@ function CommitHistoryHeader({
   );
 }
 
-type CommitHistoryFilterInputProps = {
-  helperText: string | null;
-  setValue: (value: string) => void;
-  value: string;
+type CollapsibleContentProps = {
+  children: ComponentChildren;
+  className?: string;
+  id?: string;
+  innerClassName?: string;
+  isOpen: boolean;
+  openClassName?: string;
 };
 
-function CommitHistoryFilterInput({ helperText, setValue, value }: CommitHistoryFilterInputProps) {
+function CollapsibleContent({
+  children,
+  className,
+  id,
+  innerClassName,
+  isOpen,
+  openClassName,
+}: CollapsibleContentProps) {
   return (
-    <>
-      <label className="block">
-        <span className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-white/55">
-          Component name
-        </span>
-        <input
-          data-testid="component-filter-input"
-          type="text"
-          value={value}
-          onInput={(event) => {
-            setValue((event.currentTarget as HTMLInputElement).value);
-          }}
-          placeholder="App, Child, ElementStatePanel"
-          className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none transition focus:border-rose-400/50 focus:bg-black/45 focus:ring-2 focus:ring-rose-500/20"
-        />
-      </label>
+    <div
+      id={id}
+      data-testid={id}
+      aria-hidden={!isOpen}
+      className={[
+        "grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-out",
+        className,
+        isOpen
+          ? [openClassName, "grid-rows-[1fr] opacity-100"].filter(Boolean).join(" ")
+          : "grid-rows-[0fr] opacity-0",
+      ].join(" ")}
+    >
+      <div className={["min-h-0 overflow-hidden", innerClassName].filter(Boolean).join(" ")}>
+        {children}
+      </div>
+    </div>
+  );
+}
 
-      {helperText != null ? (
-        <p
-          data-testid="component-filter-available"
-          className="mt-3 text-xs leading-5 text-white/45"
-        >
-          {helperText}
-        </p>
-      ) : null}
-    </>
+function NoMatchMessage() {
+  return (
+    <p
+      data-testid="component-filter-no-match"
+      className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+    >
+      입력한 이름과 일치하는 컴포넌트가 없습니다.
+    </p>
   );
 }

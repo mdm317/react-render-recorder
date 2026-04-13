@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 function useCounterState(initialCount: number) {
   const [count, setCount] = useState(initialCount);
@@ -14,11 +14,24 @@ function useCounterState(initialCount: number) {
 export function App() {
   const [view] = useState("overview");
   const { count, increment } = useCounterState(0);
+  const [c, setc] = useState(0);
+
+  useLayoutEffect(() => {
+    if (c === 1) {
+      setc((v) => v + 1);
+    }
+  }, [c]);
+
+  const handleCount = () => {
+    increment();
+    setc(1);
+  };
 
   return (
     <>
+      <h1>{c}</h1>
       <p data-testid="view-label">View: {view}</p>
-      <button type="button" data-testid="count-button" onClick={increment}>
+      <button type="button" data-testid="count-button" onClick={handleCount}>
         Count: {count}
       </button>
       <br />
