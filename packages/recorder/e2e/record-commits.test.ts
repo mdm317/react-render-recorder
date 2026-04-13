@@ -235,7 +235,7 @@ test.describe("react-render-recorder E2E", () => {
 
     await stopRecording(page);
 
-    await expectRecorderCommitCount(page, appCounterCommitsPerClick);
+    await expectRecorderCommitCount(page, 1);
     await fillRecorderComponentFilter(page, "elementstate");
 
     await expect
@@ -269,7 +269,7 @@ test.describe("react-render-recorder E2E", () => {
 
     await stopRecording(page);
 
-    await expectRecorderCommitCount(page, 1);
+    await expectRecorderCommitCount(page, appCounterCommitsPerClick);
     await expect.poll(() => getRecorderFilterInputValue(page)).toBe("");
     await expect
       .poll(() => getRecorderTextContent(page, "component-filter-result"))
