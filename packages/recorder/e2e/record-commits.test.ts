@@ -120,6 +120,8 @@ async function expectRecorderCommitCount(page: Page, count: number) {
   await expect.poll(() => getRecorderTextContent(page, "commit-count")).toBe(`${count} commit(s)`);
 }
 
+const appCounterCommitsPerClick = 2;
+
 test.describe("react-render-recorder E2E", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
@@ -146,7 +148,7 @@ test.describe("react-render-recorder E2E", () => {
     await expect.poll(() => recorderElementExists(page, "commit-count")).toBe(false);
 
     await stopRecording(page);
-    await expectRecorderCommitCount(page, 2);
+    await expectRecorderCommitCount(page, appCounterCommitsPerClick * 2);
   });
 
   test("commits are ignored while recording is off", async ({ page }) => {
@@ -168,7 +170,7 @@ test.describe("react-render-recorder E2E", () => {
 
     await stopRecording(page);
 
-    await expectRecorderCommitCount(page, 1);
+    await expectRecorderCommitCount(page, appCounterCommitsPerClick);
     await expect
       .poll(() => getRecorderTextContent(page, "component-filter-result"))
       .toContain("Component App");
@@ -185,13 +187,13 @@ test.describe("react-render-recorder E2E", () => {
 
     await stopRecording(page);
 
-    await expectRecorderCommitCount(page, 1);
+    await expectRecorderCommitCount(page, appCounterCommitsPerClick);
     await expect
       .poll(() => getRecorderTextContent(page, "component-filter-result"))
       .toContain("Hook 1 (CounterState(0) > State)");
     await expect
       .poll(() => getRecorderTextContent(page, "component-filter-result"))
-      .toContain("Commit 0: 0 -> 1");
+      .toContain("Commit 1: 0 -> 1");
   });
 
   test("multiple clicks continue to accumulate commits", async ({ page }) => {
@@ -203,7 +205,7 @@ test.describe("react-render-recorder E2E", () => {
     }
 
     await stopRecording(page);
-    await expectRecorderCommitCount(page, 5);
+    await expectRecorderCommitCount(page, appCounterCommitsPerClick * 5);
   });
 
   test("stop recording preserves html element hook changes with concise identifiers", async ({
@@ -233,7 +235,7 @@ test.describe("react-render-recorder E2E", () => {
 
     await stopRecording(page);
 
-    await expectRecorderCommitCount(page, 1);
+    await expectRecorderCommitCount(page, appCounterCommitsPerClick);
     await fillRecorderComponentFilter(page, "elementstate");
 
     await expect
@@ -283,7 +285,7 @@ test.describe("react-render-recorder E2E", () => {
 
     await stopRecording(page);
 
-    await expectRecorderCommitCount(page, 3);
+    await expectRecorderCommitCount(page, appCounterCommitsPerClick + 2);
     await expect
       .poll(() => getRecorderTextContent(page, "component-filter-available"))
       .not.toContain("Total");
@@ -317,7 +319,7 @@ test.describe("react-render-recorder E2E", () => {
     await clickRecorderElementByTestId(page, "copy-commit-history-button");
     await expect
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
-      .toContain("Commit 0");
+      .toContain("Commit 1");
   });
 
   test("commit history panel can be collapsed and expanded when results exist", async ({

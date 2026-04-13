@@ -55,7 +55,7 @@ export function formatHookChangedHistoryForLLM(hookChangedHistory: HookChangedHi
     `- Components with hook changes: ${componentNames.length}`,
     `- Distinct changed hooks: ${totalHookCount}`,
     `- Total hook change events: ${totalChangeCount}`,
-    "- Commit indices are zero-based.",
+    "- Commit numbers are one-based.",
   ];
 
   if (componentNames.length === 0) {
@@ -72,7 +72,7 @@ export function formatHookChangedHistoryForLLM(hookChangedHistory: HookChangedHi
 
     hookIndices.forEach((hookIndex) => {
       const entries = indexedHooks[hookIndex] ?? [];
-      const commitIndices = entries.map(({ commitIndex }) => commitIndex);
+      const commitNumbers = entries.map(({ commitIndex }) => commitIndex + 1);
       const hookLabel =
         entries[0]?.hookPath != null && entries[0].hookPath.length > 0
           ? `${hookIndex} (${entries[0].hookPath.join(" > ")})`
@@ -81,12 +81,14 @@ export function formatHookChangedHistoryForLLM(hookChangedHistory: HookChangedHi
             : String(hookIndex);
 
       lines.push(
-        `- Hook ${hookLabel} changed ${entries.length} time(s) across commit(s): ${commitIndices.join(", ")}`,
+        `- Hook ${hookLabel} changed ${entries.length} time(s) across commit(s): ${commitNumbers.join(", ")}`,
       );
 
       entries.forEach(({ commitIndex, prev, next }) => {
+        const commitNumber = commitIndex + 1;
+
         lines.push(
-          `  - Commit ${commitIndex}: ${formatValueForLLM(prev)} -> ${formatValueForLLM(next)}`,
+          `  - Commit ${commitNumber}: ${formatValueForLLM(prev)} -> ${formatValueForLLM(next)}`,
         );
       });
     });

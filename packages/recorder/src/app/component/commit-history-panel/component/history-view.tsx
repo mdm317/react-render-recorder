@@ -4,40 +4,27 @@ import { CopyHistoryButton } from "../../common/copy-history-button";
 type CommitHistoryContentProps = {
   commitHistoryText: string;
   hookHistoryText: string;
-  showNoMatchMessage: boolean;
 };
 
 export function CommitHistoryContent({
   commitHistoryText,
   hookHistoryText,
-  showNoMatchMessage,
 }: CommitHistoryContentProps) {
   return (
-    <>
-      {showNoMatchMessage ? (
-        <p
-          data-testid="component-filter-no-match"
-          className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
-        >
-          입력한 이름과 일치하는 컴포넌트가 없습니다.
-        </p>
-      ) : (
-        <div data-testid="component-filter-result" className="mt-4 space-y-4">
-          <HistoryText
-            accentClassName="text-rose-200"
-            section="hook"
-            text={hookHistoryText}
-            title="Hook history"
-          />
-          <HistoryText
-            accentClassName="text-sky-200"
-            section="commit"
-            text={commitHistoryText}
-            title="Commit history"
-          />
-        </div>
-      )}
-    </>
+    <div data-testid="component-filter-result" className="mt-4 space-y-4">
+      <HistoryText
+        accentClassName="text-rose-200"
+        section="hook"
+        text={hookHistoryText}
+        title="Hook history"
+      />
+      <HistoryText
+        accentClassName="text-sky-200"
+        section="commit"
+        text={commitHistoryText}
+        title="Commit history"
+      />
+    </div>
   );
 }
 
@@ -62,7 +49,7 @@ function HistoryText({ accentClassName, section, text, title }: HistoryTextProps
         </div>
         <CopyHistoryButton section={section} text={text} />
       </div>
-      <pre className="max-h-56 overflow-auto px-4 py-3 text-xs leading-5 whitespace-pre-wrap text-white/78">
+      <pre className="recorder-scrollbar-hidden max-h-56 overflow-auto px-4 py-3 text-xs leading-5 whitespace-pre-wrap text-white/78">
         {text}
       </pre>
     </div>

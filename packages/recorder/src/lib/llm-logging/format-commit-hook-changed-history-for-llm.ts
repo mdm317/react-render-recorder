@@ -110,7 +110,7 @@ export function formatCommitHookChangedHistoryForLLM(
     `- Commits with hook changes: ${commitIndices.length}`,
     `- Components with hook changes: ${componentNames.length}`,
     `- Total hook change events: ${totalChangeCount}`,
-    "- Commit indices are zero-based.",
+    "- Commit numbers are one-based.",
   ];
 
   if (commitIndices.length === 0) {
@@ -120,10 +120,11 @@ export function formatCommitHookChangedHistoryForLLM(
   commitIndices.forEach((commitIndex) => {
     const entries = commitEntries.get(commitIndex) ?? [];
     const components = new Set(entries.map(({ componentName }) => componentName));
+    const commitNumber = commitIndex + 1;
 
     lines.push(
       "",
-      `Commit ${commitIndex}`,
+      `Commit ${commitNumber}`,
       `- Components with hook changes: ${components.size}`,
       `- Hook change events: ${entries.length}`,
     );

@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { copyToClipboard } from "../../../utils/copy-to-clipboard";
 
 type CopyHistoryButtonProps = {
+  label?: string;
   section: "hook" | "commit";
+  testId?: string;
   text: string;
 };
 
@@ -14,7 +16,12 @@ const BUTTON_STYLES = {
   hook: "rounded-full border border-white/10 bg-white/6 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-white/72 transition hover:border-rose-300/40 hover:text-white",
 } as const;
 
-export function CopyHistoryButton({ section, text }: CopyHistoryButtonProps) {
+export function CopyHistoryButton({
+  label = "Copy",
+  section,
+  testId = `copy-${section}-history-button`,
+  text,
+}: CopyHistoryButtonProps) {
   const [isCopied, setIsCopied] = useState(false);
   const resetCopiedTimeoutRef = useRef<number | null>(null);
 
@@ -47,13 +54,13 @@ export function CopyHistoryButton({ section, text }: CopyHistoryButtonProps) {
   return (
     <button
       type="button"
-      data-testid={`copy-${section}-history-button`}
+      data-testid={testId}
       onClick={() => {
         void handleCopy();
       }}
       className={BUTTON_STYLES[section]}
     >
-      {isCopied ? "Copied" : "Copy"}
+      {isCopied ? "Copied" : label}
     </button>
   );
 }

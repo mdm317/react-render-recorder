@@ -23,7 +23,7 @@ describe("formatHookChangedHistoryForLLM", () => {
     const formatted = formatHookChangedHistoryForLLM(history);
 
     expect(formatted).toContain("Hook 0 (useCounter(0) > State) changed 1 time(s)");
-    expect(formatted).toContain("Commit 0: 0 -> 1");
+    expect(formatted).toContain("Commit 1: 0 -> 1");
   });
 
   it("returns only the summary when there are no hook changes", () => {
