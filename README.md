@@ -11,7 +11,7 @@ Paste the recorder script into your app before the React app runs.
 ```html
 <script
   crossorigin="anonymous"
-  src="https://unpkg.com/react-render-recorder@0.0.2/dist/react-render-recorder.js"
+  src="https://unpkg.com/react-render-recorder@0.0.3/dist/react-render-recorder.js"
 ></script>
 ```
 
@@ -26,7 +26,7 @@ The Vite example loads the recorder script in `index.html`.
 ```html
 <script
   crossorigin="anonymous"
-  src="https://unpkg.com/react-render-recorder@0.0.2/dist/react-render-recorder.js"
+  src="https://unpkg.com/react-render-recorder@0.0.3/dist/react-render-recorder.js"
 ></script>
 ```
 
@@ -43,7 +43,7 @@ export default function RootLayout({ children }) {
       <body>
         <Script
           crossOrigin="anonymous"
-          src="https://unpkg.com/react-render-recorder@0.0.2/dist/react-render-recorder.js"
+          src="https://unpkg.com/react-render-recorder@0.0.3/dist/react-render-recorder.js"
           strategy="beforeInteractive"
         />
         {children}
@@ -67,7 +67,7 @@ export default function Document() {
       <Head>
         <Script
           crossOrigin="anonymous"
-          src="https://unpkg.com/react-render-recorder@0.0.2/dist/react-render-recorder.js"
+          src="https://unpkg.com/react-render-recorder@0.0.3/dist/react-render-recorder.js"
           strategy="beforeInteractive"
         />
       </Head>
