@@ -9,6 +9,10 @@ export function installReactRenderRecorder(): () => void {
 
   renderRecorderUI();
   onReactCommit((hook, rendererID, root, priorityLevel) => {
+    if (!recorderStore.getSnapshot().isRecording) {
+      return;
+    }
+
     const changes = onCommitFiber(root, hook?.renderers.get(rendererID)?.currentDispatcherRef);
     recorderStore.recordCommit({
       changes,
@@ -18,6 +22,10 @@ export function installReactRenderRecorder(): () => void {
     });
   });
   onReactPaint(() => {
+    if (!recorderStore.getSnapshot().isRecording) {
+      return;
+    }
+
     recorderStore.recordPaint();
   });
 
