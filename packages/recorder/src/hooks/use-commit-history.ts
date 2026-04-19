@@ -39,7 +39,7 @@ export function useCommitHistory(): UseCommitHistoryFilterResult {
     }
   }, [state.isRecording]);
 
-  const commitCount = state.commits.length;
+  const commitCount = state.fiberChanges.length;
   const {
     availableComponentNames,
     commitHistoryText,

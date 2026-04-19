@@ -1,6 +1,8 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 import { createSafeJsonReplacer, formatElementSummary, isElementLike } from "../../utils/safe-json";
 
+type HookChange = NonNullable<CommittedFiberChange["hooks"]>[number];
+
 type CommitEntry = {
   componentName: string;
   hookIndex: number;
@@ -48,25 +50,24 @@ function buildCommitEntries(
   fiberChangesByCommit.forEach((commitChanges, commitIndex) => {
     const nextEntries: CommitEntry[] = [];
 
-    commitChanges.forEach(({ changeDescription, displayName }) => {
+    commitChanges.forEach(({ displayName, hooks }) => {
       if (displayName == null) {
         return;
       }
 
-      const changedHooks = changeDescription.hooks;
-      if (changedHooks == null || changedHooks.length === 0) {
+      if (hooks == null || hooks.length === 0) {
         return;
       }
 
-      changedHooks
+      hooks
         .slice()
         .sort((left, right) => left.hookIndex - right.hookIndex)
-        .forEach((hook) => {
+        .forEach((hook: HookChange) => {
           nextEntries.push({
             componentName: displayName,
             hookIndex: hook.hookIndex,
-            hookName: hook.hookName ?? null,
-            hookPath: hook.hookPath ?? null,
+            hookName: "hookName" in hook ? hook.hookName ?? null : null,
+            hookPath: "hookPath" in hook ? hook.hookPath ?? null : null,
             prev: hook.prev,
             next: hook.next,
           });
@@ -90,13 +91,7 @@ export function formatCommitHookChangedHistoryForLLM(
     new Set(
       fiberChangesByCommit.flatMap((commitChanges) =>
         commitChanges
-          .map(({ displayName, changeDescription }) =>
-            displayName != null &&
-            changeDescription.hooks != null &&
-            changeDescription.hooks.length > 0
-              ? displayName
-              : null,
-          )
+          .map(({ displayName, hooks }) => (displayName != null && hooks != null && hooks.length > 0 ? displayName : null))
           .filter((componentName): componentName is string => componentName != null),
       ),
     ),

@@ -54,17 +54,49 @@ describe("installReactRenderRecorder", () => {
     expect(recordCommit).not.toHaveBeenCalled();
   });
 
-  it("collects commits while recording is on", async () => {
+  it("stores recorded commits when recording stops", async () => {
     const { installReactRenderRecorder } = await import("./index");
     const recorderStore = createRecorderStore();
     const recordCommit = vi.spyOn(recorderStore, "recordCommit");
 
     installReactRenderRecorder();
-    recorderStore.setRecording(true);
-    mocks.commitCallbacks[0](createHook(), 1, {} as never);
+    recorderStore.startRecording();
+    mocks.commitCallbacks[0](createHook(), 1, createMountedRoot());
+    expect(recorderStore.getSnapshot().fiberChanges).toEqual([]);
+    recorderStore.endRecording([[{} as never]] as never);
 
     expect(mocks.onCommitFiber).toHaveBeenCalledTimes(1);
     expect(recordCommit).toHaveBeenCalledTimes(1);
+    expect(recorderStore.getSnapshot().fiberChanges).toHaveLength(1);
+    expect(recorderStore.getSnapshot().fiberChanges).toEqual([[{}]]);
+  });
+
+  it("drops commits without changes when recording stops", async () => {
+    const { installReactRenderRecorder } = await import("./index");
+    const recorderStore = createRecorderStore();
+    const recordCommit = vi.spyOn(recorderStore, "recordCommit");
+
+    installReactRenderRecorder();
+    recorderStore.startRecording();
+    mocks.commitCallbacks[0](createHook(), 1, createMountedRoot());
+    recorderStore.endRecording([[]] as never);
+
+    expect(mocks.onCommitFiber).toHaveBeenCalledTimes(1);
+    expect(recordCommit).toHaveBeenCalledTimes(1);
+    expect(recorderStore.getSnapshot().fiberChanges).toEqual([]);
+  });
+
+  it("skips commit collection when the root has no mounted child", async () => {
+    const { installReactRenderRecorder } = await import("./index");
+    const recorderStore = createRecorderStore();
+    const recordCommit = vi.spyOn(recorderStore, "recordCommit");
+
+    installReactRenderRecorder();
+    recorderStore.startRecording();
+    mocks.commitCallbacks[0](createHook(), 1, createUnmountedRoot());
+
+    expect(mocks.onCommitFiber).not.toHaveBeenCalled();
+    expect(recordCommit).not.toHaveBeenCalled();
   });
 
   it("skips paint recording while recording is off", async () => {
@@ -84,7 +116,7 @@ describe("installReactRenderRecorder", () => {
     const recordPaint = vi.spyOn(recorderStore, "recordPaint");
 
     installReactRenderRecorder();
-    recorderStore.setRecording(true);
+    recorderStore.startRecording();
     mocks.paintCallbacks[0]();
 
     expect(recordPaint).toHaveBeenCalledTimes(1);
@@ -94,5 +126,21 @@ describe("installReactRenderRecorder", () => {
 function createHook(): ReturnType<typeof installHook> {
   return {
     renderers: new Map([[1, { currentDispatcherRef: {} }]]),
+  } as never;
+}
+
+function createUnmountedRoot() {
+  return {
+    current: {
+      child: null,
+    },
+  } as never;
+}
+
+function createMountedRoot() {
+  return {
+    current: {
+      child: {},
+    },
   } as never;
 }

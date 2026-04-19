@@ -1,13 +1,11 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
-import { CommitData } from "../core/types";
 import {
   buildHookChangedHistory,
   type HookChangedHistory,
 } from "../lib/build-hook-changed-history";
 
 export type RecorderStoreState = {
-  commits: CommitData[];
   fiberChanges: CommittedFiberChange[][];
   hookChangedHistory: HookChangedHistory;
   isRecording: boolean;
@@ -17,15 +15,15 @@ export type RecorderStoreState = {
 export type RecorderStore = {
   subscribe: (listener: () => void) => () => void;
   getSnapshot: () => RecorderStoreState;
-  recordCommit: (commit: CommitData & { changes: CommittedFiberChange[] }) => void;
+  recordCommit: () => void;
   recordPaint: () => void;
-  setRecording: (value: boolean) => void;
+  startRecording: () => void;
+  endRecording: (recordedFiberChanges: CommittedFiberChange[][]) => void;
   reset: () => void;
 };
 
 function createInitialState(): RecorderStoreState {
   return {
-    commits: [],
     fiberChanges: [],
     hookChangedHistory: {},
     isRecording: false,
@@ -36,6 +34,7 @@ function createInitialState(): RecorderStoreState {
 function createRecorderStoreInstance(): RecorderStore {
   const listeners = new Set<() => void>();
   let state: RecorderStoreState = createInitialState();
+  let recordedCommitCount = 0;
 
   function emit() {
     for (const listener of listeners) {
@@ -49,17 +48,43 @@ function createRecorderStoreInstance(): RecorderStore {
   }
 
   function startRecording() {
+    if (state.isRecording) {
+      return;
+    }
+    recordedCommitCount = 0;
     setState({
       ...createInitialState(),
       isRecording: true,
     });
   }
 
-  function endRecording() {
+  function endRecording(recordedFiberChanges: CommittedFiberChange[][]) {
+    if (!state.isRecording) {
+      return;
+    }
+    const fiberChangesWithoutBailout: CommittedFiberChange[][] = [];
+    const nextPaintCommitIndices: number[] = [];
+    const paintCommitIndexSet = new Set(state.paintCommitIndices);
+
+    for (const [commitIndex, commitChanges] of recordedFiberChanges.entries()) {
+      if (commitChanges.length === 0) {
+        continue;
+      }
+
+      if (paintCommitIndexSet.has(commitIndex)) {
+        nextPaintCommitIndices.push(fiberChangesWithoutBailout.length);
+      }
+
+      fiberChangesWithoutBailout.push(commitChanges);
+    }
+
+    recordedCommitCount = 0;
     setState({
       ...state,
+      fiberChanges: fiberChangesWithoutBailout,
+      hookChangedHistory: buildHookChangedHistory(fiberChangesWithoutBailout),
       isRecording: false,
-      hookChangedHistory: buildHookChangedHistory(state.fiberChanges),
+      paintCommitIndices: nextPaintCommitIndices,
     });
   }
 
@@ -76,21 +101,20 @@ function createRecorderStoreInstance(): RecorderStore {
       return state;
     },
 
-    recordCommit({ changes, ...args }) {
+    recordCommit() {
       if (!state.isRecording) {
         return;
       }
 
-      state.commits.push(args);
-      state.fiberChanges.push(changes);
+      recordedCommitCount += 1;
     },
 
     recordPaint() {
-      if (!state.isRecording || state.commits.length === 0) {
+      if (!state.isRecording || recordedCommitCount === 0) {
         return;
       }
 
-      const paintCommitIndex = state.commits.length - 1;
+      const paintCommitIndex = recordedCommitCount - 1;
       if (state.paintCommitIndices[state.paintCommitIndices.length - 1] === paintCommitIndex) {
         return;
       }
@@ -98,19 +122,12 @@ function createRecorderStoreInstance(): RecorderStore {
       state.paintCommitIndices.push(paintCommitIndex);
     },
 
-    setRecording(value) {
-      if (state.isRecording === value) {
-        return;
-      }
+    startRecording,
 
-      if (value) {
-        startRecording();
-      } else {
-        endRecording();
-      }
-    },
+    endRecording,
 
     reset() {
+      recordedCommitCount = 0;
       setState(createInitialState());
     },
   };

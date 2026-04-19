@@ -8,18 +8,17 @@ export function installReactRenderRecorder(): () => void {
   const recorderStore = createRecorderStore();
 
   renderRecorderUI();
-  onReactCommit((hook, rendererID, root, priorityLevel) => {
+  onReactCommit((hook, rendererID, root, _priorityLevel) => {
     if (!recorderStore.getSnapshot().isRecording) {
       return;
     }
 
-    const changes = onCommitFiber(root, hook?.renderers.get(rendererID)?.currentDispatcherRef);
-    recorderStore.recordCommit({
-      changes,
-      rendererID,
-      root,
-      priorityLevel,
-    });
+    if (root.current?.child == null) {
+      return;
+    }
+
+    onCommitFiber(root, hook?.renderers.get(rendererID)?.currentDispatcherRef);
+    recorderStore.recordCommit();
   });
   onReactPaint(() => {
     if (!recorderStore.getSnapshot().isRecording) {

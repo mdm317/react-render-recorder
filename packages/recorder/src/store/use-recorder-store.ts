@@ -3,7 +3,6 @@ import { useSyncExternalStore } from "preact/compat";
 import { createRecorderStore, type RecorderStoreState } from "./recorder-store";
 
 type UseRecorderStoreResult = {
-  setRecording: (value: boolean) => void;
   state: RecorderStoreState;
 };
 
@@ -15,7 +14,6 @@ export function useRecorderStore(): UseRecorderStoreResult {
   );
 
   return {
-    setRecording: recorderStore.setRecording,
     state,
   };
 }

@@ -73,11 +73,16 @@ export function formatHookChangedHistoryForLLM(hookChangedHistory: HookChangedHi
     hookIndices.forEach((hookIndex) => {
       const entries = indexedHooks[hookIndex] ?? [];
       const commitNumbers = entries.map(({ commitIndex }) => commitIndex + 1);
+      const firstEntry = entries[0];
+      const hookPath =
+        firstEntry != null && "hookPath" in firstEntry ? firstEntry.hookPath ?? null : null;
+      const hookName =
+        firstEntry != null && "hookName" in firstEntry ? firstEntry.hookName ?? null : null;
       const hookLabel =
-        entries[0]?.hookPath != null && entries[0].hookPath.length > 0
-          ? `${hookIndex} (${entries[0].hookPath.join(" > ")})`
-          : entries[0]?.hookName != null
-            ? `${hookIndex} (${entries[0].hookName})`
+        hookPath != null && hookPath.length > 0
+          ? `${hookIndex} (${hookPath.join(" > ")})`
+          : hookName != null
+            ? `${hookIndex} (${hookName})`
             : String(hookIndex);
 
       lines.push(

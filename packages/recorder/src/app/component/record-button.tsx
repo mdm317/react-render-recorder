@@ -1,16 +1,68 @@
 /** @jsxImportSource preact */
-import { useRecorderStore } from "../../store";
+import { useCallback, useEffect } from "preact/hooks";
+
+import { useRecordingControl } from "../../hooks/use-recording-control";
 
 export function RecordButton() {
-  const { state, setRecording } = useRecorderStore();
-  const isRecording = state.isRecording;
+  const { isRecording, toggleRecording } = useRecordingControl();
+  const handlePointerToggle = useCallback(
+    (event: PointerEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleRecording();
+    },
+    [toggleRecording],
+  );
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const isCtrlR =
+        event.ctrlKey &&
+        !event.altKey &&
+        !event.metaKey &&
+        !event.shiftKey &&
+        (event.code === "KeyR" || event.key.toLowerCase() === "r");
+
+      if (!isCtrlR) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!event.repeat) {
+        toggleRecording();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown, true);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, [toggleRecording]);
 
   return (
     <button
       type="button"
       aria-label={isRecording ? "Stop recording" : "Start recording"}
-      onClick={() => {
-        setRecording(!isRecording);
+      onPointerDown={(event) => {
+        event.stopPropagation();
+      }}
+      onPointerUp={handlePointerToggle}
+      onMouseDown={(event) => {
+        event.stopPropagation();
+      }}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.detail !== 0) {
+          return;
+        }
+        toggleRecording();
+      }}
+      onKeyDown={(event) => {
+        event.stopPropagation();
       }}
       className={[
         "recorder-btn group relative inline-flex shrink-0 items-center gap-2.5 rounded-full px-4 py-2.5 text-[0.65rem] font-bold uppercase tracking-[0.2em] transition-all duration-300 ease-out",
@@ -43,18 +95,18 @@ export function RecordButton() {
       >
         <span
           className={[
-            "absolute inset-0 rounded-full border transition-all duration-300",
+            "pointer-events-none absolute inset-0 rounded-full border transition-all duration-300",
             isRecording ? "border-rose-500/40 bg-rose-950/50" : "border-white/10 bg-white/4",
           ].join(" ")}
         />
 
         {isRecording && (
-          <span className="absolute inset-[-3px] rounded-full border border-rose-500/20 animate-[pulse-ring_2s_cubic-bezier(0.4,0,0.6,1)_infinite]" />
+          <span className="pointer-events-none absolute inset-[-3px] rounded-full border border-rose-500/20 animate-[pulse-ring_2s_cubic-bezier(0.4,0,0.6,1)_infinite]" />
         )}
 
         <span
           className={[
-            "relative transition-all duration-300",
+            "pointer-events-none relative transition-all duration-300",
             isRecording
               ? "size-3 rounded-[2px] bg-rose-500 shadow-[0_0_10px_rgba(225,29,72,0.7),0_0_20px_rgba(225,29,72,0.3)] animate-[rec-pulse_1.5s_ease-in-out_infinite]"
               : "size-2.5 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(225,29,72,0.3)]",
@@ -72,7 +124,7 @@ export function RecordButton() {
       </span>
 
       {isRecording && (
-        <span className="relative flex size-1.5">
+        <span className="pointer-events-none relative flex size-1.5">
           <span className="absolute inline-flex size-full animate-ping rounded-full bg-rose-400 opacity-60" />
           <span className="relative inline-flex size-1.5 rounded-full bg-rose-500" />
         </span>

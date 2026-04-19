@@ -3,7 +3,7 @@ import type { CommittedFiberChange, Fiber } from "@react-record/devtools-api";
 import { sanitizeForJson } from "../utils/safe-json";
 
 type HookChange = NonNullable<
-  NonNullable<CommittedFiberChange["changeDescription"]["hooks"]>[number]
+  NonNullable<CommittedFiberChange["hooks"]>[number]
 >;
 
 export type HookHistoryEntry = HookChange & {
@@ -14,7 +14,7 @@ export type HookHistoryEntry = HookChange & {
 // value: hook changes indexed by hook index
 export type HookChangedHistory = Record<string, HookIndexed>;
 
-// key: changeDescription.hooks.hookIndex
+// key: hooks.hookIndex
 // value: changed hook data history + commit index
 export type HookIndexed = Record<number, HookHistoryEntry[]>;
 
@@ -65,20 +65,19 @@ export function buildHookChangedHistory(
   }
 
   fiberChanges.forEach((commitChanges, commitIndex) => {
-    commitChanges.forEach(({ changeDescription, displayName, fiber, prevFiber }) => {
+    commitChanges.forEach(({ displayName, fiber, hooks, prevFiber }) => {
       if (displayName == null) {
         return;
       }
 
-      const changedHooks = changeDescription.hooks;
-      if (changedHooks == null || changedHooks.length === 0) {
+      if (hooks == null || hooks.length === 0) {
         return;
       }
 
       const instanceId = getOrCreateInstanceId(displayName, fiber, prevFiber);
       const indexedHooks = historyByInstance.get(instanceId) ?? {};
 
-      changedHooks.forEach((hook) => {
+      hooks.forEach((hook) => {
         const hookHistory = indexedHooks[hook.hookIndex] ?? [];
 
         hookHistory.push({

@@ -8,17 +8,15 @@ describe("formatCommitHookChangedHistoryForLLM", () => {
       [],
       [
         {
-          changeDescription: {
-            hooks: [
-              {
-                hookIndex: 0,
-                hookName: "State",
-                next: 1,
-                prev: 0,
-              },
-            ],
-          },
           displayName: "App",
+          hooks: [
+            {
+              hookIndex: 0,
+              hookName: "State",
+              next: 1,
+              prev: 0,
+            },
+          ],
         } as never,
       ],
     ]);
