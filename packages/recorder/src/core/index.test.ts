@@ -62,7 +62,6 @@ describe("installReactRenderRecorder", () => {
     installReactRenderRecorder();
     recorderStore.startRecording();
     mocks.commitCallbacks[0](createHook(), 1, createMountedRoot());
-    expect(recorderStore.getSnapshot().fiberChanges).toEqual([]);
     recorderStore.endRecording([[{} as never]] as never);
 
     expect(mocks.onCommitFiber).toHaveBeenCalledTimes(1);

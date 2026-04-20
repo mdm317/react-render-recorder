@@ -190,7 +190,7 @@ test.describe("react-render-recorder E2E", () => {
     await expectRecorderCommitCount(page, appCounterCommitsPerClick);
     await expect
       .poll(() => getRecorderTextContent(page, "component-filter-result"))
-      .toContain("Hook 1 (CounterState(0) > State)");
+      .toContain("Hook 1 (CounterState > State)");
     await expect
       .poll(() => getRecorderTextContent(page, "component-filter-result"))
       .toContain("Commit 1: 0 -> 1");
