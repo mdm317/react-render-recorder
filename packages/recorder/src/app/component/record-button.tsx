@@ -1,5 +1,5 @@
 /** @jsxImportSource preact */
-import { useCallback, useEffect } from "preact/hooks";
+import { useCallback } from "preact/hooks";
 
 import { useRecordingControl } from "../../hooks/use-recording-control";
 
@@ -13,34 +13,6 @@ export function RecordButton() {
     },
     [toggleRecording],
   );
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      const isCtrlR =
-        event.ctrlKey &&
-        !event.altKey &&
-        !event.metaKey &&
-        !event.shiftKey &&
-        (event.code === "KeyR" || event.key.toLowerCase() === "r");
-
-      if (!isCtrlR) {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      if (!event.repeat) {
-        toggleRecording();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown, true);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown, true);
-    };
-  }, [toggleRecording]);
 
   return (
     <button
