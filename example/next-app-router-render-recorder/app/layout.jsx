@@ -13,7 +13,7 @@ export default function RootLayout({ children }) {
       <body>
         <Script
           crossOrigin="anonymous"
-          src="https://unpkg.com/react-render-recorder@0.0.3/dist/react-render-recorder.js"
+          src="https://unpkg.com/react-render-recorder@0.0.4/dist/react-render-recorder.js"
           strategy="beforeInteractive"
         />
         {children}
