@@ -6,23 +6,22 @@ export async function clickRecorderButton(
 ) {
   await page.evaluate((buttonName) => {
     const root = document.getElementById("recorder-root");
-    const buttons = root?.shadowRoot?.querySelectorAll("button") ?? [];
+    const button = root?.shadowRoot?.querySelector(`button[aria-label="${buttonName}"]`);
 
-    for (const button of buttons) {
-      if (button.getAttribute("aria-label") === buttonName) {
-        button.click();
-        return;
-      }
+    if (!(button instanceof HTMLElement)) {
+      throw new Error(`Recorder button "${buttonName}" not found in shadow DOM`);
     }
 
-    throw new Error(`Recorder button "${buttonName}" not found in shadow DOM`);
+    button.click();
   }, name);
 }
 
 export async function getRecorderButtonLabel(page: Page): Promise<string | null> {
   return page.evaluate(() => {
     const root = document.getElementById("recorder-root");
-    const button = root?.shadowRoot?.querySelector("button[aria-label]");
+    const button = root?.shadowRoot?.querySelector(
+      'button[aria-label="Start recording"], button[aria-label="Stop recording"]',
+    );
 
     return button?.getAttribute("aria-label") ?? null;
   });
