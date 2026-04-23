@@ -56,7 +56,6 @@ export function CommitHistoryPanel() {
         onToggle={() => {
           setShowPaintView((prev) => !prev);
         }}
-        text={showPaintView ? "Show history" : "Show paint"}
       />
 
       <CollapsibleContent
