@@ -59,8 +59,9 @@ export function CommitHistoryPanel() {
       />
 
       <CollapsibleContent
-        className="min-h-0"
+        className="min-h-0 flex-1"
         id="commit-history-panel-content"
+        innerClassName="recorder-scrollbar-hidden overflow-y-auto"
         isOpen={isOpen}
         openClassName="mt-3"
       >
@@ -152,7 +153,7 @@ function CollapsibleContent({
           : "grid-rows-[0fr] opacity-0",
       ].join(" ")}
     >
-      <div className={["min-h-0 overflow-hidden", innerClassName].filter(Boolean).join(" ")}>
+      <div className={["min-h-0", innerClassName ?? "overflow-hidden"].filter(Boolean).join(" ")}>
         {children}
       </div>
     </div>
