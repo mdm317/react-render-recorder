@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  clickTimes,
   expectRecorderCommitCount,
   recordButton,
   recorderByTestId,
@@ -20,8 +21,7 @@ test.describe("rendering scenarios", () => {
   test.describe("Single render · useState", () => {
     test("records 1 commit per click", async ({ page }) => {
       await recordCycle(page, async () => {
-        await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
-        await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
+        await clickTimes(page, SCENARIO_BUTTON.UPDATE, 2);
       });
       await expectRecorderCommitCount(page, 2);
     });
@@ -80,8 +80,7 @@ test.describe("rendering scenarios", () => {
   test.describe("Custom hook · state update", () => {
     test("records commits triggered through a reusable hook", async ({ page }) => {
       await recordCycle(page, async () => {
-        await page.getByTestId(SCENARIO_BUTTON.CUSTOM_HOOK).click();
-        await page.getByTestId(SCENARIO_BUTTON.CUSTOM_HOOK).click();
+        await clickTimes(page, SCENARIO_BUTTON.CUSTOM_HOOK, 2);
       });
       await expectRecorderCommitCount(page, 2);
     });
@@ -125,8 +124,7 @@ test.describe("rendering scenarios", () => {
 
     test("records clearing the stored element back to null", async ({ page }) => {
       await recordCycle(page, async () => {
-        await page.getByTestId(SCENARIO_BUTTON.ELEMENT_ALPHA).click();
-        await page.getByTestId(SCENARIO_BUTTON.ELEMENT_ALPHA).click();
+        await clickTimes(page, SCENARIO_BUTTON.ELEMENT_ALPHA, 2);
       });
       await expectRecorderCommitCount(page, 2);
       const result = recorderByTestId(page, "component-filter-result");
@@ -158,38 +156,60 @@ test.describe("rendering scenarios", () => {
       await expect(paintToggle).toHaveAttribute("aria-checked", "true");
     });
 
-    test("single-render clicks produce one paint segment per commit", async ({ page }) => {
+    test("single-render 2 clicks produce one paint segment per commit with hook data", async ({
+      page,
+    }) => {
       await recordCycle(page, async () => {
-        await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
-        await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
+        await clickTimes(page, SCENARIO_BUTTON.UPDATE, 2);
       });
 
       await recorderByTestId(page, "paint-view-toggle-paint").click();
 
-      const segmentResult = recorderByTestId(page, "paint-segment-result");
-      await expect(segmentResult).toContainText("Paint 1");
-      await expect(segmentResult).toContainText("Paint 2");
-      await expect(segmentResult).toContainText("Commit range: 1");
-      await expect(segmentResult).toContainText("Commit range: 2");
+      const segments = recorderByTestId(page, "paint-segment-result").locator("article");
+      await expect(segments).toHaveCount(2);
+
+      const paint1 = segments.nth(0);
+      await expect(paint1).toContainText("Paint 1");
+      await expect(paint1).toContainText("Commit range: 1");
+      await expect(paint1).toContainText("Component UpdateButton, Hook 0 (State)");
+      await expect(paint1).toContainText("0 -> 1");
+
+      const paint2 = segments.nth(1);
+      await expect(paint2).toContainText("Paint 2");
+      await expect(paint2).toContainText("Commit range: 2");
+      await expect(paint2).toContainText("1 -> 2");
     });
 
-    test("useLayoutEffect double-render groups both commits into one paint", async ({ page }) => {
+    test("useLayoutEffect 2 clicks produce two paints each grouping a pair of commits with hook data", async ({
+      page,
+    }) => {
       await recordCycle(page, async () => {
-        await page.getByTestId(SCENARIO_BUTTON.DOUBLE_LAYOUT_EFFECT).click();
+        await clickTimes(page, SCENARIO_BUTTON.DOUBLE_LAYOUT_EFFECT, 2);
       });
 
       await recorderByTestId(page, "paint-view-toggle-paint").click();
 
-      const segmentResult = recorderByTestId(page, "paint-segment-result");
-      await expect(segmentResult).toContainText("Paint 1");
-      await expect(segmentResult).toContainText("Commit range: 1-2");
-      await expect(segmentResult).not.toContainText("Paint 2");
+      const segments = recorderByTestId(page, "paint-segment-result").locator("article");
+      await expect(segments).toHaveCount(2);
+
+      const paint1 = segments.nth(0);
+      await expect(paint1).toContainText("Paint 1");
+      await expect(paint1).toContainText("Commit range: 1-2");
+      await expect(paint1).toContainText("Component DoubleUpdateLayoutEffectButton, Hook 0 (State)");
+      await expect(paint1).toContainText("0 -> 1");
+      await expect(paint1).toContainText("1 -> 2");
+      await expect(paint1).toContainText("false -> true");
+
+      const paint2 = segments.nth(1);
+      await expect(paint2).toContainText("Paint 2");
+      await expect(paint2).toContainText("Commit range: 3-4");
+      await expect(paint2).toContainText("2 -> 3");
+      await expect(paint2).toContainText("3 -> 4");
     });
 
-    test("shows empty state when recording produced no paint markers", async ({ page }) => {
+    test("shows empty state when a single click produces no paint marker", async ({ page }) => {
       await recordCycle(page, async () => {
-        await page.getByTestId(SCENARIO_BUTTON.ELEMENT_ALPHA).click();
-        await page.getByTestId(SCENARIO_BUTTON.ELEMENT_ALPHA).click();
+        await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
       });
 
       await recorderByTestId(page, "paint-view-toggle-paint").click();
@@ -198,6 +218,69 @@ test.describe("rendering scenarios", () => {
         "기록된 paint marker가 없습니다.",
       );
       await expect(recorderByTestId(page, "paint-segment-result")).toHaveCount(0);
+    });
+
+    test("single-render 3 clicks produce 3 separate paint segments with hook data", async ({
+      page,
+    }) => {
+      await recordCycle(page, async () => {
+        await clickTimes(page, SCENARIO_BUTTON.UPDATE, 3);
+      });
+      await expectRecorderCommitCount(page, 3);
+
+      await recorderByTestId(page, "paint-view-toggle-paint").click();
+
+      const segments = recorderByTestId(page, "paint-segment-result").locator("article");
+      await expect(segments).toHaveCount(3);
+
+      const paint1 = segments.nth(0);
+      await expect(paint1).toContainText("Paint 1");
+      await expect(paint1).toContainText("Commit range: 1");
+      await expect(paint1).toContainText("Component UpdateButton, Hook 0 (State)");
+      await expect(paint1).toContainText("0 -> 1");
+
+      const paint2 = segments.nth(1);
+      await expect(paint2).toContainText("Paint 2");
+      await expect(paint2).toContainText("Commit range: 2");
+      await expect(paint2).toContainText("1 -> 2");
+
+      const paint3 = segments.nth(2);
+      await expect(paint3).toContainText("Paint 3");
+      await expect(paint3).toContainText("Commit range: 3");
+      await expect(paint3).toContainText("2 -> 3");
+    });
+
+    test("useLayoutEffect 3 clicks produce 3 paints each grouping a pair of commits with hook data", async ({
+      page,
+    }) => {
+      await recordCycle(page, async () => {
+        await clickTimes(page, SCENARIO_BUTTON.DOUBLE_LAYOUT_EFFECT, 3);
+      });
+      await expectRecorderCommitCount(page, 6);
+
+      await recorderByTestId(page, "paint-view-toggle-paint").click();
+
+      const segments = recorderByTestId(page, "paint-segment-result").locator("article");
+      await expect(segments).toHaveCount(3);
+
+      const paint1 = segments.nth(0);
+      await expect(paint1).toContainText("Paint 1");
+      await expect(paint1).toContainText("Commit range: 1-2");
+      await expect(paint1).toContainText("Component DoubleUpdateLayoutEffectButton, Hook 0 (State)");
+      await expect(paint1).toContainText("0 -> 1");
+      await expect(paint1).toContainText("1 -> 2");
+
+      const paint2 = segments.nth(1);
+      await expect(paint2).toContainText("Paint 2");
+      await expect(paint2).toContainText("Commit range: 3-4");
+      await expect(paint2).toContainText("2 -> 3");
+      await expect(paint2).toContainText("3 -> 4");
+
+      const paint3 = segments.nth(2);
+      await expect(paint3).toContainText("Paint 3");
+      await expect(paint3).toContainText("Commit range: 5-6");
+      await expect(paint3).toContainText("4 -> 5");
+      await expect(paint3).toContainText("5 -> 6");
     });
   });
 });

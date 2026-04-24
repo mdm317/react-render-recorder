@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  clickTimes,
   expectRecorderCommitCount,
   fillRecorderComponentFilter,
   recordButton,
@@ -30,8 +31,7 @@ test.describe("react-render-recorder E2E", () => {
     test("commits accumulate while recording and surface only after stop", async ({ page }) => {
       await startRecording(page);
 
-      await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
-      await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
+      await clickTimes(page, SCENARIO_BUTTON.UPDATE, 2);
 
       await expect(recorderByTestId(page, "commit-count")).toHaveCount(0);
 
@@ -40,8 +40,7 @@ test.describe("react-render-recorder E2E", () => {
     });
 
     test("commits are ignored while recording is off", async ({ page }) => {
-      await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
-      await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
+      await clickTimes(page, SCENARIO_BUTTON.UPDATE, 2);
 
       await expect(recorderByTestId(page, "commit-count")).toHaveCount(0);
     });

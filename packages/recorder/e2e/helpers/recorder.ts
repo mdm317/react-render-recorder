@@ -33,6 +33,31 @@ export async function recordCycle(page: Page, actions: () => Promise<void>) {
   await stopRecording(page);
 }
 
+async function waitForMacrotaskFlush(page: Page) {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        const first = new MessageChannel();
+        first.port1.onmessage = () => {
+          const second = new MessageChannel();
+          second.port1.onmessage = () => resolve();
+          second.port2.postMessage(null);
+        };
+        first.port2.postMessage(null);
+      }),
+  );
+}
+
+export async function clickTimes(page: Page, testId: string, times: number) {
+  const button = page.getByTestId(testId);
+  for (let i = 0; i < times; i += 1) {
+    await button.click();
+    if (i < times - 1) {
+      await waitForMacrotaskFlush(page);
+    }
+  }
+}
+
 export async function fillRecorderComponentFilter(page: Page, value: string) {
   await recorderByTestId(page, "component-filter-input").fill(value);
 }
