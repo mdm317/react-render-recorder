@@ -17,9 +17,6 @@ importers:
 
   packages/recorder:
     dependencies:
-      '@react-record/devtools-api':
-        specifier: https://github.com/mdm317/react/releases/download/react-devtools-custom-v0.0.3/react-devtools-custom-0.0.3.tgz
-        version: react-devtools-custom@https://github.com/mdm317/react/releases/download/react-devtools-custom-v0.0.3/react-devtools-custom-0.0.3.tgz
       preact:
         specifier: ^10.29.1
         version: 10.29.1
@@ -27,6 +24,9 @@ importers:
       '@playwright/test':
         specifier: ^1.59.1
         version: 1.59.1
+      '@react-record/devtools-api':
+        specifier: file:../../react/packages/react-devtools-custom
+        version: react-devtools-custom@file:react/packages/react-devtools-custom
       '@tailwindcss/vite':
         specifier: ^4.2.2
         version: 4.2.2(vite@8.0.9(esbuild@0.27.7)(jiti@2.6.1))
@@ -1115,9 +1115,8 @@ packages:
   react-devtools-core@7.0.1:
     resolution: {integrity: sha512-C3yNvRHaizlpiASzy7b9vbnBGLrhvdhl1CbdU6EnZgxPNbai60szdLtl+VL76UNOt5bOoVTOz5rNWZxgGt+Gsw==}
 
-  react-devtools-custom@https://github.com/mdm317/react/releases/download/react-devtools-custom-v0.0.3/react-devtools-custom-0.0.3.tgz:
-    resolution: {integrity: sha512-FmdBWZEUp46hLglLcWbV/BFMtKF77QPCR0hr7VSuYLFknGXzG2QKRtgVuFMY2xUc7ZqGFBia1VUmjOTj0HaLxQ==, tarball: https://github.com/mdm317/react/releases/download/react-devtools-custom-v0.0.3/react-devtools-custom-0.0.3.tgz}
-    version: 0.0.3
+  react-devtools-custom@file:react/packages/react-devtools-custom:
+    resolution: {directory: react/packages/react-devtools-custom, type: directory}
 
   react-dom@19.2.5:
     resolution: {integrity: sha512-J5bAZz+DXMMwW/wV3xzKke59Af6CHY7G4uYLN1OvBcKEsWOs4pQExj86BBKamxl/Ik5bx9whOrvBlSDfWzgSag==}
@@ -2061,7 +2060,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  react-devtools-custom@https://github.com/mdm317/react/releases/download/react-devtools-custom-v0.0.3/react-devtools-custom-0.0.3.tgz:
+  react-devtools-custom@file:react/packages/react-devtools-custom:
     dependencies:
       react-devtools-core: 7.0.1
     transitivePeerDependencies:

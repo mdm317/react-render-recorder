@@ -91,3 +91,20 @@ export default function Document() {
 ## Experimental
 
 - Paint grouping only works when React yields through `MessageChannel`. If React does not use `MessageChannel` for the recorded flow, paint grouping may be missing or inaccurate.
+
+## Development
+
+The recorder depends on `react-devtools-custom`, which lives in the [mdm317/react](https://github.com/mdm317/react) fork and is wired in as a git submodule under `react`. The fork's `devtools-custom` branch already ships a pre-built `packages/react-devtools-custom/dist/`, so no separate build step is needed for the submodule.
+
+```bash
+# Clone with submodule (or init after clone)
+git clone --recurse-submodules <this-repo>
+# or, for an existing clone:
+git submodule update --init --recursive
+
+# Install workspace deps and build the recorder
+pnpm install
+pnpm build
+```
+
+To iterate on the custom devtools, edit sources under `react/packages/react-devtools-custom/src/`, rebuild its `dist/` in the fork, commit the new `dist/` on `devtools-custom`, then bump the submodule pointer here with `git submodule update --remote react` and rerun `pnpm install && pnpm build`.

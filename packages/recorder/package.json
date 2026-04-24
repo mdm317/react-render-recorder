@@ -20,10 +20,10 @@
     "test:e2e": "playwright test --config e2e/playwright.config.ts"
   },
   "dependencies": {
-    "@react-record/devtools-api": "https://github.com/mdm317/react/releases/download/react-devtools-custom-v0.0.3/react-devtools-custom-0.0.3.tgz",
     "preact": "^10.29.1"
   },
   "devDependencies": {
+    "@react-record/devtools-api": "file:../../react/packages/react-devtools-custom",
     "@playwright/test": "^1.59.1",
     "@tailwindcss/vite": "^4.2.2",
     "@types/react": "^19.2.14",
