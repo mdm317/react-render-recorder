@@ -1,4 +1,4 @@
-import type { CommittedFiberChange } from "@react-record/devtools-api";
+import type { CommittedFiberChange, FiberRoot } from "@react-record/devtools-api";
 
 import {
   buildHookChangedHistory,
@@ -6,6 +6,7 @@ import {
 } from "../lib/build-hook-changed-history";
 
 export type RecorderStoreState = {
+  fiberRoot: FiberRoot | null;
   fiberChanges: CommittedFiberChange[][];
   hookChangedHistory: HookChangedHistory;
   isRecording: boolean;
@@ -20,10 +21,12 @@ export type RecorderStore = {
   startRecording: () => void;
   endRecording: (recordedFiberChanges: CommittedFiberChange[][]) => void;
   reset: () => void;
+  setFiberRoot: (fiberRoot: FiberRoot) => void;
 };
 
 function createInitialState(): RecorderStoreState {
   return {
+    fiberRoot: null,
     fiberChanges: [],
     hookChangedHistory: {},
     isRecording: false,
@@ -125,7 +128,18 @@ function createRecorderStoreInstance(): RecorderStore {
     startRecording,
 
     endRecording,
-
+    setFiberRoot(fiberRoot) {
+      if (state.fiberRoot !== fiberRoot) {
+        setState({
+          ...state,
+          fiberRoot,
+        });
+      }
+      // TODO: multi-root not supported. After the first capture, a different root
+      // is currently overwritten silently — if this happens mid-recording, data
+      // collected against the previous root becomes inconsistent. Decide whether
+      // to reject the change explicitly via warn or throw.
+    },
     reset() {
       recordedCommitCount = 0;
       setState(createInitialState());
