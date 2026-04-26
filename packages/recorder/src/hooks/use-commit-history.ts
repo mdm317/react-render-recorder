@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 
 import {
   filterFiberChangesByComponent,
+  filterFiberChangesByComponentPreservingCommitIndices,
   filterHookChangedHistoryByComponent,
   getComponentNamesFromHistory,
   getMatchingComponentNames,
@@ -11,6 +12,13 @@ import {
   buildCommitHistoryWithPaintText,
   type CommitSegmentByPaint,
 } from "../lib/build-commit-segments-by-paint";
+import {
+  buildCommitTimingSummaries,
+  buildPaintTimingSummaries,
+  buildPaintTimingSummaryLines,
+  buildTimingSummaryLines,
+} from "../lib/build-commit-timings";
+import { buildRerenderCountLines } from "../lib/build-rerender-counts";
 import {
   formatCommitHookChangedHistoryForLLM,
   formatHookChangedHistoryForLLM,
@@ -61,16 +69,49 @@ export function useCommitHistory(): UseCommitHistoryFilterResult {
       state.fiberChanges,
       componentNameFilter,
     );
-    const commitSegmentsByPaint = buildCommitSegmentsByPaint({
+    const rawCommitSegmentsByPaint = buildCommitSegmentsByPaint({
       componentNameFilter,
       fiberChanges: state.fiberChanges,
       paintCommitIndices: state.paintCommitIndices,
     });
+    const filteredFiberChangesPreservingIndices =
+      filterFiberChangesByComponentPreservingCommitIndices(
+        state.fiberChanges,
+        componentNameFilter,
+      );
+    const commitTimingSummaries = buildCommitTimingSummaries(filteredFiberChangesPreservingIndices);
+    const paintTimingSummaries = buildPaintTimingSummaries({
+      commitTimingSummaries,
+      paintCommitIndices: state.paintCommitIndices,
+    });
+    const rerenderCountLines = buildRerenderCountLines(filteredFiberChangesPreservingIndices);
+    const timingSummaryLines = buildTimingSummaryLines(commitTimingSummaries);
+    const summaryLinesForFormatters = [...rerenderCountLines, ...timingSummaryLines];
+
+    const paintSummaryByNumber = new Map<number, string[]>();
+    for (const summary of paintTimingSummaries) {
+      paintSummaryByNumber.set(summary.paintNumber, buildPaintTimingSummaryLines(summary));
+    }
+
+    const commitSegmentsByPaint = rawCommitSegmentsByPaint.map((segment) => {
+      const summaryLines = paintSummaryByNumber.get(segment.paintNumber) ?? [];
+      if (summaryLines.length === 0) {
+        return segment;
+      }
+      return {
+        ...segment,
+        text: `${summaryLines.join("\n")}\n\n${segment.text}`,
+      };
+    });
 
     return {
       availableComponentNames,
-      commitHistoryText: formatCommitHookChangedHistoryForLLM(filteredFiberChanges),
-      hookHistoryText: formatHookChangedHistoryForLLM(filteredHookHistory),
+      commitHistoryText: formatCommitHookChangedHistoryForLLM(filteredFiberChanges, {
+        extraSummaryLines: summaryLinesForFormatters,
+      }),
+      hookHistoryText: formatHookChangedHistoryForLLM(filteredHookHistory, {
+        extraSummaryLines: summaryLinesForFormatters,
+      }),
       matchingComponents,
       commitSegmentsByPaint,
       commitHistoryWithPaintText: buildCommitHistoryWithPaintText(commitSegmentsByPaint),
