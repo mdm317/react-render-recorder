@@ -1,15 +1,17 @@
 /** @jsxImportSource preact */
 import { useMemo } from "preact/hooks";
 
-const selfScript =
-  typeof document !== "undefined"
-    ? (document.currentScript as HTMLScriptElement | null)
-    : null;
+function readQuery(): URLSearchParams | null {
+  if (import.meta.env.DEV) {
+    if (typeof window === "undefined") return null;
+    return new URLSearchParams(window.location.search);
+  }
 
-const selfScriptQuery: URLSearchParams | null = selfScript?.src
-  ? new URL(selfScript.src).searchParams
-  : null;
+  if (typeof document === "undefined") return null;
+  const selfScript = document.currentScript as HTMLScriptElement | null;
+  return selfScript?.src ? new URL(selfScript.src).searchParams : null;
+}
 
 export function useQueryParameter(): URLSearchParams | null {
-  return useMemo(() => selfScriptQuery, []);
+  return useMemo(() => readQuery(), []);
 }
