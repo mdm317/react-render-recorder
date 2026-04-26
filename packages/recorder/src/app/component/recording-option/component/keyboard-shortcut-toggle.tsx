@@ -3,14 +3,15 @@ import type { ComponentChildren } from "preact";
 import { useEffect, useState } from "preact/hooks";
 
 import { useRecordingControl } from "../../../../hooks/use-recording-control";
-import { hasUrlOption } from "../../../../lib/url-options";
-
-const CTRL_R_URL_OPTION = "ctrl-r";
 
 type KeycapProps = {
   children: ComponentChildren;
   isEnabled: boolean;
   widthClass: string;
+};
+
+type KeyboardShortcutToggleProps = {
+  defaultEnabled: boolean;
 };
 
 function Keycap({ children, isEnabled, widthClass }: KeycapProps) {
@@ -35,8 +36,8 @@ function Keycap({ children, isEnabled, widthClass }: KeycapProps) {
   );
 }
 
-export function KeyboardShortcutToggle() {
-  const [isEnabled, setIsEnabled] = useState(() => hasUrlOption(CTRL_R_URL_OPTION));
+export function KeyboardShortcutToggle({ defaultEnabled }: KeyboardShortcutToggleProps) {
+  const [isEnabled, setIsEnabled] = useState(defaultEnabled);
   const onToggle = () => {
     setIsEnabled((prev) => !prev);
   };

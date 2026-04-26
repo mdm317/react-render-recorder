@@ -82,11 +82,11 @@ export default function Document() {
 
 ## URL options
 
-Append `?rrr=<option>` to the page URL to enable recorder options by default. Multiple options can be comma-separated: `?rrr=ctrl-r,other-option`.
+Append boolean query parameters to the page URL to enable recorder options by default: `?shortcut=true&other-option=true`.
 
-| Option   | Effect                                                   |
-| -------- | -------------------------------------------------------- |
-| `ctrl-r` | Start with the Ctrl+R recording shortcut already enabled |
+| Option     | Effect                                                   |
+| ---------- | -------------------------------------------------------- |
+| `shortcut` | Start with the Ctrl+R recording shortcut already enabled |
 
 ## Notes
 
