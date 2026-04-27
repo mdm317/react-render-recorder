@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createRecorderStore, type RecorderStore } from "./recorder-store";
 
@@ -37,5 +37,22 @@ describe("recorderStore", () => {
     store.endRecording([[], [{} as never]] as never);
 
     expect(store.getSnapshot().paintCommitIndices).toEqual([0]);
+  });
+
+  it("stores multiple fiber roots without duplicates", () => {
+    const store = createRecorderStore();
+    const listener = vi.fn();
+    const unsubscribe = store.subscribe(listener);
+    const firstRoot = {} as never;
+    const secondRoot = {} as never;
+
+    store.setFiberRoot(firstRoot);
+    store.setFiberRoot(firstRoot);
+    store.setFiberRoot(secondRoot);
+
+    expect(store.getSnapshot().fiberRoots).toEqual([firstRoot, secondRoot]);
+    expect(listener).toHaveBeenCalledTimes(2);
+
+    unsubscribe();
   });
 });

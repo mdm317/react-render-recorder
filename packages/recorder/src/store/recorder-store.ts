@@ -6,7 +6,7 @@ import {
 } from "../lib/build-hook-changed-history";
 
 export type RecorderStoreState = {
-  fiberRoot: FiberRoot | null;
+  fiberRoots: FiberRoot[];
   fiberChanges: CommittedFiberChange[][];
   hookChangedHistory: HookChangedHistory;
   isRecording: boolean;
@@ -26,7 +26,7 @@ export type RecorderStore = {
 
 function createInitialState(): RecorderStoreState {
   return {
-    fiberRoot: null,
+    fiberRoots: [],
     fiberChanges: [],
     hookChangedHistory: {},
     isRecording: false,
@@ -129,16 +129,14 @@ function createRecorderStoreInstance(): RecorderStore {
 
     endRecording,
     setFiberRoot(fiberRoot) {
-      if (state.fiberRoot !== fiberRoot) {
-        setState({
-          ...state,
-          fiberRoot,
-        });
+      if (state.fiberRoots.includes(fiberRoot)) {
+        return;
       }
-      // TODO: multi-root not supported. After the first capture, a different root
-      // is currently overwritten silently — if this happens mid-recording, data
-      // collected against the previous root becomes inconsistent. Decide whether
-      // to reject the change explicitly via warn or throw.
+
+      setState({
+        ...state,
+        fiberRoots: [...state.fiberRoots, fiberRoot],
+      });
     },
     reset() {
       recordedCommitCount = 0;
