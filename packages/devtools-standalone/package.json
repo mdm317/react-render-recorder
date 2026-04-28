@@ -1,0 +1,20 @@
+{
+  "name": "@react-record/devtools-standalone",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Electron-hosted standalone React DevTools with a target-URL launcher.",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "rm -rf dist *.tsbuildinfo && tsc -b tsconfig.main.json tsconfig.renderer.json",
+    "start": "pnpm build && electron .",
+    "dev": "pnpm build && electron ."
+  },
+  "dependencies": {
+    "react-devtools-core": "^7.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "electron": "^33.0.0",
+    "typescript": "^6.0.3"
+  }
+}

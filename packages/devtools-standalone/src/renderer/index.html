@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>React Developer Tools</title>
+    <meta charset="utf8" />
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: sans-serif;
+        background-color: #fff;
+        color: #777d88;
+      }
+
+      .layout {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background-color: #f7f7f7;
+        border-bottom: 1px solid #eee;
+      }
+
+      .topbar label {
+        font-size: 0.85rem;
+        color: #5f6673;
+        white-space: nowrap;
+      }
+
+      .topbar input {
+        flex: 1;
+        font-size: 0.9rem;
+        padding: 0.35rem 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 0.25rem;
+        background-color: #fff;
+        color: #333;
+        min-width: 0;
+      }
+
+      .topbar button {
+        font-size: 0.85rem;
+        padding: 0.35rem 0.75rem;
+        border: 1px solid #aaa;
+        border-radius: 0.25rem;
+        background-color: #fff;
+        color: #333;
+        cursor: pointer;
+      }
+      .topbar button.primary {
+        background-color: #1478fa;
+        border-color: #1478fa;
+        color: #fff;
+      }
+      .topbar button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .topbar .status {
+        font-size: 0.75rem;
+        color: #888;
+        margin-left: auto;
+        white-space: nowrap;
+      }
+
+      #container {
+        flex: 1;
+        position: relative;
+        overflow: auto;
+      }
+
+      .waiting {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-style: italic;
+        color: #999;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <div class="topbar">
+        <label for="url-input">Inspect URL:</label>
+        <input
+          id="url-input"
+          type="text"
+          placeholder="http://localhost:3000"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="open-button" class="primary" type="button">Open</button>
+        <button id="close-button" type="button" disabled>Close target</button>
+        <span id="server-status" class="status">Server: starting…</span>
+      </div>
+      <div id="container">
+        <div id="waiting" class="waiting">Waiting for React to connect…</div>
+      </div>
+    </div>
+    <script type="module" src="../../dist/renderer/index.js"></script>
+  </body>
+</html>
