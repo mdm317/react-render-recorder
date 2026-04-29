@@ -36,6 +36,35 @@ function buildBackendScriptTag(host: string, port: number): string {
   return `<script src="http://${host}:${port}"></script>`;
 }
 
+const WS_TAP_SCRIPT = `<script>
+(() => {
+  console.log('[devtools-tap] installed');
+  const OriginalWS = window.WebSocket;
+  function tap(direction, raw) {
+    if (typeof raw !== 'string') return;
+    let msg;
+    try { msg = JSON.parse(raw); } catch { return; }
+    if (!msg || !msg.event) return;
+    if (msg.event === 'profilingData') {
+      window.__lastProfilingData = msg.payload;
+      console.log('[devtools-tap] profilingData', msg.payload);
+    }
+  }
+  class TappedWS extends OriginalWS {
+    constructor(url, protocols) {
+      super(url, protocols);
+      console.log('[devtools-tap] WebSocket open ->', url);
+      this.addEventListener('message', (ev) => tap('in', ev.data));
+    }
+    send(data) {
+      tap('out', data);
+      return super.send(data);
+    }
+  }
+  window.WebSocket = TappedWS;
+})();
+</script>`;
+
 const RECORDER_BUNDLE_PATH = resolve(
   __dirname,
   '..',
@@ -121,7 +150,9 @@ async function setupDocumentInterception(
 ) {
   const backendTag = buildBackendScriptTag(host, port);
   const recorderTag = buildRecorderScriptTag();
-  const scriptTags = [backendTag, recorderTag].filter(Boolean).join('');
+  const scriptTags = [WS_TAP_SCRIPT, backendTag, recorderTag]
+    .filter(Boolean)
+    .join('');
 
   if (!wc.debugger.isAttached()) {
     wc.debugger.attach('1.3');
