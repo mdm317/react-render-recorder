@@ -5,16 +5,22 @@
   "description": "Electron-hosted standalone React DevTools with a target-URL launcher.",
   "main": "dist/main.js",
   "scripts": {
-    "build": "rm -rf dist *.tsbuildinfo && tsc -b tsconfig.main.json tsconfig.renderer.json",
+    "build": "rm -rf dist *.tsbuildinfo && tsc -b tsconfig.main.json tsconfig.renderer.json && vite build",
     "start": "pnpm build && electron .",
     "dev": "pnpm build && electron ."
   },
   "dependencies": {
-    "react-devtools-core": "file:../../react/packages/react-devtools-core"
+    "react": "^19.2.5",
+    "react-devtools-core": "file:../../react/packages/react-devtools-core",
+    "react-dom": "^19.2.5"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
     "electron": "^33.0.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vite": "^8.0.9"
   }
 }
