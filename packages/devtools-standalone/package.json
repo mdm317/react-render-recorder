@@ -10,7 +10,7 @@
     "dev": "pnpm build && electron ."
   },
   "dependencies": {
-    "react-devtools-core": "^7.0.1"
+    "react-devtools-core": "file:../../react/packages/react-devtools-core"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",

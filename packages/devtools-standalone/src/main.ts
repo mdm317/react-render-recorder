@@ -1,5 +1,7 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as fs from 'fs';
+import * as http from 'http';
+import type { AddressInfo } from 'net';
 import { join, resolve } from 'path';
 
 let devtoolsWindow: BrowserWindow | null = null;
@@ -40,27 +42,63 @@ const RECORDER_BUNDLE_PATH = resolve(
   '..',
   'recorder',
   'dist',
-  'react-render-recorder.js?debug=true&shortcut=true',
+  'react-render-recorder.js',
 );
+const RECORDER_BUNDLE_NAME = 'react-render-recorder.js';
+const RECORDER_QUERY = 'debug=true&shortcut=true';
 
-let cachedRecorderTag: string | null | undefined;
+let recorderServerOrigin: string | null = null;
+let cachedRecorderBundle: Buffer | null | undefined;
 
-function buildRecorderScriptTag(): string | null {
-  if (cachedRecorderTag !== undefined) return cachedRecorderTag;
+function readRecorderBundle(): Buffer | null {
+  if (cachedRecorderBundle !== undefined) return cachedRecorderBundle;
   try {
-    const source = fs.readFileSync(RECORDER_BUNDLE_PATH, 'utf8');
-    // Escape any literal "</script>" inside the bundle so the inline tag
-    // is not closed prematurely by the HTML parser.
-    const safe = source.replace(/<\/script>/gi, '<\\/script>');
-    cachedRecorderTag = `<script>${safe}</script>`;
+    cachedRecorderBundle = fs.readFileSync(RECORDER_BUNDLE_PATH);
   } catch (err) {
     console.error(
       `[devtools-standalone] Failed to read recorder bundle at ${RECORDER_BUNDLE_PATH}:`,
       err,
     );
-    cachedRecorderTag = null;
+    cachedRecorderBundle = null;
   }
-  return cachedRecorderTag;
+  return cachedRecorderBundle;
+}
+
+function startRecorderServer(): Promise<string | null> {
+  return new Promise((resolveOrigin) => {
+    const server = http.createServer((req, res) => {
+      const bundle = readRecorderBundle();
+      if (bundle == null) {
+        res.writeHead(503, { 'Content-Type': 'text/plain' });
+        res.end('recorder bundle not available');
+        return;
+      }
+      res.writeHead(200, {
+        'Content-Type': 'application/javascript; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache',
+      });
+      res.end(bundle);
+    });
+
+    server.on('error', (err) => {
+      console.error('[devtools-standalone] recorder server error:', err);
+      resolveOrigin(null);
+    });
+
+    server.listen(0, '127.0.0.1', () => {
+      const addr = server.address() as AddressInfo;
+      const origin = `http://127.0.0.1:${addr.port}`;
+      recorderServerOrigin = origin;
+      console.log(`[devtools-standalone] recorder bundle served at ${origin}/${RECORDER_BUNDLE_NAME}`);
+      resolveOrigin(origin);
+    });
+  });
+}
+
+function buildRecorderScriptTag(): string | null {
+  if (recorderServerOrigin == null) return null;
+  return `<script src="${recorderServerOrigin}/${RECORDER_BUNDLE_NAME}?${RECORDER_QUERY}"></script>`;
 }
 
 function injectIntoHtml(html: string, scriptTags: string): string {
@@ -215,7 +253,9 @@ app.on('window-all-closed', () => {
   app.quit();
 });
 
-app.on('ready', () => {
+app.on('ready', async () => {
+  await startRecorderServer();
+
   ipcMain.handle(
     'devtools-standalone:open-target',
     async (
