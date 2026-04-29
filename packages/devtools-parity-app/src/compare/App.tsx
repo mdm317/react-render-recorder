@@ -137,7 +137,7 @@ export function App() {
           errorMessage={fatalError}
         />
         <Pane
-          title="devtools-standalone profilingData"
+          title="react-devtools profilingData"
           summary={result ? describeDevtools(result.devtools) : "—"}
           available={Boolean(result?.devtoolsAvailable)}
           data={result?.devtools}

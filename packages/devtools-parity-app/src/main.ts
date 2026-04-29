@@ -86,7 +86,7 @@ function readRecorderBundle(): Buffer | null {
     cachedRecorderBundle = fs.readFileSync(RECORDER_BUNDLE_PATH);
   } catch (err) {
     console.error(
-      `[devtools-standalone] Failed to read recorder bundle at ${RECORDER_BUNDLE_PATH}:`,
+      `[devtools-parity-app] Failed to read recorder bundle at ${RECORDER_BUNDLE_PATH}:`,
       err,
     );
     cachedRecorderBundle = null;
@@ -112,7 +112,7 @@ function startRecorderServer(): Promise<string | null> {
     });
 
     server.on('error', (err) => {
-      console.error('[devtools-standalone] recorder server error:', err);
+      console.error('[devtools-parity-app] recorder server error:', err);
       resolveOrigin(null);
     });
 
@@ -120,7 +120,7 @@ function startRecorderServer(): Promise<string | null> {
       const addr = server.address() as AddressInfo;
       const origin = `http://127.0.0.1:${addr.port}`;
       recorderServerOrigin = origin;
-      console.log(`[devtools-standalone] recorder bundle served at ${origin}/${RECORDER_BUNDLE_NAME}`);
+      console.log(`[devtools-parity-app] recorder bundle served at ${origin}/${RECORDER_BUNDLE_NAME}`);
       resolveOrigin(origin);
     });
   });
@@ -160,7 +160,7 @@ async function setupDocumentInterception(
   }
 
   wc.debugger.on('detach', (_event, reason) => {
-    console.warn('[devtools-standalone] CDP detached:', reason);
+    console.warn('[devtools-parity-app] CDP detached:', reason);
   });
 
   wc.debugger.on('message', async (_event, method, params) => {
@@ -212,7 +212,7 @@ async function setupDocumentInterception(
         body: Buffer.from(modified, 'utf8').toString('base64'),
       });
     } catch (err) {
-      console.error('[devtools-standalone] Fetch handler error:', err);
+      console.error('[devtools-parity-app] Fetch handler error:', err);
       try {
         await wc.debugger.sendCommand('Fetch.continueRequest', { requestId });
       } catch {
@@ -264,7 +264,7 @@ async function openTargetUrl(rawUrl: string, host: string, port: number) {
   try {
     await setupDocumentInterception(wc, host, port);
   } catch (err) {
-    console.error('[devtools-standalone] Failed to set up CDP:', err);
+    console.error('[devtools-parity-app] Failed to set up CDP:', err);
   }
 
   targetWindow.on('closed', () => {
@@ -421,7 +421,7 @@ app.on('ready', async () => {
   await startRecorderServer();
 
   ipcMain.handle(
-    'devtools-standalone:open-target',
+    'devtools-parity-app:open-target',
     async (
       _evt,
       payload: { url: string; host: string; port: number },
@@ -430,15 +430,15 @@ app.on('ready', async () => {
     },
   );
 
-  ipcMain.handle('devtools-standalone:close-target', () => {
+  ipcMain.handle('devtools-parity-app:close-target', () => {
     closeTargetUrl();
   });
 
-  ipcMain.handle('devtools-standalone:open-compare', () => {
+  ipcMain.handle('devtools-parity-app:open-compare', () => {
     createCompareWindow();
   });
 
-  ipcMain.handle('devtools-standalone:fetch-comparison', async () => {
+  ipcMain.handle('devtools-parity-app:fetch-comparison', async () => {
     return fetchComparisonFromTarget();
   });
 

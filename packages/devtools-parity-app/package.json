@@ -1,8 +1,8 @@
 {
-  "name": "@react-record/devtools-standalone",
+  "name": "@react-record/devtools-parity-app",
   "version": "0.0.0",
   "private": true,
-  "description": "Electron-hosted standalone React DevTools with a target-URL launcher.",
+  "description": "Electron app for verifying parity between stock react-devtools and the recorder + devtools-custom pipeline.",
   "main": "dist/main.js",
   "scripts": {
     "build": "rm -rf dist *.tsbuildinfo && tsc -b tsconfig.main.json tsconfig.renderer.json && vite build",

@@ -24,7 +24,7 @@ contextBridge.exposeInMainWorld('api', {
       // eslint-disable-next-line no-alert
       alert(
         (err as Error).toString() +
-          '\n\nDid you install dependencies in packages/devtools-standalone?',
+          '\n\nDid you install dependencies in packages/devtools-parity-app?',
       );
       return null;
     }
@@ -74,7 +74,7 @@ contextBridge.exposeInMainWorld('api', {
   },
 
   openTarget(url: string, host: string, port: number): Promise<void> {
-    return ipcRenderer.invoke('devtools-standalone:open-target', {
+    return ipcRenderer.invoke('devtools-parity-app:open-target', {
       url,
       host,
       port,
@@ -82,14 +82,14 @@ contextBridge.exposeInMainWorld('api', {
   },
 
   closeTarget(): Promise<void> {
-    return ipcRenderer.invoke('devtools-standalone:close-target');
+    return ipcRenderer.invoke('devtools-parity-app:close-target');
   },
 
   openCompare(): Promise<void> {
-    return ipcRenderer.invoke('devtools-standalone:open-compare');
+    return ipcRenderer.invoke('devtools-parity-app:open-compare');
   },
 
   fetchComparison(): Promise<unknown> {
-    return ipcRenderer.invoke('devtools-standalone:fetch-comparison');
+    return ipcRenderer.invoke('devtools-parity-app:fetch-comparison');
   },
 });
