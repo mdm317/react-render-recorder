@@ -6,6 +6,7 @@ import { join, resolve } from 'path';
 
 let devtoolsWindow: BrowserWindow | null = null;
 let targetWindow: BrowserWindow | null = null;
+let compareWindow: BrowserWindow | null = null;
 
 function createDevtoolsWindow() {
   devtoolsWindow = new BrowserWindow({
@@ -280,6 +281,138 @@ function closeTargetUrl() {
   targetWindow = null;
 }
 
+type ComparisonResult = {
+  capturedAt: number;
+  devtools: unknown;
+  devtoolsAvailable: boolean;
+  error: string | null;
+  recorder: unknown;
+  recorderAvailable: boolean;
+  targetUrl: string | null;
+};
+
+const COMPARISON_EVAL_EXPRESSION = `(() => {
+  try {
+    const devtools = (typeof window !== 'undefined' && '__lastProfilingData' in window)
+      ? window.__lastProfilingData ?? null
+      : null;
+    const recorderFn = (typeof window !== 'undefined' && typeof window.__recorderSnapshot === 'function')
+      ? window.__recorderSnapshot
+      : null;
+    const recorder = recorderFn ? recorderFn() : null;
+    return JSON.stringify({
+      devtools,
+      devtoolsAvailable: devtools != null,
+      recorder,
+      recorderAvailable: recorder != null,
+    });
+  } catch (err) {
+    return JSON.stringify({ __error: (err && err.message) || String(err) });
+  }
+})()`;
+
+async function fetchComparisonFromTarget(): Promise<ComparisonResult> {
+  const baseResult: ComparisonResult = {
+    capturedAt: Date.now(),
+    devtools: null,
+    devtoolsAvailable: false,
+    error: null,
+    recorder: null,
+    recorderAvailable: false,
+    targetUrl: null,
+  };
+
+  if (!targetWindow || targetWindow.isDestroyed()) {
+    return { ...baseResult, error: 'No target window open. Click "Open" first.' };
+  }
+
+  const wc = targetWindow.webContents;
+  baseResult.targetUrl = wc.getURL() || null;
+
+  if (!wc.debugger.isAttached()) {
+    return { ...baseResult, error: 'CDP debugger is not attached to the target window.' };
+  }
+
+  try {
+    const evalResult = (await wc.debugger.sendCommand('Runtime.evaluate', {
+      expression: COMPARISON_EVAL_EXPRESSION,
+      returnByValue: true,
+      awaitPromise: false,
+    })) as {
+      result: { type: string; value?: string };
+      exceptionDetails?: { text?: string; exception?: { description?: string } };
+    };
+
+    if (evalResult.exceptionDetails) {
+      const description =
+        evalResult.exceptionDetails.exception?.description ||
+        evalResult.exceptionDetails.text ||
+        'Runtime.evaluate raised an exception';
+      return { ...baseResult, error: description };
+    }
+
+    const raw = evalResult.result?.value;
+    if (typeof raw !== 'string') {
+      return { ...baseResult, error: 'Runtime.evaluate returned no value.' };
+    }
+
+    let parsed: {
+      devtools?: unknown;
+      devtoolsAvailable?: boolean;
+      recorder?: unknown;
+      recorderAvailable?: boolean;
+      __error?: string;
+    };
+    try {
+      parsed = JSON.parse(raw);
+    } catch (err) {
+      return {
+        ...baseResult,
+        error: `Failed to parse Runtime.evaluate payload: ${(err as Error).message}`,
+      };
+    }
+
+    if (parsed.__error) {
+      return { ...baseResult, error: `Target page threw: ${parsed.__error}` };
+    }
+
+    return {
+      ...baseResult,
+      devtools: parsed.devtools ?? null,
+      devtoolsAvailable: Boolean(parsed.devtoolsAvailable),
+      recorder: parsed.recorder ?? null,
+      recorderAvailable: Boolean(parsed.recorderAvailable),
+    };
+  } catch (err) {
+    return { ...baseResult, error: (err as Error).message || String(err) };
+  }
+}
+
+function createCompareWindow() {
+  if (compareWindow && !compareWindow.isDestroyed()) {
+    compareWindow.focus();
+    return;
+  }
+
+  compareWindow = new BrowserWindow({
+    width: 1100,
+    height: 760,
+    title: 'Recorder ↔ DevTools Comparison',
+    webPreferences: {
+      contextIsolation: true,
+      sandbox: false,
+      preload: join(__dirname, 'preload.js'),
+    },
+  });
+
+  const htmlPath = resolve(__dirname, 'compare', 'index.html');
+  compareWindow.loadFile(htmlPath);
+
+  compareWindow.on('closed', () => {
+    compareWindow = null;
+  });
+}
+
 app.on('window-all-closed', () => {
   app.quit();
 });
@@ -299,6 +432,14 @@ app.on('ready', async () => {
 
   ipcMain.handle('devtools-standalone:close-target', () => {
     closeTargetUrl();
+  });
+
+  ipcMain.handle('devtools-standalone:open-compare', () => {
+    createCompareWindow();
+  });
+
+  ipcMain.handle('devtools-standalone:fetch-comparison', async () => {
+    return fetchComparisonFromTarget();
   });
 
   createDevtoolsWindow();
