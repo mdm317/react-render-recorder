@@ -35,6 +35,8 @@ type WindowApi = {
   readEnv: () => EnvOptions;
   openTarget: (url: string, host: string, port: number) => Promise<void>;
   closeTarget: () => Promise<void>;
+  openCompare: () => Promise<void>;
+  fetchComparison: () => Promise<unknown>;
 };
 
 declare global {
@@ -53,6 +55,9 @@ const urlInput = document.getElementById('url-input') as HTMLInputElement;
 const openButton = document.getElementById('open-button') as HTMLButtonElement;
 const closeButton = document.getElementById(
   'close-button',
+) as HTMLButtonElement;
+const compareButton = document.getElementById(
+  'compare-button',
 ) as HTMLButtonElement;
 
 function setStatus(text: string) {
@@ -121,6 +126,11 @@ async function handleClose() {
 
 openButton.addEventListener('click', handleOpen);
 closeButton.addEventListener('click', handleClose);
+compareButton.addEventListener('click', () => {
+  void api.openCompare().catch((err) => {
+    console.error('Failed to open comparison window', err);
+  });
+});
 urlInput.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') {
     event.preventDefault();

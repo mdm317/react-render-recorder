@@ -84,4 +84,12 @@ contextBridge.exposeInMainWorld('api', {
   closeTarget(): Promise<void> {
     return ipcRenderer.invoke('devtools-standalone:close-target');
   },
+
+  openCompare(): Promise<void> {
+    return ipcRenderer.invoke('devtools-standalone:open-compare');
+  },
+
+  fetchComparison(): Promise<unknown> {
+    return ipcRenderer.invoke('devtools-standalone:fetch-comparison');
+  },
 });
