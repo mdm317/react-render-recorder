@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@react-record/devtools-api", () => ({
   onCommitFiber: mocks.onCommitFiber,
+  startRecording: vi.fn(),
+  endRecording: vi.fn(() => []),
 }));
 
 vi.mock("./render-recorder-ui", () => ({
@@ -119,6 +121,58 @@ describe("installReactRenderRecorder", () => {
     mocks.paintCallbacks[0]();
 
     expect(recordPaint).toHaveBeenCalledTimes(1);
+  });
+
+  it("exposes window.__REACT_RENDER_RECORDER__ returning a JSON-safe snapshot shape", async () => {
+    const stubbedWindow = {} as Record<string, unknown>;
+    const globalAny = globalThis as unknown as Record<string, unknown>;
+    const previousWindow = globalAny.window;
+    globalAny.window = stubbedWindow;
+
+    try {
+      const { installReactRenderRecorder } = await import("./index");
+      const recorderStore = createRecorderStore();
+
+      installReactRenderRecorder();
+      const recorderGlobal = stubbedWindow.__REACT_RENDER_RECORDER__ as
+        | { snapshot: () => unknown; start: () => void; end: () => unknown }
+        | undefined;
+      expect(typeof recorderGlobal?.snapshot).toBe("function");
+      expect(typeof recorderGlobal?.start).toBe("function");
+      expect(typeof recorderGlobal?.end).toBe("function");
+      const snapshotFn = recorderGlobal!.snapshot as () => unknown;
+
+      const initialSnapshot = snapshotFn!() as Record<string, unknown>;
+      expect(initialSnapshot).toMatchObject({
+        commitCount: 0,
+        isRecording: false,
+        paintCommitIndices: [],
+      });
+      expect(Array.isArray(initialSnapshot.commits)).toBe(true);
+      expect((initialSnapshot.commits as unknown[]).length).toBe(0);
+
+      recorderStore.startRecording();
+      mocks.commitCallbacks[0](createHook(), 1, createMountedRoot());
+      recorderStore.endRecording([
+        [{ displayName: "Foo", actualDuration: 1.5, selfDuration: 0.5 } as never],
+      ] as never);
+
+      const afterSnapshot = snapshotFn!() as {
+        commitCount: number;
+        commits: Array<{ commitIndex: number; entries: unknown[] }>;
+      };
+      expect(afterSnapshot.commitCount).toBe(1);
+      expect(afterSnapshot.commits).toHaveLength(1);
+      expect(afterSnapshot.commits[0].commitIndex).toBe(0);
+
+      expect(() => JSON.stringify(afterSnapshot)).not.toThrow();
+    } finally {
+      if (previousWindow === undefined) {
+        delete globalAny.window;
+      } else {
+        globalAny.window = previousWindow;
+      }
+    }
   });
 });
 

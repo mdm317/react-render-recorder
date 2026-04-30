@@ -133,7 +133,7 @@ export function App() {
           summary={result ? describeRecorder(result.recorder) : "—"}
           available={Boolean(result?.recorderAvailable)}
           data={result?.recorder}
-          emptyMessage="window.__recorderSnapshot is not exposed yet. Make sure the recorder bundle is loaded and recording has been performed at least once."
+          emptyMessage="window.__REACT_RENDER_RECORDER__ is not exposed yet. Make sure the recorder bundle is loaded and recording has been performed at least once."
           errorMessage={fatalError}
         />
         <Pane

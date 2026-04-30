@@ -296,10 +296,10 @@ const COMPARISON_EVAL_EXPRESSION = `(() => {
     const devtools = (typeof window !== 'undefined' && '__lastProfilingData' in window)
       ? window.__lastProfilingData ?? null
       : null;
-    const recorderFn = (typeof window !== 'undefined' && typeof window.__recorderSnapshot === 'function')
-      ? window.__recorderSnapshot
+    const recorderApi = (typeof window !== 'undefined' && window.__REACT_RENDER_RECORDER__) || null;
+    const recorder = (recorderApi && typeof recorderApi.snapshot === 'function')
+      ? recorderApi.snapshot()
       : null;
-    const recorder = recorderFn ? recorderFn() : null;
     return JSON.stringify({
       devtools,
       devtoolsAvailable: devtools != null,
