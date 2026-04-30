@@ -1,17 +1,26 @@
 import { useCallback, useEffect, useState } from "react";
 
+import type {
+  RecorderSnapshot,
+  SerializableFiberChange,
+} from "../../../recorder/src/services/recording";
+
 type ComparisonResult = {
   capturedAt: number;
-  devtools: unknown;
-  devtoolsAvailable: boolean;
   error: string | null;
-  recorder: unknown;
+  fiberChanges: SerializableFiberChange[][] | null;
+  fiberChangesAvailable: boolean;
+  recorder: RecorderSnapshot | null;
   recorderAvailable: boolean;
   targetUrl: string | null;
 };
 
+type ControlResult = { ok: boolean; error: string | null };
+
 type CompareApi = {
   fetchComparison: () => Promise<ComparisonResult>;
+  recorderStart: () => Promise<ControlResult>;
+  recorderEnd: () => Promise<ControlResult>;
 };
 
 const compareApi = (window as unknown as { api: CompareApi }).api;
@@ -24,31 +33,18 @@ function formatJsonSafe(value: unknown): string {
   }
 }
 
-function describeRecorder(recorder: unknown): string {
-  if (recorder == null || typeof recorder !== "object") return "no recorder snapshot.";
-  const r = recorder as {
-    commitCount?: number;
-    paintCommitIndices?: unknown;
-    isRecording?: boolean;
-  };
-  const commitCount = typeof r.commitCount === "number" ? r.commitCount : 0;
-  const paintCount = Array.isArray(r.paintCommitIndices) ? r.paintCommitIndices.length : 0;
-  const recordingText = r.isRecording ? " (still recording)" : "";
-  return `${commitCount} commits, ${paintCount} paints${recordingText}.`;
+function describeRecorder(recorder: RecorderSnapshot | null): string {
+  if (recorder == null) return "no recorder snapshot.";
+  const recordingText = recorder.isRecording ? " (still recording)" : "";
+  return `${recorder.commitCount} commits, ${recorder.paintCommitIndices.length} paints${recordingText}.`;
 }
 
-function describeDevtools(devtools: unknown): string {
-  if (devtools == null || typeof devtools !== "object") {
-    return "no profilingData captured yet.";
-  }
-  const d = devtools as { dataForRoots?: unknown };
-  if (!Array.isArray(d.dataForRoots)) return "profilingData present but no dataForRoots array.";
-  const roots = d.dataForRoots as Array<{ commitData?: unknown[]; displayName?: string }>;
-  const totalCommits = roots.reduce((sum, root) => {
-    return sum + (Array.isArray(root.commitData) ? root.commitData.length : 0);
-  }, 0);
-  const rootNames = roots.map((root) => root.displayName ?? "Unknown").join(", ");
-  return `${roots.length} root(s) [${rootNames}], ${totalCommits} total commits.`;
+function describeFiberChanges(
+  fiberChanges: SerializableFiberChange[][] | null,
+): string {
+  if (fiberChanges == null) return "no fiberChanges captured yet.";
+  const totalChanges = fiberChanges.reduce((sum, commit) => sum + commit.length, 0);
+  return `${fiberChanges.length} commits, ${totalChanges} total fiber changes.`;
 }
 
 type PaneProps = {
@@ -76,10 +72,23 @@ function Pane({ title, summary, available, data, emptyMessage, errorMessage }: P
   );
 }
 
+type RecordingState = "idle" | "starting" | "recording" | "stopping";
+
+function describeControlError(
+  label: string,
+  result: ControlResult | null,
+): string | null {
+  if (result == null || result.ok) return null;
+  return `${label}: ${result.error ?? "unknown error"}`;
+}
+
 export function App() {
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [ipcError, setIpcError] = useState<string | null>(null);
+  const [recState, setRecState] = useState<RecordingState>("idle");
+  const [recorderControlResult, setRecorderControlResult] =
+    useState<ControlResult | null>(null);
 
   const handleFetch = useCallback(async () => {
     setLoading(true);
@@ -95,15 +104,53 @@ export function App() {
     }
   }, []);
 
+  const handleStart = useCallback(async () => {
+    setRecState("starting");
+    setRecorderControlResult(null);
+    try {
+      const rec = await compareApi.recorderStart();
+      setRecorderControlResult(rec);
+      setRecState("recording");
+    } catch (err) {
+      setIpcError((err as Error).message || String(err));
+      setRecState("idle");
+    }
+  }, []);
+
+  const handleStop = useCallback(async () => {
+    setRecState("stopping");
+    try {
+      const rec = await compareApi.recorderEnd();
+      setRecorderControlResult(rec);
+    } catch (err) {
+      setIpcError((err as Error).message || String(err));
+    } finally {
+      setRecState("idle");
+    }
+    void handleFetch();
+  }, [handleFetch]);
+
   useEffect(() => {
     void handleFetch();
   }, [handleFetch]);
 
+  const controlErrors = describeControlError("recorder", recorderControlResult) ?? "";
+
   let statusText = "Ready.";
-  if (loading) {
+  if (recState === "starting") {
+    statusText = "Starting recording…";
+  } else if (recState === "recording") {
+    statusText = controlErrors
+      ? `Recording (with errors: ${controlErrors})`
+      : "Recording — click Stop to finish.";
+  } else if (recState === "stopping") {
+    statusText = "Stopping recording…";
+  } else if (loading) {
     statusText = "Fetching from target page…";
   } else if (ipcError) {
     statusText = `IPC error: ${ipcError}`;
+  } else if (controlErrors) {
+    statusText = `Last control error: ${controlErrors}`;
   } else if (result?.error) {
     statusText = result.error;
   } else if (result) {
@@ -113,6 +160,8 @@ export function App() {
   }
 
   const fatalError = ipcError ?? result?.error ?? null;
+  const isRecording = recState === "recording";
+  const isBusy = recState === "starting" || recState === "stopping";
 
   return (
     <div className="layout">
@@ -120,7 +169,21 @@ export function App() {
         <button
           type="button"
           className="primary"
-          disabled={loading}
+          disabled={isBusy || recState === "recording"}
+          onClick={() => void handleStart()}
+        >
+          {recState === "starting" ? "Starting…" : "Start Recording"}
+        </button>
+        <button
+          type="button"
+          disabled={!isRecording && recState !== "stopping"}
+          onClick={() => void handleStop()}
+        >
+          {recState === "stopping" ? "Stopping…" : "Stop Recording"}
+        </button>
+        <button
+          type="button"
+          disabled={loading || isBusy}
           onClick={() => void handleFetch()}
         >
           {loading ? "Fetching…" : "Fetch Comparison"}
@@ -137,11 +200,11 @@ export function App() {
           errorMessage={fatalError}
         />
         <Pane
-          title="react-devtools profilingData"
-          summary={result ? describeDevtools(result.devtools) : "—"}
-          available={Boolean(result?.devtoolsAvailable)}
-          data={result?.devtools}
-          emptyMessage="window.__lastProfilingData not present yet. Run a Profiler recording in the standalone DevTools window first."
+          title="recorder fiberChanges (raw)"
+          summary={result ? describeFiberChanges(result.fiberChanges) : "—"}
+          available={Boolean(result?.fiberChangesAvailable)}
+          data={result?.fiberChanges}
+          emptyMessage="window.__REACT_RENDER_RECORDER__.getFiberChanges() returned no data. Make sure the recorder bundle is loaded and recording has run at least once."
           errorMessage={fatalError}
         />
       </div>

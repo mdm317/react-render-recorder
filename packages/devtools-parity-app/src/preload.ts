@@ -92,4 +92,20 @@ contextBridge.exposeInMainWorld('api', {
   fetchComparison(): Promise<unknown> {
     return ipcRenderer.invoke('devtools-parity-app:fetch-comparison');
   },
+
+  recorderStart(): Promise<{ ok: boolean; error: string | null }> {
+    return ipcRenderer.invoke('devtools-parity-app:recorder-start');
+  },
+
+  recorderEnd(): Promise<{ ok: boolean; error: string | null }> {
+    return ipcRenderer.invoke('devtools-parity-app:recorder-end');
+  },
+
+  profilerStart(): Promise<{ ok: boolean; error: string | null }> {
+    return ipcRenderer.invoke('devtools-parity-app:profiler-start');
+  },
+
+  profilerStop(): Promise<{ ok: boolean; error: string | null }> {
+    return ipcRenderer.invoke('devtools-parity-app:profiler-stop');
+  },
 });

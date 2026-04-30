@@ -5,6 +5,7 @@ import { onReactPaint } from "./on-react-paint";
 import { renderRecorderUI } from "./render-recorder-ui";
 import {
   endRecording,
+  getFiberChanges,
   getRecorderSnapshot,
   startRecording,
 } from "../services/recording";
@@ -20,6 +21,7 @@ function exposeRecorderControl(
     start: () => startRecording(recorderStore),
     end: () => endRecording(recorderStore),
     snapshot: () => getRecorderSnapshot(recorderStore),
+    getFiberChanges: () => getFiberChanges(recorderStore),
   };
 }
 

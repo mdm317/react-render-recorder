@@ -4,6 +4,14 @@ import * as http from 'http';
 import type { AddressInfo } from 'net';
 import { join, resolve } from 'path';
 
+// `recorder` and `fiberChanges` are forwarded through the IPC layer untouched;
+// their concrete shapes live in the recorder package and are consumed in the
+// compare renderer (`src/compare/App.tsx`), where Vite resolves the recorder
+// source path. Keeping them as `unknown` here avoids dragging recorder source
+// files (and their transitive imports) into the tsc project for `main.ts`.
+type RecorderSnapshot = unknown;
+type SerializableFiberChange = unknown;
+
 let devtoolsWindow: BrowserWindow | null = null;
 let targetWindow: BrowserWindow | null = null;
 let compareWindow: BrowserWindow | null = null;
@@ -37,34 +45,68 @@ function buildBackendScriptTag(host: string, port: number): string {
   return `<script src="http://${host}:${port}"></script>`;
 }
 
-const WS_TAP_SCRIPT = `<script>
+function buildWsTapScript(host: string, port: number): string {
+  // Match the URL the devtools backend uses (`<protocol>://<host>:<port><path>`)
+  // so we don't latch onto unrelated sockets like Next.js HMR.
+  const matchPrefix = `${host}:${port}`;
+  return `<script>
 (() => {
-  console.log('[devtools-tap] installed');
+  console.log('[devtools-tap] installed (looking for ${matchPrefix})');
   const OriginalWS = window.WebSocket;
+  const MATCH = ${JSON.stringify(matchPrefix)};
   function tap(direction, raw) {
     if (typeof raw !== 'string') return;
     let msg;
     try { msg = JSON.parse(raw); } catch { return; }
     if (!msg || !msg.event) return;
     if (msg.event === 'profilingData') {
-      window.__lastProfilingData = msg.payload;
-      console.log('[devtools-tap] profilingData', msg.payload);
+      // Multiple renderers (e.g. flight RSC + client) each emit a
+      // profilingData event. Merge dataForRoots across them in this session.
+      const prev = window.__lastProfilingData;
+      const incomingRoots = msg.payload && Array.isArray(msg.payload.dataForRoots)
+        ? msg.payload.dataForRoots
+        : [];
+      if (prev && Array.isArray(prev.dataForRoots)) {
+        window.__lastProfilingData = Object.assign({}, msg.payload, {
+          dataForRoots: prev.dataForRoots.concat(incomingRoots),
+        });
+      } else {
+        window.__lastProfilingData = msg.payload;
+      }
+      console.log('[devtools-tap] profilingData (merged dataForRoots:',
+        (window.__lastProfilingData.dataForRoots || []).length, ')');
     }
   }
   class TappedWS extends OriginalWS {
     constructor(url, protocols) {
       super(url, protocols);
-      console.log('[devtools-tap] WebSocket open ->', url);
-      this.addEventListener('message', (ev) => tap('in', ev.data));
+      const isBackend = typeof url === 'string' && url.indexOf(MATCH) !== -1;
+      console.log('[devtools-tap] WebSocket open ->', url, isBackend ? '(backend)' : '');
+      if (isBackend) {
+        window.__devtoolsBackendWS = this;
+        this.addEventListener('message', (ev) => tap('in', ev.data));
+      }
     }
     send(data) {
-      tap('out', data);
+      if (this === window.__devtoolsBackendWS) tap('out', data);
       return super.send(data);
     }
   }
   window.WebSocket = TappedWS;
+  window.__simulateDevtoolsFrontendMessage = function (event, payload) {
+    const ws = window.__devtoolsBackendWS;
+    if (!ws) {
+      throw new Error('devtools backend WebSocket not initialized yet (standalone DevTools may not be connected)');
+    }
+    const handler = ws.onmessage;
+    if (typeof handler !== 'function') {
+      throw new Error('devtools backend onmessage handler not registered yet');
+    }
+    handler({ data: JSON.stringify({ event: event, payload: payload }) });
+  };
 })();
 </script>`;
+}
 
 const RECORDER_BUNDLE_PATH = resolve(
   __dirname,
@@ -151,9 +193,17 @@ async function setupDocumentInterception(
 ) {
   const backendTag = buildBackendScriptTag(host, port);
   const recorderTag = buildRecorderScriptTag();
-  const scriptTags = [WS_TAP_SCRIPT, backendTag, recorderTag]
+  const wsTapScript = buildWsTapScript(host, port);
+  const scriptTags = [wsTapScript, backendTag, recorderTag]
     .filter(Boolean)
     .join('');
+  if (recorderTag == null) {
+    console.warn(
+      '[devtools-parity-app] recorder tag is null — recorder bundle will not be injected.',
+    );
+  } else {
+    console.log('[devtools-parity-app] injecting recorder tag:', recorderTag);
+  }
 
   if (!wc.debugger.isAttached()) {
     wc.debugger.attach('1.3');
@@ -193,6 +243,9 @@ async function setupDocumentInterception(
       const modified = looksLikeHtml
         ? injectIntoHtml(decoded, scriptTags)
         : decoded;
+      console.log(
+        `[devtools-parity-app] Document intercepted: status=${responseStatusCode} html=${looksLikeHtml} bytes=${decoded.length} modified=${modified.length}`,
+      );
 
       const responseHeaders = (
         params as { responseHeaders?: Array<{ name: string; value: string }> }
@@ -283,40 +336,125 @@ function closeTargetUrl() {
 
 type ComparisonResult = {
   capturedAt: number;
-  devtools: unknown;
-  devtoolsAvailable: boolean;
   error: string | null;
-  recorder: unknown;
+  fiberChanges: SerializableFiberChange[][] | null;
+  fiberChangesAvailable: boolean;
+  recorder: RecorderSnapshot | null;
   recorderAvailable: boolean;
   targetUrl: string | null;
 };
 
 const COMPARISON_EVAL_EXPRESSION = `(() => {
   try {
-    const devtools = (typeof window !== 'undefined' && '__lastProfilingData' in window)
-      ? window.__lastProfilingData ?? null
-      : null;
     const recorderApi = (typeof window !== 'undefined' && window.__REACT_RENDER_RECORDER__) || null;
     const recorder = (recorderApi && typeof recorderApi.snapshot === 'function')
       ? recorderApi.snapshot()
       : null;
+    const fiberChanges = (recorderApi && typeof recorderApi.getFiberChanges === 'function')
+      ? recorderApi.getFiberChanges()
+      : null;
     return JSON.stringify({
-      devtools,
-      devtoolsAvailable: devtools != null,
       recorder,
       recorderAvailable: recorder != null,
+      fiberChanges,
+      fiberChangesAvailable: fiberChanges != null,
     });
   } catch (err) {
     return JSON.stringify({ __error: (err && err.message) || String(err) });
   }
 })()`;
 
+type EvalOnTargetResult = { ok: boolean; error: string | null };
+
+async function evalOnTarget(expression: string): Promise<EvalOnTargetResult> {
+  if (!targetWindow || targetWindow.isDestroyed()) {
+    return { ok: false, error: 'No target window open. Click "Open" first.' };
+  }
+  const wc = targetWindow.webContents;
+  if (!wc.debugger.isAttached()) {
+    return { ok: false, error: 'CDP debugger is not attached to the target window.' };
+  }
+  try {
+    const evalResult = (await wc.debugger.sendCommand('Runtime.evaluate', {
+      expression,
+      returnByValue: true,
+      awaitPromise: false,
+    })) as {
+      exceptionDetails?: { text?: string; exception?: { description?: string } };
+    };
+    if (evalResult.exceptionDetails) {
+      const description =
+        evalResult.exceptionDetails.exception?.description ||
+        evalResult.exceptionDetails.text ||
+        'Runtime.evaluate raised an exception';
+      return { ok: false, error: description };
+    }
+    return { ok: true, error: null };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message || String(err) };
+  }
+}
+
+const RECORDER_START_EXPR = `(() => {
+  const api = window.__REACT_RENDER_RECORDER__;
+  if (!api || typeof api.start !== 'function') {
+    throw new Error('window.__REACT_RENDER_RECORDER__.start is not available');
+  }
+  api.start();
+  return true;
+})()`;
+
+const RECORDER_END_EXPR = `(() => {
+  const api = window.__REACT_RENDER_RECORDER__;
+  if (!api || typeof api.end !== 'function') {
+    throw new Error('window.__REACT_RENDER_RECORDER__.end is not available');
+  }
+  api.end();
+  return true;
+})()`;
+
+const PROFILER_START_EXPR = `(() => {
+  // Reset any prior session data so the next stop produces a fresh snapshot.
+  window.__lastProfilingData = null;
+  window.__simulateDevtoolsFrontendMessage('startProfiling', { recordChangeDescriptions: false, recordTimeline: true });
+  return true;
+})()`;
+
+// After stopping the profiler, ask the backend to emit profilingData for every
+// known renderer. The backend responds via bridge.send('profilingData', …),
+// which our WS tap captures into window.__lastProfilingData.
+const PROFILER_STOP_EXPR = `(() => {
+  window.__simulateDevtoolsFrontendMessage('stopProfiling');
+  const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+  if (!hook || !hook.renderers || typeof hook.renderers.keys !== 'function') {
+    return { stopped: true, requested: 0, reason: 'no devtools hook / renderers' };
+  }
+  const ids = Array.from(hook.renderers.keys());
+  let succeeded = 0;
+  const failures = [];
+  for (const rendererID of ids) {
+    try {
+      window.__simulateDevtoolsFrontendMessage('getProfilingData', { rendererID });
+      succeeded++;
+    } catch (err) {
+      // Some renderers (e.g. flight/RSC) don't support profiling — skip.
+      failures.push(rendererID + ':' + (err && err.message));
+    }
+  }
+  return {
+    stopped: true,
+    requested: succeeded,
+    skipped: failures.length,
+    reason: failures.length ? failures.join(' | ') : null,
+  };
+})()`;
+
 async function fetchComparisonFromTarget(): Promise<ComparisonResult> {
   const baseResult: ComparisonResult = {
     capturedAt: Date.now(),
-    devtools: null,
-    devtoolsAvailable: false,
     error: null,
+    fiberChanges: null,
+    fiberChangesAvailable: false,
     recorder: null,
     recorderAvailable: false,
     targetUrl: null,
@@ -356,10 +494,12 @@ async function fetchComparisonFromTarget(): Promise<ComparisonResult> {
       return { ...baseResult, error: 'Runtime.evaluate returned no value.' };
     }
 
+    // The target page produces these fields via COMPARISON_EVAL_EXPRESSION;
+    // we trust the structure but accept null/undefined for the data slots.
     let parsed: {
-      devtools?: unknown;
-      devtoolsAvailable?: boolean;
-      recorder?: unknown;
+      fiberChanges?: SerializableFiberChange[][] | null;
+      fiberChangesAvailable?: boolean;
+      recorder?: RecorderSnapshot | null;
       recorderAvailable?: boolean;
       __error?: string;
     };
@@ -378,8 +518,8 @@ async function fetchComparisonFromTarget(): Promise<ComparisonResult> {
 
     return {
       ...baseResult,
-      devtools: parsed.devtools ?? null,
-      devtoolsAvailable: Boolean(parsed.devtoolsAvailable),
+      fiberChanges: parsed.fiberChanges ?? null,
+      fiberChangesAvailable: Boolean(parsed.fiberChangesAvailable),
       recorder: parsed.recorder ?? null,
       recorderAvailable: Boolean(parsed.recorderAvailable),
     };
@@ -441,6 +581,19 @@ app.on('ready', async () => {
   ipcMain.handle('devtools-parity-app:fetch-comparison', async () => {
     return fetchComparisonFromTarget();
   });
+
+  ipcMain.handle('devtools-parity-app:recorder-start', () =>
+    evalOnTarget(RECORDER_START_EXPR),
+  );
+  ipcMain.handle('devtools-parity-app:recorder-end', () =>
+    evalOnTarget(RECORDER_END_EXPR),
+  );
+  ipcMain.handle('devtools-parity-app:profiler-start', () =>
+    evalOnTarget(PROFILER_START_EXPR),
+  );
+  ipcMain.handle('devtools-parity-app:profiler-stop', () =>
+    evalOnTarget(PROFILER_STOP_EXPR),
+  );
 
   createDevtoolsWindow();
 });

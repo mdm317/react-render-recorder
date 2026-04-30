@@ -17,6 +17,9 @@ importers:
 
   packages/devtools-parity-app:
     dependencies:
+      '@react-record/devtools-api':
+        specifier: file:../../react/packages/react-devtools-custom
+        version: react-devtools-custom@file:react/packages/react-devtools-custom
       react:
         specifier: ^19.2.5
         version: 19.2.5

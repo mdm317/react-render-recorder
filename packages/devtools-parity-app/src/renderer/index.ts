@@ -37,6 +37,10 @@ type WindowApi = {
   closeTarget: () => Promise<void>;
   openCompare: () => Promise<void>;
   fetchComparison: () => Promise<unknown>;
+  recorderStart: () => Promise<{ ok: boolean; error: string | null }>;
+  recorderEnd: () => Promise<{ ok: boolean; error: string | null }>;
+  profilerStart: () => Promise<{ ok: boolean; error: string | null }>;
+  profilerStop: () => Promise<{ ok: boolean; error: string | null }>;
 };
 
 declare global {

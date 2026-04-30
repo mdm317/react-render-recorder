@@ -10,6 +10,7 @@
     "dev": "pnpm build && electron ."
   },
   "dependencies": {
+    "@react-record/devtools-api": "file:../../react/packages/react-devtools-custom",
     "react": "^19.2.5",
     "react-devtools-core": "file:../../react/packages/react-devtools-core",
     "react-dom": "^19.2.5"
