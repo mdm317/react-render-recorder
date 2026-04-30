@@ -1,3 +1,6 @@
+// TODO: candidate for extraction into a shared utils package — these helpers
+// are independent of the recorder and could be reused by sibling packages.
+
 type ElementLike = {
   className?: unknown;
   getAttribute?: (name: string) => string | null;
