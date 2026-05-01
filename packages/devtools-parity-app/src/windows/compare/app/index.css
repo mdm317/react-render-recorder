@@ -102,6 +102,16 @@ body {
   word-break: break-word;
 }
 
+.pane-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.75rem;
+  background-color: #fafafa;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
 .empty {
   padding: 0.75rem;
   font-size: 0.8rem;

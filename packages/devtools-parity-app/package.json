@@ -5,12 +5,13 @@
   "description": "Electron app for verifying parity between stock react-devtools and the recorder + devtools-custom pipeline.",
   "main": "dist/main.js",
   "scripts": {
-    "build": "rm -rf dist *.tsbuildinfo && tsc -b tsconfig.main.json tsconfig.renderer.json && vite build",
+    "build": "rm -rf dist *.tsbuildinfo && tsc -b tsconfig.main.json tsconfig.renderer.json && cp src/windows/home/app/index.html dist/windows/home/app/index.html && vite build",
     "start": "pnpm build && electron .",
     "dev": "pnpm build && electron ."
   },
   "dependencies": {
     "@react-record/devtools-api": "file:../../react/packages/react-devtools-custom",
+    "@uiw/react-json-view": "2.0.0-alpha.42",
     "react": "^19.2.5",
     "react-devtools-core": "file:../../react/packages/react-devtools-core",
     "react-dom": "^19.2.5"
