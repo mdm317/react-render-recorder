@@ -1,10 +1,12 @@
-import type { CommittedFiberChange } from "@react-record/devtools-api";
 import JsonView from "@uiw/react-json-view";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-// Recorder strips the live `fiber`/`prevFiber` refs before serializing — see
-// `getFiberChanges` in packages/recorder/src/services/recording.ts.
-type SerializableFiberChange = Omit<CommittedFiberChange, "fiber" | "prevFiber">;
+import {
+  buildCommitPairs,
+  type DevtoolsRankedSummaryCommit,
+  type SerializableFiberChange,
+} from "./build-commit-pairs";
+import { CommitSummaryTable } from "./commit-summary-table";
 
 type FiberChangesResult = {
   capturedAt: number;
@@ -12,17 +14,6 @@ type FiberChangesResult = {
   fiberChanges: SerializableFiberChange[][] | null;
   fiberChangesAvailable: boolean;
   targetUrl: string | null;
-};
-
-type DevtoolsRankedSummaryCommit = {
-  rootID: number;
-  rootDisplayName: string;
-  commitIndex: number;
-  commitDuration: number;
-  components: Array<{
-    name: string;
-    duration: number;
-  }>;
 };
 
 type RankedProfilerSummaryResult = {
@@ -104,6 +95,8 @@ function describeControlError(label: string, result: ControlResult | null): stri
   return `${label}: ${result.error ?? "unknown error"}`;
 }
 
+type TabId = "parity" | "raw";
+
 export function App() {
   const [result, setResult] = useState<FiberChangesResult | null>(null);
   const [rankedSummary, setRankedSummary] = useState<RankedProfilerSummaryResult | null>(null);
@@ -112,6 +105,7 @@ export function App() {
   const [recState, setRecState] = useState<RecordingState>("idle");
   const [recorderControlResult, setRecorderControlResult] = useState<ControlResult | null>(null);
   const [profilerControlResult, setProfilerControlResult] = useState<ControlResult | null>(null);
+  const [activeTab, setActiveTab] = useState<TabId>("parity");
 
   const handleFetch = useCallback(async () => {
     setLoading(true);
@@ -202,6 +196,13 @@ export function App() {
   const isRecording = recState === "recording";
   const isBusy = recState === "starting" || recState === "stopping";
 
+  const commitPairs = useMemo(
+    () => buildCommitPairs(result?.fiberChanges ?? null, rankedSummary?.data ?? null),
+    [result?.fiberChanges, rankedSummary?.data],
+  );
+  const matchedCount = commitPairs.filter((p) => p.status === "matched").length;
+  const mismatchedCount = commitPairs.length - matchedCount;
+
   return (
     <div className="layout">
       <div className="topbar">
@@ -225,24 +226,77 @@ export function App() {
         </button>
         <span className="status">{statusText}</span>
       </div>
-      <div className="panes">
-        <Pane
-          title="recorder fiberChanges (raw)"
-          summary={result ? describeFiberChanges(result.fiberChanges) : "—"}
-          available={Boolean(result?.fiberChangesAvailable)}
-          data={result?.fiberChanges}
-          emptyMessage="No fiber changes captured yet. Click Start Recording, interact with the target page, then Stop Recording."
-          errorMessage={fatalError}
-        />
-        <Pane
-          title="react-devtools ranked summary (Profiler UI)"
-          summary={describeRankedSummary(rankedSummary?.data ?? null)}
-          available={Boolean(rankedSummary?.data && rankedSummary.data.length > 0)}
-          data={rankedSummary?.data}
-          emptyMessage="Ranked summary comes from the standalone DevTools profilingCache. Empty until the Profiler has processed data."
-          errorMessage={rankedSummary?.error ?? fatalError}
-        />
-      </div>
+      <nav className="tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "parity"}
+          className={activeTab === "parity" ? "tab tab-active" : "tab"}
+          onClick={() => setActiveTab("parity")}
+        >
+          Parity
+          {commitPairs.length > 0 && (
+            <span
+              className={`tab-badge tab-badge-${mismatchedCount > 0 ? "mismatched" : "matched"}`}
+            >
+              {mismatchedCount > 0 ? `${mismatchedCount} ✗` : `${matchedCount} ✓`}
+            </span>
+          )}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "raw"}
+          className={activeTab === "raw" ? "tab tab-active" : "tab"}
+          onClick={() => setActiveTab("raw")}
+        >
+          Raw data
+        </button>
+      </nav>
+      {activeTab === "parity" ? (
+        <section className="parity-section" role="tabpanel">
+          <header className="parity-header">
+            <h2>Per-commit parity</h2>
+            <div className="parity-meta">
+              {commitPairs.length > 0 ? (
+                <>
+                  <span className="status-pill status-matched">✓ {matchedCount}</span>
+                  <span
+                    className={`status-pill status-${mismatchedCount > 0 ? "mismatched" : "matched"}`}
+                  >
+                    ✗ {mismatchedCount}
+                  </span>
+                  <span className="parity-meta-note">
+                    Multiset compare per commit · ForwardRef/Memo wrappers stripped · selfDuration rounded to 3 decimals · single-root
+                  </span>
+                </>
+              ) : (
+                <span className="parity-meta-note">No data yet</span>
+              )}
+            </div>
+          </header>
+          <CommitSummaryTable data={commitPairs} />
+        </section>
+      ) : (
+        <div className="panes" role="tabpanel">
+          <Pane
+            title="recorder fiberChanges (raw)"
+            summary={result ? describeFiberChanges(result.fiberChanges) : "—"}
+            available={Boolean(result?.fiberChangesAvailable)}
+            data={result?.fiberChanges}
+            emptyMessage="No fiber changes captured yet. Click Start Recording, interact with the target page, then Stop Recording."
+            errorMessage={fatalError}
+          />
+          <Pane
+            title="react-devtools ranked summary (Profiler UI)"
+            summary={describeRankedSummary(rankedSummary?.data ?? null)}
+            available={Boolean(rankedSummary?.data && rankedSummary.data.length > 0)}
+            data={rankedSummary?.data}
+            emptyMessage="Ranked summary comes from the standalone DevTools profilingCache. Empty until the Profiler has processed data."
+            errorMessage={rankedSummary?.error ?? fatalError}
+          />
+        </div>
+      )}
     </div>
   );
 }

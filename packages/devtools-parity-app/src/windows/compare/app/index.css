@@ -62,6 +62,7 @@ body {
   gap: 1px;
   background-color: #e5e7eb;
   overflow: hidden;
+  min-height: 0;
 }
 
 .pane {
@@ -123,4 +124,362 @@ body {
   padding: 0.75rem;
   font-size: 0.8rem;
   color: #b91c1c;
+}
+
+/* ---- Per-commit parity (TanStack table) ---- */
+
+.parity-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+.parity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f3f4f6;
+}
+
+.parity-header h2 {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.parity-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #4b5563;
+}
+
+.parity-meta-note {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.commit-summary-empty {
+  padding: 1rem 0.75rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.commit-table {
+  flex: 1;
+  min-height: 0;
+  display: block;
+  overflow: auto;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+.commit-table thead {
+  position: sticky;
+  top: 0;
+  background-color: #fafafa;
+  z-index: 1;
+}
+
+.commit-table th {
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.72rem;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.commit-table th.sortable {
+  cursor: pointer;
+}
+
+.commit-table th.sortable:hover {
+  background-color: #f3f4f6;
+}
+
+.commit-table td {
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+.commit-row:hover {
+  background-color: #f9fafb;
+}
+
+.commit-row-matched td:first-child {
+  border-left: 3px solid #10b981;
+}
+
+.commit-row-mismatched td:first-child {
+  border-left: 3px solid #ef4444;
+}
+
+.commit-row-mismatched {
+  background-color: #fef2f2;
+}
+
+.commit-row-mismatched:hover {
+  background-color: #fee2e2;
+}
+
+.row-expander {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #6b7280;
+  padding: 0 0.25rem;
+}
+
+.row-expander:hover {
+  color: #1f2330;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-pill.status-matched {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-pill.status-mismatched {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.count-warn {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+/* expanded detail row */
+
+.commit-detail-row > td {
+  padding: 0;
+  background-color: #fafafa;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.commit-detail {
+  padding: 0.75rem 1rem;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+.commit-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.detail-section {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.6rem;
+  min-width: 0;
+}
+
+.detail-section h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-matched h4 {
+  color: #047857;
+}
+
+.detail-recorder-only h4 {
+  color: #b91c1c;
+}
+
+.detail-devtools-only h4 {
+  color: #b91c1c;
+}
+
+.detail-recorder-only {
+  border-color: #fecaca;
+  background-color: #fef2f2;
+}
+
+.detail-devtools-only {
+  border-color: #fecaca;
+  background-color: #fef2f2;
+}
+
+.detail-count {
+  background-color: #e5e7eb;
+  color: #374151;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.detail-recorder-only .detail-count,
+.detail-devtools-only .detail-count {
+  background-color: #fecaca;
+  color: #991b1b;
+}
+
+.detail-matched .detail-count {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.detail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.72rem;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.detail-list li {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+  border-bottom: 1px dashed #f0f0f0;
+}
+
+.detail-list li:last-child {
+  border-bottom: none;
+}
+
+.detail-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #1f2330;
+}
+
+.detail-duration {
+  color: #4b5563;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.detail-meta {
+  color: #6b7280;
+  font-size: 0.68rem;
+}
+
+.detail-skip-reason {
+  color: #b45309;
+  font-size: 0.68rem;
+}
+
+.detail-empty {
+  color: #9ca3af;
+  font-size: 0.72rem;
+  font-style: italic;
+}
+
+.detail-skipped {
+  margin-top: 0.75rem;
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.6rem;
+}
+
+.detail-skipped h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #92400e;
+  display: flex;
+  justify-content: space-between;
+}
+
+.detail-note {
+  margin: 0 0 0.4rem;
+  font-size: 0.7rem;
+  color: #78350f;
+  font-style: italic;
+}
+
+.detail-skipped .detail-count {
+  background-color: #fde68a;
+  color: #92400e;
+}
+
+/* tabs */
+
+.tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 0.75rem;
+  background-color: #f7f7f7;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border: none;
+  background: transparent;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #4b5563;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: #1f2330;
+  background-color: #f3f4f6;
+}
+
+.tab.tab-active {
+  color: #1478fa;
+  border-bottom-color: #1478fa;
+  background-color: #fff;
+}
+
+.tab-badge {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tab-badge-matched {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.tab-badge-mismatched {
+  background-color: #fee2e2;
+  color: #991b1b;
 }
