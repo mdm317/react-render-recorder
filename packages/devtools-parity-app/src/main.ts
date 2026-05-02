@@ -50,6 +50,7 @@ app.on("ready", async () => {
     OPEN_TARGET,
     async (_evt, payload: { url: string; host: string; port: number }): Promise<void> => {
       await openTargetUrl(payload.url, payload.host, payload.port);
+      createComparisonWindow();
     },
   );
 
