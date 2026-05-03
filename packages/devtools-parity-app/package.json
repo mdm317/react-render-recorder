@@ -10,6 +10,7 @@
     "dev": "pnpm build && electron ."
   },
   "dependencies": {
+    "@base-ui-components/react": "1.0.0-beta.3",
     "@react-record/devtools-api": "file:../../react/packages/react-devtools-custom",
     "@tanstack/react-table": "^8.21.3",
     "@uiw/react-json-view": "2.0.0-alpha.42",

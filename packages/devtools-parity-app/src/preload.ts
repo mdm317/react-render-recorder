@@ -98,7 +98,7 @@ contextBridge.exposeInMainWorld("api", {
     return ipcRenderer.invoke(OPEN_COMPARE);
   },
 
-  fetchFiberChanges(): Promise<unknown> {
+  fetchRecorderFiberChanges(): Promise<unknown> {
     return ipcRenderer.invoke(FETCH_FIBER_CHANGES);
   },
 

@@ -8,9 +8,9 @@ import {
   type ExpandedState,
   type SortingState,
 } from "@tanstack/react-table";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useState } from "react";
 
-import type { CommitPair } from "./build-commit-pairs";
+import type { CommitPair } from "../lib/build-commit-pairs";
 import { CommitDetailView } from "./commit-detail-view";
 
 type LengthOf = { length: number };
@@ -89,10 +89,11 @@ function makeColumns(): ColumnDef<CommitPair>[] {
   ];
 }
 
+const columns = makeColumns();
+
 export function CommitSummaryTable({ data }: { data: CommitPair[] }) {
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [sorting, setSorting] = useState<SortingState>([]);
-  const columns = useMemo(makeColumns, []);
 
   const table = useReactTable({
     data,

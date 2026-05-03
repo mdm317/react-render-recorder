@@ -18,6 +18,12 @@ body {
   height: 100%;
 }
 
+.tab-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .topbar {
   display: flex;
   align-items: center;

@@ -1,302 +1,70 @@
-import JsonView from "@uiw/react-json-view";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { Tabs } from "@base-ui-components/react/tabs";
 
+import { CompareControls } from "./components/compare-controls";
+import { ParityPanel } from "./components/parity-panel";
+import { RawDataPanel } from "./components/raw-data-panel";
+import { TabBadge } from "./components/tab-badge";
+import { useCompareStore } from "./hooks/use-compare-store";
 import {
-  buildCommitPairs,
-  type DevtoolsRankedSummaryCommit,
-  type SerializableFiberChange,
-} from "./build-commit-pairs";
-import { CommitSummaryTable } from "./commit-summary-table";
+  EMPTY_PARITY_REPORT,
+  getParityReport,
+  getStatusText,
+} from "./lib/parity-report";
+import type { TabId } from "./lib/compare-types";
 
-type FiberChangesResult = {
-  capturedAt: number;
-  error: string | null;
-  fiberChanges: SerializableFiberChange[][] | null;
-  fiberChangesAvailable: boolean;
-  targetUrl: string | null;
-};
-
-type RankedProfilerSummaryResult = {
-  data: DevtoolsRankedSummaryCommit[] | null;
-  error: string | null;
-};
-
-type ControlResult = { ok: boolean; error: string | null };
-
-type CompareApi = {
-  fetchFiberChanges: () => Promise<FiberChangesResult>;
-  recorderStart: () => Promise<ControlResult>;
-  recorderEnd: () => Promise<ControlResult>;
-  profilerStart: () => Promise<ControlResult>;
-  profilerStop: () => Promise<ControlResult>;
-};
-
-const compareApi = (window as unknown as { api: CompareApi }).api;
-
-function getRankedProfilerSummary(): Promise<RankedProfilerSummaryResult> {
-  const parity = window.__REACT_DEVTOOLS_PARITY__;
-  if (!parity) {
-    return Promise.resolve({
-      data: null,
-      error: "window.__REACT_DEVTOOLS_PARITY__ is not installed.",
-    });
-  }
-  return parity.getRankedProfilerSummary();
-}
-
-function describeFiberChanges(fiberChanges: SerializableFiberChange[][] | null): string {
-  if (fiberChanges == null) return "no fiberChanges captured yet.";
-  const totalChanges = fiberChanges.reduce((sum, commit) => sum + commit.length, 0);
-  return `${fiberChanges.length} commits, ${totalChanges} total fiber changes.`;
-}
-
-function describeRankedSummary(commits: DevtoolsRankedSummaryCommit[] | null): string {
-  if (commits == null || commits.length === 0) return "no ranked summary available yet.";
-  const totalComponents = commits.reduce((sum, commit) => sum + commit.components.length, 0);
-  return `${commits.length} commit(s), ${totalComponents} ranked component entries.`;
-}
-
-type PaneProps = {
-  title: string;
-  summary: string;
-  available: boolean;
-  data: unknown;
-  emptyMessage: string;
-  errorMessage: string | null;
-};
-
-function Pane({ title, summary, available, data, emptyMessage, errorMessage }: PaneProps) {
-  return (
-    <section className="pane">
-      <h2>{title}</h2>
-      <div className="summary">{summary}</div>
-      {errorMessage ? (
-        <div className="error">{errorMessage}</div>
-      ) : available ? (
-        <div className="pane-body">
-          <JsonView
-            value={data as object}
-            collapsed={2}
-            displayDataTypes={false}
-            shortenTextAfterLength={120}
-          />
-        </div>
-      ) : (
-        <div className="empty">{emptyMessage}</div>
-      )}
-    </section>
-  );
-}
-
-type RecordingState = "idle" | "starting" | "recording" | "stopping";
-
-function describeControlError(label: string, result: ControlResult | null): string | null {
-  if (result == null || result.ok) return null;
-  return `${label}: ${result.error ?? "unknown error"}`;
-}
-
-type TabId = "parity" | "raw";
+const getTabClassName = (state: { selected: boolean }) =>
+  state.selected ? "tab tab-active" : "tab";
 
 export function App() {
-  const [result, setResult] = useState<FiberChangesResult | null>(null);
-  const [rankedSummary, setRankedSummary] = useState<RankedProfilerSummaryResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [ipcError, setIpcError] = useState<string | null>(null);
-  const [recState, setRecState] = useState<RecordingState>("idle");
-  const [recorderControlResult, setRecorderControlResult] = useState<ControlResult | null>(null);
-  const [profilerControlResult, setProfilerControlResult] = useState<ControlResult | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("parity");
-
-  const handleFetch = useCallback(async () => {
-    setLoading(true);
-    setIpcError(null);
-    try {
-      const [next, ranked] = await Promise.all([
-        compareApi.fetchFiberChanges(),
-        getRankedProfilerSummary(),
-      ]);
-      setResult(next);
-      setRankedSummary(ranked);
-    } catch (err) {
-      setIpcError((err as Error).message || String(err));
-      setResult(null);
-      setRankedSummary(null);
-    } finally {
-      setLoading(false);
+  const compareStore = useCompareStore();
+  const parityReport = useMemo(() => {
+    if (compareStore.recorderFiberChanges == null || compareStore.profilerRankedSummary == null) {
+      return EMPTY_PARITY_REPORT;
     }
-  }, []);
 
-  const handleStart = useCallback(async () => {
-    setRecState("starting");
-    setRecorderControlResult(null);
-    setProfilerControlResult(null);
-    try {
-      const [rec, prof] = await Promise.all([
-        compareApi.recorderStart(),
-        compareApi.profilerStart(),
-      ]);
-      setRecorderControlResult(rec);
-      setProfilerControlResult(prof);
-      setRecState("recording");
-    } catch (err) {
-      setIpcError((err as Error).message || String(err));
-      setRecState("idle");
-    }
-  }, []);
-
-  const handleStop = useCallback(async () => {
-    setRecState("stopping");
-    try {
-      const [rec, prof] = await Promise.all([compareApi.recorderEnd(), compareApi.profilerStop()]);
-      setRecorderControlResult(rec);
-      setProfilerControlResult(prof);
-    } catch (err) {
-      setIpcError((err as Error).message || String(err));
-    } finally {
-      setRecState("idle");
-    }
-    void handleFetch();
-  }, [handleFetch]);
-
-  useEffect(() => {
-    void handleFetch();
-  }, [handleFetch]);
-
-  const controlErrors = [
-    describeControlError("recorder", recorderControlResult),
-    describeControlError("devtools profiler", profilerControlResult),
-  ]
-    .filter(Boolean)
-    .join(" · ");
-
-  let statusText = "Ready.";
-  if (recState === "starting") {
-    statusText = "Starting recording…";
-  } else if (recState === "recording") {
-    statusText = controlErrors
-      ? `Recording (with errors: ${controlErrors})`
-      : "Recording — click Stop to finish.";
-  } else if (recState === "stopping") {
-    statusText = "Stopping recording…";
-  } else if (loading) {
-    statusText = "Fetching from target page…";
-  } else if (ipcError) {
-    statusText = `IPC error: ${ipcError}`;
-  } else if (controlErrors) {
-    statusText = `Last control error: ${controlErrors}`;
-  } else if (result?.error) {
-    statusText = result.error;
-  } else if (result) {
-    const ts = new Date(result.capturedAt).toLocaleTimeString();
-    const targetSuffix = result.targetUrl ? ` · ${result.targetUrl}` : "";
-    statusText = `Fetched at ${ts}${targetSuffix}`;
-  }
-
-  const fatalError = ipcError ?? result?.error ?? null;
-  const isRecording = recState === "recording";
-  const isBusy = recState === "starting" || recState === "stopping";
-
-  const commitPairs = useMemo(
-    () => buildCommitPairs(result?.fiberChanges ?? null, rankedSummary?.data ?? null),
-    [result?.fiberChanges, rankedSummary?.data],
-  );
-  const matchedCount = commitPairs.filter((p) => p.status === "matched").length;
-  const mismatchedCount = commitPairs.length - matchedCount;
+    return getParityReport(compareStore.recorderFiberChanges, compareStore.profilerRankedSummary);
+  }, [compareStore.recorderFiberChanges, compareStore.profilerRankedSummary]);
+  const fatalError = compareStore.error ?? compareStore.recorderFiberChanges?.error ?? null;
 
   return (
     <div className="layout">
-      <div className="topbar">
-        <button
-          type="button"
-          className="primary"
-          disabled={isBusy || recState === "recording"}
-          onClick={() => void handleStart()}
-        >
-          {recState === "starting" ? "Starting…" : "Start Recording"}
-        </button>
-        <button
-          type="button"
-          disabled={!isRecording && recState !== "stopping"}
-          onClick={() => void handleStop()}
-        >
-          {recState === "stopping" ? "Stopping…" : "Stop Recording"}
-        </button>
-        <button type="button" disabled={loading || isBusy} onClick={() => void handleFetch()}>
-          {loading ? "Fetching…" : "Fetch Comparison"}
-        </button>
-        <span className="status">{statusText}</span>
-      </div>
-      <nav className="tabs" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "parity"}
-          className={activeTab === "parity" ? "tab tab-active" : "tab"}
-          onClick={() => setActiveTab("parity")}
-        >
-          Parity
-          {commitPairs.length > 0 && (
-            <span
-              className={`tab-badge tab-badge-${mismatchedCount > 0 ? "mismatched" : "matched"}`}
-            >
-              {mismatchedCount > 0 ? `${mismatchedCount} ✗` : `${matchedCount} ✓`}
-            </span>
-          )}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "raw"}
-          className={activeTab === "raw" ? "tab tab-active" : "tab"}
-          onClick={() => setActiveTab("raw")}
-        >
-          Raw data
-        </button>
-      </nav>
-      {activeTab === "parity" ? (
-        <section className="parity-section" role="tabpanel">
-          <header className="parity-header">
-            <h2>Per-commit parity</h2>
-            <div className="parity-meta">
-              {commitPairs.length > 0 ? (
-                <>
-                  <span className="status-pill status-matched">✓ {matchedCount}</span>
-                  <span
-                    className={`status-pill status-${mismatchedCount > 0 ? "mismatched" : "matched"}`}
-                  >
-                    ✗ {mismatchedCount}
-                  </span>
-                  <span className="parity-meta-note">
-                    Multiset compare per commit · ForwardRef/Memo wrappers stripped · selfDuration rounded to 3 decimals · single-root
-                  </span>
-                </>
-              ) : (
-                <span className="parity-meta-note">No data yet</span>
-              )}
-            </div>
-          </header>
-          <CommitSummaryTable data={commitPairs} />
-        </section>
-      ) : (
-        <div className="panes" role="tabpanel">
-          <Pane
-            title="recorder fiberChanges (raw)"
-            summary={result ? describeFiberChanges(result.fiberChanges) : "—"}
-            available={Boolean(result?.fiberChangesAvailable)}
-            data={result?.fiberChanges}
-            emptyMessage="No fiber changes captured yet. Click Start Recording, interact with the target page, then Stop Recording."
-            errorMessage={fatalError}
+      <CompareControls
+        onRefresh={compareStore.fetchComparison}
+        onStart={compareStore.startRecording}
+        onStop={compareStore.stopRecording}
+        status={compareStore.status}
+        statusText={getStatusText(compareStore.status)}
+      />
+      <Tabs.Root value={activeTab} onValueChange={(value) => setActiveTab(value as TabId)}>
+        <Tabs.List className="tabs">
+          <Tabs.Tab value="parity" className={getTabClassName}>
+            Parity
+            <TabBadge
+              matchedCount={parityReport.matchedCount}
+              mismatchedCount={parityReport.mismatchedCount}
+            />
+          </Tabs.Tab>
+          <Tabs.Tab value="raw" className={getTabClassName}>
+            Raw data
+          </Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Panel value="parity" keepMounted className="tab-panel">
+          <ParityPanel
+            commitPairs={parityReport.commitPairs}
+            matchedCount={parityReport.matchedCount}
+            mismatchedCount={parityReport.mismatchedCount}
           />
-          <Pane
-            title="react-devtools ranked summary (Profiler UI)"
-            summary={describeRankedSummary(rankedSummary?.data ?? null)}
-            available={Boolean(rankedSummary?.data && rankedSummary.data.length > 0)}
-            data={rankedSummary?.data}
-            emptyMessage="Ranked summary comes from the standalone DevTools profilingCache. Empty until the Profiler has processed data."
-            errorMessage={rankedSummary?.error ?? fatalError}
+        </Tabs.Panel>
+        <Tabs.Panel value="raw" keepMounted className="tab-panel">
+          <RawDataPanel
+            fatalError={fatalError}
+            profilerRankedSummary={compareStore.profilerRankedSummary}
+            recorderFiberChanges={compareStore.recorderFiberChanges}
           />
-        </div>
-      )}
+        </Tabs.Panel>
+      </Tabs.Root>
     </div>
   );
 }
