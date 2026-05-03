@@ -11,3 +11,5 @@ AGENTS.md
 .specify
 test-results
 playwright-report
+.claude
+.vscode
