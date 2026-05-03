@@ -131,7 +131,11 @@ export function CommitSummaryTable({ data }: { data: CommitPair[] }) {
                   className={canSort ? "sortable" : undefined}
                 >
                   {flexRender(h.column.columnDef.header, h.getContext())}
-                  {sorted === "asc" ? " ↑" : sorted === "desc" ? " ↓" : ""}
+                  {sorted ? (
+                    <span className="sort-indicator">
+                      {sorted === "asc" ? "↑" : "↓"}
+                    </span>
+                  ) : null}
                 </th>
               );
             })}

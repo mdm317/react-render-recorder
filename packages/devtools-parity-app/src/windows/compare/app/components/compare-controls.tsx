@@ -39,7 +39,10 @@ export function CompareControls({
       <button type="button" disabled={isFetching || isBusy} onClick={() => void onRefresh()}>
         {isFetching ? "Fetching…" : "Fetch Comparison"}
       </button>
-      <span className="status">{statusText}</span>
+      <span className="status" data-status={status}>
+        <span className="status-dot" aria-hidden="true" />
+        {statusText}
+      </span>
     </div>
   );
 }

@@ -19,8 +19,10 @@ export function Pane({
 }: PaneProps) {
   return (
     <section className="pane">
-      <h2>{title}</h2>
-      <div className="summary">{summary}</div>
+      <header className="pane-header">
+        <h2>{title}</h2>
+        <div className="summary">{summary}</div>
+      </header>
       {errorMessage ? (
         <div className="error">{errorMessage}</div>
       ) : available ? (

@@ -37,7 +37,11 @@ export function App() {
         status={compareStore.status}
         statusText={getStatusText(compareStore.status)}
       />
-      <Tabs.Root value={activeTab} onValueChange={(value) => setActiveTab(value as TabId)}>
+      <Tabs.Root
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as TabId)}
+        className="tabs-root"
+      >
         <Tabs.List className="tabs">
           <Tabs.Tab value="parity" className={getTabClassName}>
             Parity
