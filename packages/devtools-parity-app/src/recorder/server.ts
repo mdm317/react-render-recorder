@@ -15,7 +15,6 @@ const RECORDER_BUNDLE_PATH = resolve(
   "react-render-recorder.js",
 );
 const RECORDER_BUNDLE_NAME = "react-render-recorder.js";
-const RECORDER_QUERY = "debug=true&shortcut=true";
 
 let recorderServerOrigin: string | null = null;
 let cachedRecorderBundle: Buffer | null | undefined;
@@ -68,9 +67,9 @@ export function startReactRenderRecordServer(): Promise<string | null> {
   });
 }
 
-// Returns the full URL (including query string) of the recorder bundle, or
-// null if the server hasn't started yet.
+// Returns the full URL of the recorder bundle, or null if the server hasn't
+// started yet.
 export function getRecorderBundleUrl(): string | null {
   if (recorderServerOrigin == null) return null;
-  return `${recorderServerOrigin}/${RECORDER_BUNDLE_NAME}?${RECORDER_QUERY}`;
+  return `${recorderServerOrigin}/${RECORDER_BUNDLE_NAME}`;
 }

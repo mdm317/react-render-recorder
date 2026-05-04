@@ -72,7 +72,7 @@ describe("installReactRenderRecorder", () => {
     expect(recorderStore.getSnapshot().fiberChanges).toEqual([[{}]]);
   });
 
-  it("drops commits without changes when recording stops", async () => {
+  it("preserves bailout commits in raw fiberChanges when recording stops", async () => {
     const { installReactRenderRecorder } = await import("./index");
     const recorderStore = createRecorderStore();
     const recordCommit = vi.spyOn(recorderStore, "recordCommit");
@@ -84,7 +84,7 @@ describe("installReactRenderRecorder", () => {
 
     expect(mocks.onCommitFiber).toHaveBeenCalledTimes(1);
     expect(recordCommit).toHaveBeenCalledTimes(1);
-    expect(recorderStore.getSnapshot().fiberChanges).toEqual([]);
+    expect(recorderStore.getSnapshot().fiberChanges).toEqual([[]]);
   });
 
   it("skips commit collection when the root has no mounted child", async () => {

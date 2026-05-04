@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 
+import { buildFilteredCommits } from "../lib/build-filtered-commits";
+import { buildHookChangedHistory } from "../lib/build-hook-changed-history";
 import {
   filterFiberChangesByComponent,
   filterFiberChangesByComponentPreservingCommitIndices,
@@ -12,12 +14,6 @@ import {
   buildCommitHistoryWithPaintText,
   type CommitSegmentByPaint,
 } from "../lib/build-commit-segments-by-paint";
-import {
-  buildCommitTimingSummaries,
-  buildPaintTimingSummaries,
-  buildPaintTimingSummaryLines,
-  buildTimingSummaryLines,
-} from "../lib/build-commit-timings";
 import { buildRerenderCountLines } from "../lib/build-rerender-counts";
 import {
   formatCommitHookChangedHistoryForLLM,
@@ -47,70 +43,56 @@ export function useCommitHistory(): UseCommitHistoryFilterResult {
     }
   }, [state.isRecording]);
 
-  const commitCount = state.fiberChanges.length;
   const {
     availableComponentNames,
+    commitCount,
     commitHistoryText,
     commitSegmentsByPaint,
     hookHistoryText,
     matchingComponents,
     commitHistoryWithPaintText,
   } = useMemo(() => {
-    const availableComponentNames = getComponentNamesFromHistory(state.hookChangedHistory);
-    const matchingComponents = getMatchingComponentNames(
-      state.hookChangedHistory,
-      componentNameFilter,
-    );
-    const filteredHookHistory = filterHookChangedHistoryByComponent(
-      state.hookChangedHistory,
-      componentNameFilter,
-    );
-    const filteredFiberChanges = filterFiberChangesByComponent(
-      state.fiberChanges,
-      componentNameFilter,
-    );
-    const rawCommitSegmentsByPaint = buildCommitSegmentsByPaint({
-      componentNameFilter,
+    const { filteredFiberChanges, filteredPaintCommitIndices } = buildFilteredCommits({
       fiberChanges: state.fiberChanges,
       paintCommitIndices: state.paintCommitIndices,
     });
-    const filteredFiberChangesPreservingIndices =
+    const filteredHookChangedHistory = buildHookChangedHistory(filteredFiberChanges);
+
+    const availableComponentNames = getComponentNamesFromHistory(filteredHookChangedHistory);
+    const matchingComponents = getMatchingComponentNames(
+      filteredHookChangedHistory,
+      componentNameFilter,
+    );
+    const componentFilteredHookHistory = filterHookChangedHistoryByComponent(
+      filteredHookChangedHistory,
+      componentNameFilter,
+    );
+    const componentFilteredFiberChanges = filterFiberChangesByComponent(
+      filteredFiberChanges,
+      componentNameFilter,
+    );
+    const commitSegmentsByPaint = buildCommitSegmentsByPaint({
+      componentNameFilter,
+      fiberChanges: filteredFiberChanges,
+      paintCommitIndices: filteredPaintCommitIndices,
+    });
+    const componentFilteredFiberChangesPreservingIndices =
       filterFiberChangesByComponentPreservingCommitIndices(
-        state.fiberChanges,
+        filteredFiberChanges,
         componentNameFilter,
       );
-    const commitTimingSummaries = buildCommitTimingSummaries(filteredFiberChangesPreservingIndices);
-    const paintTimingSummaries = buildPaintTimingSummaries({
-      commitTimingSummaries,
-      paintCommitIndices: state.paintCommitIndices,
-    });
-    const rerenderCountLines = buildRerenderCountLines(filteredFiberChangesPreservingIndices);
-    const timingSummaryLines = buildTimingSummaryLines(commitTimingSummaries);
-    const summaryLinesForFormatters = [...rerenderCountLines, ...timingSummaryLines];
-
-    const paintSummaryByNumber = new Map<number, string[]>();
-    for (const summary of paintTimingSummaries) {
-      paintSummaryByNumber.set(summary.paintNumber, buildPaintTimingSummaryLines(summary));
-    }
-
-    const commitSegmentsByPaint = rawCommitSegmentsByPaint.map((segment) => {
-      const summaryLines = paintSummaryByNumber.get(segment.paintNumber) ?? [];
-      if (summaryLines.length === 0) {
-        return segment;
-      }
-      return {
-        ...segment,
-        text: `${summaryLines.join("\n")}\n\n${segment.text}`,
-      };
-    });
+    const rerenderCountLines = buildRerenderCountLines(
+      componentFilteredFiberChangesPreservingIndices,
+    );
 
     return {
       availableComponentNames,
-      commitHistoryText: formatCommitHookChangedHistoryForLLM(filteredFiberChanges, {
-        extraSummaryLines: summaryLinesForFormatters,
+      commitCount: filteredFiberChanges.length,
+      commitHistoryText: formatCommitHookChangedHistoryForLLM(componentFilteredFiberChanges, {
+        extraSummaryLines: rerenderCountLines,
       }),
-      hookHistoryText: formatHookChangedHistoryForLLM(filteredHookHistory, {
-        extraSummaryLines: summaryLinesForFormatters,
+      hookHistoryText: formatHookChangedHistoryForLLM(componentFilteredHookHistory, {
+        extraSummaryLines: rerenderCountLines,
       }),
       matchingComponents,
       commitSegmentsByPaint,

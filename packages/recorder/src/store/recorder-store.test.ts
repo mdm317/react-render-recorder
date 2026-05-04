@@ -26,7 +26,7 @@ describe("recorderStore", () => {
     expect(store.getSnapshot().paintCommitIndices).toEqual([0, 1]);
   });
 
-  it("remaps painted commit indices after dropping commits without changes", () => {
+  it("preserves raw fiber changes and paint indices including bailout commits", () => {
     const store = createRecorderStore();
     store.startRecording();
 
@@ -36,7 +36,8 @@ describe("recorderStore", () => {
     store.recordPaint();
     store.endRecording([[], [{} as never]] as never);
 
-    expect(store.getSnapshot().paintCommitIndices).toEqual([0]);
+    expect(store.getSnapshot().fiberChanges).toEqual([[], [{}]]);
+    expect(store.getSnapshot().paintCommitIndices).toEqual([0, 1]);
   });
 
   it("stores multiple fiber roots without duplicates", () => {
