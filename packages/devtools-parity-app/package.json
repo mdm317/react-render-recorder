@@ -1,0 +1,30 @@
+{
+  "name": "@react-record/devtools-parity-app",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Electron app for verifying parity between stock react-devtools and the recorder + devtools-custom pipeline.",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "rm -rf dist *.tsbuildinfo && tsc -b tsconfig.main.json tsconfig.renderer.json && cp src/windows/home/app/index.html dist/windows/home/app/index.html && vite build",
+    "start": "pnpm build && electron .",
+    "dev": "pnpm build && electron ."
+  },
+  "dependencies": {
+    "@base-ui-components/react": "1.0.0-beta.3",
+    "@react-record/devtools-api": "file:../../react/packages/react-devtools-custom",
+    "@tanstack/react-table": "^8.21.3",
+    "@uiw/react-json-view": "2.0.0-alpha.42",
+    "react": "^19.2.5",
+    "react-devtools-core": "file:../../react/packages/react-devtools-core",
+    "react-dom": "^19.2.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "electron": "^33.0.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.9"
+  }
+}

@@ -1,3 +1,6 @@
+// TODO: candidate for extraction into a shared utils package — these helpers
+// are independent of the recorder and could be reused by sibling packages.
+
 export type FormattedDuration = {
   text: string;
   unit: "s" | "ms" | "μs" | "";

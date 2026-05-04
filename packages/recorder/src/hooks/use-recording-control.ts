@@ -1,10 +1,7 @@
 /** @jsxImportSource preact */
-import {
-  endRecording as endDevtoolsRecording,
-  startRecording as startDevtoolsRecording,
-} from "@react-record/devtools-api";
 import { useCallback } from "preact/hooks";
 
+import { endRecording, startRecording } from "../services/recording";
 import { useRecorderStore } from "../store";
 
 type UseRecordingControlResult = {
@@ -16,18 +13,14 @@ export function useRecordingControl(): UseRecordingControlResult {
   const { state, store } = useRecorderStore();
   const toggleRecording = useCallback(() => {
     if (state.isRecording) {
-      store.endRecording(endDevtoolsRecording());
+      endRecording(store);
     } else {
-      if (!state.fiberRoot) {
-        return;
-      }
-      startDevtoolsRecording(state.fiberRoot);
-      store.startRecording();
+      startRecording(store);
     }
-  }, [state.isRecording, store, state.fiberRoot]);
+  }, [state.isRecording, store]);
 
   return {
-    // TODO: expose the idle state (fiberRoot not yet captured, before the first
+    // TODO: expose the idle state (fiberRoots not yet captured, before the first
     // React commit) as a separate flag so the toggle button can be disabled.
     // Right now clicking is a silent no-op with no feedback to the user.
     isRecording: state.isRecording,

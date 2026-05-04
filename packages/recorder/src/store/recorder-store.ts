@@ -1,14 +1,8 @@
 import type { CommittedFiberChange, FiberRoot } from "@react-record/devtools-api";
 
-import {
-  buildHookChangedHistory,
-  type HookChangedHistory,
-} from "../lib/build-hook-changed-history";
-
 export type RecorderStoreState = {
   fiberRoots: FiberRoot[];
   fiberChanges: CommittedFiberChange[][];
-  hookChangedHistory: HookChangedHistory;
   isRecording: boolean;
   paintCommitIndices: number[];
 };
@@ -28,7 +22,6 @@ function createInitialState(): RecorderStoreState {
   return {
     fiberRoots: [],
     fiberChanges: [],
-    hookChangedHistory: {},
     isRecording: false,
     paintCommitIndices: [],
   };
@@ -65,29 +58,12 @@ function createRecorderStoreInstance(): RecorderStore {
     if (!state.isRecording) {
       return;
     }
-    const fiberChangesWithoutBailout: CommittedFiberChange[][] = [];
-    const nextPaintCommitIndices: number[] = [];
-    const paintCommitIndexSet = new Set(state.paintCommitIndices);
-
-    for (const [commitIndex, commitChanges] of recordedFiberChanges.entries()) {
-      if (commitChanges.length === 0) {
-        continue;
-      }
-
-      if (paintCommitIndexSet.has(commitIndex)) {
-        nextPaintCommitIndices.push(fiberChangesWithoutBailout.length);
-      }
-
-      fiberChangesWithoutBailout.push(commitChanges);
-    }
 
     recordedCommitCount = 0;
     setState({
       ...state,
-      fiberChanges: fiberChangesWithoutBailout,
-      hookChangedHistory: buildHookChangedHistory(fiberChangesWithoutBailout),
+      fiberChanges: recordedFiberChanges,
       isRecording: false,
-      paintCommitIndices: nextPaintCommitIndices,
     });
   }
 
