@@ -45,16 +45,65 @@ export type FiberChangesResult = {
   targetUrl: string | null;
 };
 
+// Replacer source embedded into the target-page eval. The recorder returns raw
+// fiberChanges with cyclic / non-serializable values intact (DOM refs in hook
+// prev/next, BigInt, functions, Symbols, deeper cycles via fiber backpointers
+// like HTMLButtonElement.__reactFiber → FiberNode.stateNode). This replacer
+// guards the outer JSON.stringify so CDP marshalling doesn't throw and the
+// resulting payload contains descriptive placeholders.
+const SAFE_JSON_REPLACER_SOURCE = `
+function createSafeJsonReplacer() {
+  const seen = new WeakSet();
+  return function (_key, value) {
+    if (typeof value === 'bigint') return value + 'n';
+    if (typeof value === 'function') return '[Function ' + (value.name || 'anonymous') + ']';
+    if (typeof value === 'symbol') return value.toString();
+    if (value === undefined) return '[undefined]';
+    const isElementInstance = typeof Element !== 'undefined' && value instanceof Element;
+    const isElementLike =
+      isElementInstance ||
+      (typeof value === 'object' && value !== null &&
+        value.nodeType === 1 && typeof value.tagName === 'string');
+    if (isElementLike) {
+      const tag = String(value.tagName).toLowerCase();
+      const idStr =
+        typeof value.id === 'string'
+          ? value.id
+          : typeof value.getAttribute === 'function'
+            ? value.getAttribute('id') || ''
+            : '';
+      const classStr =
+        typeof value.className === 'string'
+          ? value.className
+          : typeof value.getAttribute === 'function'
+            ? value.getAttribute('class') || ''
+            : '';
+      const id = idStr.trim();
+      const classes = classStr.trim().split(/\\s+/).filter(Boolean).slice(0, 3);
+      return '[HTMLElement ' + tag + (id ? '#' + id : '') +
+        (classes.length ? '.' + classes.join('.') : '') + ']';
+    }
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) return '[Circular]';
+      seen.add(value);
+    }
+    return value;
+  };
+}
+`;
+
 const FIBER_CHANGES_EVAL_EXPRESSION = `(() => {
+  ${SAFE_JSON_REPLACER_SOURCE}
   try {
     const recorderApi = (typeof window !== 'undefined' && window.__REACT_RENDER_RECORDER__) || null;
-    const fiberChanges = (recorderApi && typeof recorderApi.getFiberChanges === 'function')
-      ? recorderApi.getFiberChanges()
-      : null;
+    if (!recorderApi || typeof recorderApi.getFiberChanges !== 'function') {
+      return JSON.stringify({ fiberChanges: null, fiberChangesAvailable: false });
+    }
+    const fiberChanges = recorderApi.getFiberChanges();
     return JSON.stringify({
       fiberChanges,
       fiberChangesAvailable: fiberChanges != null,
-    });
+    }, createSafeJsonReplacer());
   } catch (err) {
     return JSON.stringify({ __error: (err && err.message) || String(err) });
   }

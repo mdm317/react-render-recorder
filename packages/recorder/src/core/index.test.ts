@@ -123,7 +123,7 @@ describe("installReactRenderRecorder", () => {
     expect(recordPaint).toHaveBeenCalledTimes(1);
   });
 
-  it("exposes window.__REACT_RENDER_RECORDER__ returning a JSON-safe snapshot shape", async () => {
+  it("exposes window.__REACT_RENDER_RECORDER__ with JSON-safe getFiberChanges", async () => {
     const stubbedWindow = {} as Record<string, unknown>;
     const globalAny = globalThis as unknown as Record<string, unknown>;
     const previousWindow = globalAny.window;
@@ -135,21 +135,13 @@ describe("installReactRenderRecorder", () => {
 
       installReactRenderRecorder();
       const recorderGlobal = stubbedWindow.__REACT_RENDER_RECORDER__ as
-        | { snapshot: () => unknown; start: () => void; end: () => unknown }
+        | { start: () => void; end: () => unknown; getFiberChanges: () => unknown[][] }
         | undefined;
-      expect(typeof recorderGlobal?.snapshot).toBe("function");
       expect(typeof recorderGlobal?.start).toBe("function");
       expect(typeof recorderGlobal?.end).toBe("function");
-      const snapshotFn = recorderGlobal!.snapshot as () => unknown;
+      expect(typeof recorderGlobal?.getFiberChanges).toBe("function");
 
-      const initialSnapshot = snapshotFn!() as Record<string, unknown>;
-      expect(initialSnapshot).toMatchObject({
-        commitCount: 0,
-        isRecording: false,
-        paintCommitIndices: [],
-      });
-      expect(Array.isArray(initialSnapshot.commits)).toBe(true);
-      expect((initialSnapshot.commits as unknown[]).length).toBe(0);
+      expect(recorderGlobal!.getFiberChanges()).toEqual([]);
 
       recorderStore.startRecording();
       mocks.commitCallbacks[0](createHook(), 1, createMountedRoot());
@@ -157,15 +149,14 @@ describe("installReactRenderRecorder", () => {
         [{ displayName: "Foo", actualDuration: 1.5, selfDuration: 0.5 } as never],
       ] as never);
 
-      const afterSnapshot = snapshotFn!() as {
-        commitCount: number;
-        commits: Array<{ commitIndex: number; entries: unknown[] }>;
-      };
-      expect(afterSnapshot.commitCount).toBe(1);
-      expect(afterSnapshot.commits).toHaveLength(1);
-      expect(afterSnapshot.commits[0].commitIndex).toBe(0);
+      const fiberChanges = recorderGlobal!.getFiberChanges() as Array<
+        Array<{ displayName: string }>
+      >;
+      expect(fiberChanges).toHaveLength(1);
+      expect(fiberChanges[0]).toHaveLength(1);
+      expect(fiberChanges[0][0].displayName).toBe("Foo");
 
-      expect(() => JSON.stringify(afterSnapshot)).not.toThrow();
+      expect(() => JSON.stringify(fiberChanges)).not.toThrow();
     } finally {
       if (previousWindow === undefined) {
         delete globalAny.window;
