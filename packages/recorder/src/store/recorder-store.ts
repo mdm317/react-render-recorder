@@ -50,6 +50,7 @@ function createRecorderStoreInstance(): RecorderStore {
     recordedCommitCount = 0;
     setState({
       ...createInitialState(),
+      fiberRoots: state.fiberRoots,
       isRecording: true,
     });
   }
