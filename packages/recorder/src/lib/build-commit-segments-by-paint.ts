@@ -27,9 +27,7 @@ export function buildCommitHistoryTextByPaint({
   });
 
   if (currentLines.length > 0) {
-    paintTexts.push(
-      currentLines.join("\n"),
-    );
+    paintTexts.push(currentLines.join("\n"));
   }
 
   return paintTexts;
