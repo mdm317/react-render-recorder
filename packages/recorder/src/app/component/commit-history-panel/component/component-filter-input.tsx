@@ -1,5 +1,7 @@
 /** @jsxImportSource preact */
 
+// TODO: Re-implement if needed later.
+
 type CommitHistoryFilterInputProps = {
   helperText: string | null;
   setValue: (value: string) => void;

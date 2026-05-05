@@ -26,14 +26,15 @@ test.describe("rendering scenarios", () => {
       await expectRecorderCommitCount(page, 2);
     });
 
-    test("hook history shows the state increment", async ({ page }) => {
+    test("commit history shows the state increment", async ({ page }) => {
       await recordCycle(page, async () => {
         await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
       });
       const result = recorderByTestId(page, "component-filter-result");
       await expect(result).toContainText("Component UpdateButton");
       await expect(result).toContainText("Hook 0 (State)");
-      await expect(result).toContainText("Commit 1: 0 -> 1");
+      await expect(result).toContainText("Commit 1");
+      await expect(result).toContainText("0 -> 1");
     });
   });
 
@@ -45,7 +46,7 @@ test.describe("rendering scenarios", () => {
       await expectRecorderCommitCount(page, 2);
     });
 
-    test("hook history tracks both state hooks across the two commits", async ({ page }) => {
+    test("commit history tracks both state hooks across the two commits", async ({ page }) => {
       await recordCycle(page, async () => {
         await page.getByTestId(SCENARIO_BUTTON.DOUBLE_LAYOUT_EFFECT).click();
       });
@@ -53,8 +54,10 @@ test.describe("rendering scenarios", () => {
       await expect(result).toContainText("Component DoubleUpdateLayoutEffectButton");
       await expect(result).toContainText("Hook 0 (State)");
       await expect(result).toContainText("Hook 1 (State)");
-      await expect(result).toContainText("Commit 1: 0 -> 1");
-      await expect(result).toContainText("Commit 2: 1 -> 2");
+      await expect(result).toContainText("Commit 1");
+      await expect(result).toContainText("Commit 2");
+      await expect(result).toContainText("0 -> 1");
+      await expect(result).toContainText("1 -> 2");
     });
   });
 
@@ -85,19 +88,20 @@ test.describe("rendering scenarios", () => {
       await expectRecorderCommitCount(page, 2);
     });
 
-    test("hook history labels the custom hook as the source", async ({ page }) => {
+    test("commit history labels the custom hook as the source", async ({ page }) => {
       await recordCycle(page, async () => {
         await page.getByTestId(SCENARIO_BUTTON.CUSTOM_HOOK).click();
       });
       const result = recorderByTestId(page, "component-filter-result");
       await expect(result).toContainText("Component CustomHookButton");
       await expect(result).toContainText("Hook 0 (HookCounter > State)");
-      await expect(result).toContainText("Commit 1: 0 -> 1");
+      await expect(result).toContainText("Commit 1");
+      await expect(result).toContainText("0 -> 1");
     });
   });
 
   test.describe("Custom hook · useDebugValue", () => {
-    test("hook history includes the useDebugValue label", async ({ page }) => {
+    test("commit history includes the useDebugValue label", async ({ page }) => {
       await recordCycle(page, async () => {
         await page.getByTestId(SCENARIO_BUTTON.DEBUG_VALUE).click();
       });
@@ -105,7 +109,8 @@ test.describe("rendering scenarios", () => {
       const result = recorderByTestId(page, "component-filter-result");
       await expect(result).toContainText("Component DebugValueButton");
       await expect(result).toContainText('DebugCounter("count = 1")');
-      await expect(result).toContainText("Commit 1: 0 -> 1");
+      await expect(result).toContainText("Commit 1");
+      await expect(result).toContainText("0 -> 1");
     });
   });
 
@@ -128,11 +133,13 @@ test.describe("rendering scenarios", () => {
       });
       await expectRecorderCommitCount(page, 2);
       const result = recorderByTestId(page, "component-filter-result");
+      await expect(result).toContainText("Commit 1");
       await expect(result).toContainText(
-        "Commit 1: null -> [HTMLElement button#hook-target-alpha.hook-target.alpha.primary]",
+        "null -> [HTMLElement button#hook-target-alpha.hook-target.alpha.primary]",
       );
+      await expect(result).toContainText("Commit 2");
       await expect(result).toContainText(
-        "Commit 2: [HTMLElement button#hook-target-alpha.hook-target.alpha.primary] -> null",
+        "[HTMLElement button#hook-target-alpha.hook-target.alpha.primary] -> null",
       );
     });
   });

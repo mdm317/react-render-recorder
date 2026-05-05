@@ -3,7 +3,6 @@ import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
 
 import { useCommitHistory } from "../../../hooks/use-commit-history";
-import { CommitHistoryFilterInput } from "./component/component-filter-input";
 import { CommitHistoryContent } from "./component/history-view";
 import { PaintCommitHistoryContent } from "./component/paint-view";
 import { PaintViewToggleButton } from "./component/paint-view-toggle";
@@ -11,30 +10,17 @@ import { PaintViewToggleButton } from "./component/paint-view-toggle";
 export function CommitHistoryPanel() {
   const [isOpen, setIsOpen] = useState(true);
   const [showPaintView, setShowPaintView] = useState(false);
-  const {
-    availableComponentNames,
-    commitCount,
-    commitHistoryText,
-    commitSegmentsByPaint,
-    componentNameFilter,
-    hookHistoryText,
-    matchingComponents,
-    commitHistoryWithPaintText,
-    setComponentNameFilter,
-  } = useCommitHistory();
+  const { commitCount, commitHistoryText, commitSegmentsByPaint, commitHistoryWithPaintText } =
+    useCommitHistory();
 
   if (commitCount === 0) {
     return null;
   }
 
-  const hasNoMatchingComponent =
-    componentNameFilter.trim().length > 0 && matchingComponents.length === 0;
-
   return (
     <section className="flex min-h-0 w-full flex-col overflow-hidden rounded-[1.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(24,24,27,0.96)_0%,rgba(9,9,11,0.98)_100%)] p-4 text-white shadow-[0_20px_48px_rgba(0,0,0,0.45)] backdrop-blur-xl">
       <CommitHistoryHeader
         commitCount={commitCount}
-        componentCount={availableComponentNames.length}
         headerAction={
           <button
             data-testid="commit-history-toggle"
@@ -65,28 +51,13 @@ export function CommitHistoryPanel() {
         isOpen={isOpen}
         openClassName="mt-3"
       >
-        <CommitHistoryFilterInput
-          helperText={
-            availableComponentNames.length > 0
-              ? `Available: ${availableComponentNames.join(", ")}`
-              : null
-          }
-          setValue={setComponentNameFilter}
-          value={componentNameFilter}
-        />
-
-        {hasNoMatchingComponent ? (
-          <NoMatchMessage />
-        ) : showPaintView ? (
+        {showPaintView ? (
           <PaintCommitHistoryContent
             commitSegmentsByPaint={commitSegmentsByPaint}
             commitHistoryWithPaintText={commitHistoryWithPaintText}
           />
         ) : (
-          <CommitHistoryContent
-            commitHistoryText={commitHistoryText}
-            hookHistoryText={hookHistoryText}
-          />
+          <CommitHistoryContent commitHistoryText={commitHistoryText} />
         )}
       </CollapsibleContent>
     </section>
@@ -95,15 +66,10 @@ export function CommitHistoryPanel() {
 
 type CommitHistoryHeaderProps = {
   commitCount: number;
-  componentCount: number;
   headerAction: ComponentChildren;
 };
 
-function CommitHistoryHeader({
-  commitCount,
-  componentCount,
-  headerAction,
-}: CommitHistoryHeaderProps) {
+function CommitHistoryHeader({ commitCount, headerAction }: CommitHistoryHeaderProps) {
   return (
     <div className="mb-3 flex items-start justify-between gap-4">
       <div>
@@ -116,7 +82,6 @@ function CommitHistoryHeader({
       </div>
       <div className="text-right text-[0.7rem] text-white/45">
         <p data-testid="commit-count">{commitCount} commit(s)</p>
-        <p data-testid="component-count">{componentCount} component(s)</p>
         {headerAction}
       </div>
     </div>
@@ -157,16 +122,5 @@ function CollapsibleContent({
         {children}
       </div>
     </div>
-  );
-}
-
-function NoMatchMessage() {
-  return (
-    <p
-      data-testid="component-filter-no-match"
-      className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
-    >
-      입력한 이름과 일치하는 컴포넌트가 없습니다.
-    </p>
   );
 }

@@ -3,21 +3,11 @@ import { CopyHistoryButton } from "../../common/copy-history-button";
 
 type CommitHistoryContentProps = {
   commitHistoryText: string;
-  hookHistoryText: string;
 };
 
-export function CommitHistoryContent({
-  commitHistoryText,
-  hookHistoryText,
-}: CommitHistoryContentProps) {
+export function CommitHistoryContent({ commitHistoryText }: CommitHistoryContentProps) {
   return (
     <div data-testid="component-filter-result" className="mt-4 space-y-4">
-      <HistoryText
-        accentClassName="text-rose-200"
-        section="hook"
-        text={hookHistoryText}
-        title="Hook history"
-      />
       <HistoryText
         accentClassName="text-sky-200"
         section="commit"
