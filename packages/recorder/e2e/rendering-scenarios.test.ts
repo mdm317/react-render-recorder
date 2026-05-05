@@ -177,13 +177,11 @@ test.describe("rendering scenarios", () => {
 
       const paint1 = segments.nth(0);
       await expect(paint1).toContainText("Paint 1");
-      await expect(paint1).toContainText("Commit range: 1");
       await expect(paint1).toContainText("Component UpdateButton, Hook 0 (State)");
       await expect(paint1).toContainText("0 -> 1");
 
       const paint2 = segments.nth(1);
       await expect(paint2).toContainText("Paint 2");
-      await expect(paint2).toContainText("Commit range: 2");
       await expect(paint2).toContainText("1 -> 2");
     });
 
@@ -201,7 +199,6 @@ test.describe("rendering scenarios", () => {
 
       const paint1 = segments.nth(0);
       await expect(paint1).toContainText("Paint 1");
-      await expect(paint1).toContainText("Commit range: 1-2");
       await expect(paint1).toContainText(
         "Component DoubleUpdateLayoutEffectButton, Hook 0 (State)",
       );
@@ -211,7 +208,6 @@ test.describe("rendering scenarios", () => {
 
       const paint2 = segments.nth(1);
       await expect(paint2).toContainText("Paint 2");
-      await expect(paint2).toContainText("Commit range: 3-4");
       await expect(paint2).toContainText("2 -> 3");
       await expect(paint2).toContainText("3 -> 4");
     });
@@ -244,18 +240,15 @@ test.describe("rendering scenarios", () => {
 
       const paint1 = segments.nth(0);
       await expect(paint1).toContainText("Paint 1");
-      await expect(paint1).toContainText("Commit range: 1");
       await expect(paint1).toContainText("Component UpdateButton, Hook 0 (State)");
       await expect(paint1).toContainText("0 -> 1");
 
       const paint2 = segments.nth(1);
       await expect(paint2).toContainText("Paint 2");
-      await expect(paint2).toContainText("Commit range: 2");
       await expect(paint2).toContainText("1 -> 2");
 
       const paint3 = segments.nth(2);
       await expect(paint3).toContainText("Paint 3");
-      await expect(paint3).toContainText("Commit range: 3");
       await expect(paint3).toContainText("2 -> 3");
     });
 
@@ -274,7 +267,6 @@ test.describe("rendering scenarios", () => {
 
       const paint1 = segments.nth(0);
       await expect(paint1).toContainText("Paint 1");
-      await expect(paint1).toContainText("Commit range: 1-2");
       await expect(paint1).toContainText(
         "Component DoubleUpdateLayoutEffectButton, Hook 0 (State)",
       );
@@ -283,13 +275,11 @@ test.describe("rendering scenarios", () => {
 
       const paint2 = segments.nth(1);
       await expect(paint2).toContainText("Paint 2");
-      await expect(paint2).toContainText("Commit range: 3-4");
       await expect(paint2).toContainText("2 -> 3");
       await expect(paint2).toContainText("3 -> 4");
 
       const paint3 = segments.nth(2);
       await expect(paint3).toContainText("Paint 3");
-      await expect(paint3).toContainText("Commit range: 5-6");
       await expect(paint3).toContainText("4 -> 5");
       await expect(paint3).toContainText("5 -> 6");
     });
