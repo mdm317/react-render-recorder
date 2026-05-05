@@ -24,12 +24,7 @@ import {
 import { startReactRenderRecordServer } from "./recorder/server";
 import { createComparisonWindow } from "./windows/compare";
 import { createDevtoolsWindow, getDevtoolsWindow } from "./windows/home";
-import {
-  clearTargetWindow,
-  evalOnTarget,
-  getTargetWindow,
-  openTargetUrl,
-} from "./windows/target";
+import { clearTargetWindow, evalOnTarget, getTargetWindow, openTargetUrl } from "./windows/target";
 
 function closeTargetUrl() {
   const win = getTargetWindow();
@@ -71,9 +66,7 @@ app.on("ready", async () => {
   ipcMain.handle(RECORDER_START, () => evalOnTarget(RECORDER_START_EXPR));
   ipcMain.handle(RECORDER_END, () => evalOnTarget(RECORDER_END_EXPR));
   ipcMain.handle(PROFILER_START, () => evalOnTarget(PROFILER_START_EXPR));
-  ipcMain.handle(PROFILER_STOP, () =>
-    evalOnTarget(PROFILER_STOP_EXPR, { awaitPromise: true }),
-  );
+  ipcMain.handle(PROFILER_STOP, () => evalOnTarget(PROFILER_STOP_EXPR, { awaitPromise: true }));
 
   createDevtoolsWindow();
 });

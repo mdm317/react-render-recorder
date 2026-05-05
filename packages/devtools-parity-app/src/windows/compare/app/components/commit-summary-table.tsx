@@ -77,8 +77,7 @@ function makeColumns(): ColumnDef<CommitPair>[] {
       accessorKey: "recorderSkipped",
       header: "Skipped",
       cell: (info) => info.getValue<LengthOf>().length,
-      sortingFn: (a, b) =>
-        a.original.recorderSkipped.length - b.original.recorderSkipped.length,
+      sortingFn: (a, b) => a.original.recorderSkipped.length - b.original.recorderSkipped.length,
     },
     {
       id: "totals",
@@ -110,8 +109,8 @@ export function CommitSummaryTable({ data }: { data: CommitPair[] }) {
   if (data.length === 0) {
     return (
       <div className="commit-summary-empty">
-        No commits captured yet. Click <strong>Start Recording</strong>, interact with the
-        target page, then <strong>Stop Recording</strong>.
+        No commits captured yet. Click <strong>Start Recording</strong>, interact with the target
+        page, then <strong>Stop Recording</strong>.
       </div>
     );
   }
@@ -132,9 +131,7 @@ export function CommitSummaryTable({ data }: { data: CommitPair[] }) {
                 >
                   {flexRender(h.column.columnDef.header, h.getContext())}
                   {sorted ? (
-                    <span className="sort-indicator">
-                      {sorted === "asc" ? "↑" : "↓"}
-                    </span>
+                    <span className="sort-indicator">{sorted === "asc" ? "↑" : "↓"}</span>
                   ) : null}
                 </th>
               );
@@ -147,9 +144,7 @@ export function CommitSummaryTable({ data }: { data: CommitPair[] }) {
           <Fragment key={row.id}>
             <tr className={`commit-row commit-row-${row.original.status}`}>
               {row.getVisibleCells().map((cell) => (
-                <td key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
+                <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
               ))}
             </tr>
             {row.getIsExpanded() && (

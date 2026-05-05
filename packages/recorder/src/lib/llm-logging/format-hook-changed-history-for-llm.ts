@@ -44,10 +44,7 @@ export function formatHookChangedHistoryForLLM(
     left.localeCompare(right),
   );
 
-  const lines = [
-    "Hook change history summary",
-    ...(options?.extraSummaryLines ?? []),
-  ];
+  const lines = ["Hook change history summary", ...(options?.extraSummaryLines ?? [])];
 
   if (componentNames.length === 0) {
     return lines.join("\n");
@@ -66,9 +63,9 @@ export function formatHookChangedHistoryForLLM(
       const commitNumbers = entries.map(({ commitIndex }) => commitIndex + 1);
       const firstEntry = entries[0];
       const hookPath =
-        firstEntry != null && "hookPath" in firstEntry ? firstEntry.hookPath ?? null : null;
+        firstEntry != null && "hookPath" in firstEntry ? (firstEntry.hookPath ?? null) : null;
       const hookName =
-        firstEntry != null && "hookName" in firstEntry ? firstEntry.hookName ?? null : null;
+        firstEntry != null && "hookName" in firstEntry ? (firstEntry.hookName ?? null) : null;
       const hookLabel =
         hookPath != null && hookPath.length > 0
           ? `${hookIndex} (${hookPath.join(" > ")})`

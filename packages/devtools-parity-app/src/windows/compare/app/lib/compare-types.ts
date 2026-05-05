@@ -1,7 +1,4 @@
-import type {
-  DevtoolsRankedSummaryCommit,
-  SerializableFiberChange,
-} from "./build-commit-pairs";
+import type { DevtoolsRankedSummaryCommit, SerializableFiberChange } from "./build-commit-pairs";
 
 export type FiberChangesResult = {
   capturedAt: number;

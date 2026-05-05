@@ -5,7 +5,9 @@ import "./App.css";
 export function App() {
   return (
     <main className="page">
-      <h1 className="page__title">Render <em>tracking</em> dev</h1>
+      <h1 className="page__title">
+        Render <em>tracking</em> dev
+      </h1>
       <p className="page__sub">Isolated cases for exercising the recorder.</p>
 
       <div className="row">
@@ -185,8 +187,9 @@ function ElementStatePanel() {
       }}
     >
       {selectedElement ? "Clear selection" : "Store as selected"}
-      <span className="btn__meta" data-testid="element-state-label">{label}</span>
+      <span className="btn__meta" data-testid="element-state-label">
+        {label}
+      </span>
     </button>
   );
 }
-

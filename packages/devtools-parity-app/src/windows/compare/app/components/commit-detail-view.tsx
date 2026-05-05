@@ -57,22 +57,13 @@ export function CommitDetailView({ pair }: { pair: CommitPair }) {
     <div className="commit-detail">
       <div className="commit-detail-grid">
         <ComponentSection title="Matched" entries={pair.matched} kind="matched" />
-        <ComponentSection
-          title="Recorder only"
-          entries={pair.recorderOnly}
-          kind="recorder-only"
-        />
-        <ComponentSection
-          title="DevTools only"
-          entries={pair.devtoolsOnly}
-          kind="devtools-only"
-        />
+        <ComponentSection title="Recorder only" entries={pair.recorderOnly} kind="recorder-only" />
+        <ComponentSection title="DevTools only" entries={pair.devtoolsOnly} kind="devtools-only" />
       </div>
       {pair.recorderSkipped.length > 0 && (
         <section className="detail-skipped">
           <h4>
-            Recorder skipped{" "}
-            <span className="detail-count">{pair.recorderSkipped.length}</span>
+            Recorder skipped <span className="detail-count">{pair.recorderSkipped.length}</span>
           </h4>
           <p className="detail-note">
             Recorder entries with null displayName — excluded from the multiset comparison.
@@ -92,13 +83,11 @@ export function CommitDetailView({ pair }: { pair: CommitPair }) {
       {pair.devtoolsSkipped.length > 0 && (
         <section className="detail-skipped">
           <h4>
-            DevTools skipped{" "}
-            <span className="detail-count">{pair.devtoolsSkipped.length}</span>
+            DevTools skipped <span className="detail-count">{pair.devtoolsSkipped.length}</span>
           </h4>
           <p className="detail-note">
-            ContextProvider / ContextConsumer entries — recorder's collectFiberChanges
-            doesn't track these fiber tags, so they're dropped on the devtools side too
-            for fair comparison.
+            ContextProvider / ContextConsumer entries — recorder's collectFiberChanges doesn't track
+            these fiber tags, so they're dropped on the devtools side too for fair comparison.
           </p>
           <ul className="detail-list">
             {pair.devtoolsSkipped.map((e, i) => (

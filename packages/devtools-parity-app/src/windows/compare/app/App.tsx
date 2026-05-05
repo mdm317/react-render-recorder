@@ -6,11 +6,7 @@ import { ParityPanel } from "./components/parity-panel";
 import { RawDataPanel } from "./components/raw-data-panel";
 import { TabBadge } from "./components/tab-badge";
 import { useCompareStore } from "./hooks/use-compare-store";
-import {
-  EMPTY_PARITY_REPORT,
-  getParityReport,
-  getStatusText,
-} from "./lib/parity-report";
+import { EMPTY_PARITY_REPORT, getParityReport, getStatusText } from "./lib/parity-report";
 import type { TabId } from "./lib/compare-types";
 
 const getTabClassName = (state: { selected: boolean }) =>

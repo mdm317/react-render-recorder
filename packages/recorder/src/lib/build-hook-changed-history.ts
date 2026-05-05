@@ -3,9 +3,7 @@ import type { CommittedFiberChange, Fiber } from "@react-record/devtools-api";
 
 import { sanitizeForJson } from "../utils/safe-json";
 
-type HookChange = NonNullable<
-  NonNullable<CommittedFiberChange["hooks"]>[number]
->;
+type HookChange = NonNullable<NonNullable<CommittedFiberChange["hooks"]>[number]>;
 
 export type HookHistoryEntry = HookChange & {
   commitIndex: number;

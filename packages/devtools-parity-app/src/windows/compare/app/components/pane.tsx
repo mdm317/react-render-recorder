@@ -9,14 +9,7 @@ type PaneProps = {
   title: string;
 };
 
-export function Pane({
-  available,
-  data,
-  emptyMessage,
-  errorMessage,
-  summary,
-  title,
-}: PaneProps) {
+export function Pane({ available, data, emptyMessage, errorMessage, summary, title }: PaneProps) {
   return (
     <section className="pane">
       <header className="pane-header">

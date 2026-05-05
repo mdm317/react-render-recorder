@@ -11,19 +11,22 @@
 **Proposed fix (Option A — tag each root with its source)**:
 
 1. Extend the merged type:
+
    ```ts
    // src/types/profiling-data.ts
-   export type ProfilingDataForRootBackendWithSource =
-     ProfilingDataForRootBackend & { sourceRendererID: number };
+   export type ProfilingDataForRootBackendWithSource = ProfilingDataForRootBackend & {
+     sourceRendererID: number;
+   };
 
    export type ProfilingDataMerged = {
      dataForRoots: ProfilingDataForRootBackendWithSource[];
-     rendererIDs: number[];          // contributing renderers (was singular)
+     rendererIDs: number[]; // contributing renderers (was singular)
      timelineData: TimelineDataExport | null;
    };
    ```
 
 2. Update the WS tap (`buildWsTapScript`) to tag each incoming root with its renderer before merging, and accumulate `rendererIDs[]`:
+
    ```js
    const tagged = (msg.payload.dataForRoots || []).map((root) => ({
      ...root,
@@ -44,7 +47,8 @@
 4. `describeDevtools` in `src/compare/App.tsx` can show source per root, e.g. `"App (renderer 2)"`.
 
 **Alternatives considered**:
-- *Option B — keep responses separate per renderer*: stores `Record<rendererID, ProfilingDataBackend>` instead of merging. Most accurate, but compare UI has to handle a (renderer × root) matrix and timeline data per renderer.
-- *Option C — `rendererIDs[]` only*: minimal change, but renderer-to-root mapping becomes order-dependent and breaks if `dataForRoots` is filtered/sorted later.
+
+- _Option B — keep responses separate per renderer_: stores `Record<rendererID, ProfilingDataBackend>` instead of merging. Most accurate, but compare UI has to handle a (renderer × root) matrix and timeline data per renderer.
+- _Option C — `rendererIDs[]` only_: minimal change, but renderer-to-root mapping becomes order-dependent and breaks if `dataForRoots` is filtered/sorted later.
 
 Option A wins because the renderer label rides with the root and can't desync.

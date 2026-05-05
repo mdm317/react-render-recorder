@@ -127,11 +127,7 @@ export function buildPaintTimingSummaries({
   const summaries: PaintTimingSummary[] = [];
   let startCommitIndex = 0;
 
-  const pushSegment = (
-    paintNumber: number,
-    start: number,
-    end: number,
-  ) => {
+  const pushSegment = (paintNumber: number, start: number, end: number) => {
     const segmentCommits = commitTimingSummaries.slice(start, end + 1);
     const perComponent = new Map<string, { actualMs: number | null; selfMs: number | null }>();
     let totalActualMs: number | null = null;
@@ -202,9 +198,7 @@ export function buildPaintTimingSummaries({
 
 const SUMMARY_TOP_COMPONENT_LIMIT = 3;
 
-export function buildTimingSummaryLines(
-  commitTimingSummaries: CommitTimingSummary[],
-): string[] {
+export function buildTimingSummaryLines(commitTimingSummaries: CommitTimingSummary[]): string[] {
   const commitsWithTiming = commitTimingSummaries.filter((summary) => summary.hasTimingData);
   if (commitsWithTiming.length === 0) {
     return [];

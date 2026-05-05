@@ -4,7 +4,7 @@
   "categories": {
     "correctness": "error"
   },
-  "ignorePatterns": ["**/dist/**", "**/dist-dev-web/**"],
+  "ignorePatterns": ["**/dist/**", "**/dist-dev-web/**", "react/**", "**/node_modules/**"],
   "env": {
     "builtin": true
   },

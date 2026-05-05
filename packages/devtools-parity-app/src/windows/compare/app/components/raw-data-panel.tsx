@@ -17,7 +17,9 @@ export function RawDataPanel({
     <div className="panes">
       <Pane
         title="recorder fiberChanges (raw)"
-        summary={recorderFiberChanges ? describeFiberChanges(recorderFiberChanges.fiberChanges) : "—"}
+        summary={
+          recorderFiberChanges ? describeFiberChanges(recorderFiberChanges.fiberChanges) : "—"
+        }
         available={Boolean(recorderFiberChanges?.fiberChangesAvailable)}
         data={recorderFiberChanges?.fiberChanges}
         emptyMessage="No fiber changes captured yet. Click Start Recording, interact with the target page, then Stop Recording."

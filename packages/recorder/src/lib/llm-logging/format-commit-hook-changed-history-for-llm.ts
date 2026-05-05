@@ -67,8 +67,8 @@ function buildCommitEntries(
           nextEntries.push({
             componentName: displayName,
             hookIndex: hook.hookIndex,
-            hookName: "hookName" in hook ? hook.hookName ?? null : null,
-            hookPath: "hookPath" in hook ? hook.hookPath ?? null : null,
+            hookName: "hookName" in hook ? (hook.hookName ?? null) : null,
+            hookPath: "hookPath" in hook ? (hook.hookPath ?? null) : null,
             prev: hook.prev,
             next: hook.next,
           });

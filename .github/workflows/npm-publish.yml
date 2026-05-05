@@ -3,7 +3,7 @@ name: npm publish
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: read

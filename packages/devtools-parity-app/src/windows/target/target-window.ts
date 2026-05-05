@@ -14,10 +14,7 @@ export function clearTargetWindow(): void {
   targetWindow = null;
 }
 
-async function getHtmlText(
-  wc: Electron.WebContents,
-  requestId: string,
-): Promise<string> {
+async function getHtmlText(wc: Electron.WebContents, requestId: string): Promise<string> {
   const { body, base64Encoded } = (await wc.debugger.sendCommand("Fetch.getResponseBody", {
     requestId,
   })) as { body: string; base64Encoded: boolean };
@@ -34,11 +31,7 @@ function injectIntoHtml(html: string, scriptTags: string): string {
   return `${scriptTags}${html}`;
 }
 
-export async function openTargetUrl(
-  rawUrl: string,
-  host: string,
-  port: number,
-): Promise<void> {
+export async function openTargetUrl(rawUrl: string, host: string, port: number): Promise<void> {
   if (targetWindow && !targetWindow.isDestroyed()) {
     targetWindow.close();
     targetWindow = null;

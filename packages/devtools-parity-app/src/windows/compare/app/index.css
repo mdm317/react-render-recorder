@@ -7,12 +7,11 @@
 :root {
   /* type stacks */
   --font-ui:
-    ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    "Segoe UI Variable", "Segoe UI", system-ui, "Helvetica Neue", Arial,
-    sans-serif;
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable",
+    "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
   --font-mono:
-    ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", "Cascadia Code",
-    Menlo, Consolas, monospace;
+    ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", "Cascadia Code", Menlo, Consolas,
+    monospace;
 
   /* zinc neutrals */
   --c-bg: #ffffff;
@@ -158,8 +157,12 @@ button {
   border: 1px solid var(--c-border-strong);
   border-radius: var(--r);
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease,
-    color 120ms ease, box-shadow 120ms ease, transform 80ms ease;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    box-shadow 120ms ease,
+    transform 80ms ease;
 }
 
 .topbar button:hover:not(:disabled) {
@@ -309,7 +312,9 @@ button {
   color: var(--c-text-muted);
   letter-spacing: 0.005em;
   cursor: pointer;
-  transition: color 120ms ease, background-color 120ms ease;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
 }
 
 .tab::after {
@@ -490,7 +495,9 @@ button {
 
 .commit-table th.sortable {
   cursor: pointer;
-  transition: color 120ms ease, background-color 120ms ease;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
 }
 
 .commit-table th.sortable:hover {
@@ -557,7 +564,9 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: color 120ms ease, background-color 120ms ease;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
 }
 
 .row-expander:hover {
@@ -981,12 +990,7 @@ button {
   margin: 0 auto var(--s-3);
   border: 1px dashed var(--c-border-strong);
   border-radius: var(--r);
-  background:
-    repeating-linear-gradient(
-      45deg,
-      transparent 0 4px,
-      var(--c-surface-2) 4px 8px
-    );
+  background: repeating-linear-gradient(45deg, transparent 0 4px, var(--c-surface-2) 4px 8px);
 }
 
 .error {

@@ -23,8 +23,8 @@
     "preact": "^10.29.1"
   },
   "devDependencies": {
-    "@react-record/devtools-api": "file:../../react/packages/react-devtools-custom",
     "@playwright/test": "^1.59.1",
+    "@react-record/devtools-api": "file:../../react/packages/react-devtools-custom",
     "@tailwindcss/vite": "^4.2.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

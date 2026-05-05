@@ -12,10 +12,7 @@ declare global {
   interface Window {
     __reactDevtoolsStandaloneProfilingDataWaiters?: Array<() => void>;
     __reactDevtoolsStandaloneBackendWS?: WebSocket;
-    __simulateReactDevtoolsStandaloneFrontendMessage?: (
-      event: string,
-      payload?: unknown,
-    ) => void;
+    __simulateReactDevtoolsStandaloneFrontendMessage?: (event: string, payload?: unknown) => void;
   }
 }
 
@@ -74,12 +71,9 @@ function installDevtoolsProfilerTap(matchPrefix: string): void {
         "react-devtools standalone backend WebSocket not initialized yet (standalone DevTools may not be connected)",
       );
     }
-    const handler = (ws as WebSocket & { onmessage?: (ev: { data: string }) => void })
-      .onmessage;
+    const handler = (ws as WebSocket & { onmessage?: (ev: { data: string }) => void }).onmessage;
     if (typeof handler !== "function") {
-      throw new Error(
-        "react-devtools standalone backend onmessage handler not registered yet",
-      );
+      throw new Error("react-devtools standalone backend onmessage handler not registered yet");
     }
     handler({ data: JSON.stringify({ event: event, payload: payload }) });
   };

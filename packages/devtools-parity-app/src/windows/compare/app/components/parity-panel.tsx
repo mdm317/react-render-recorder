@@ -10,11 +10,7 @@ type ParityPanelProps = {
   mismatchedCount: number;
 };
 
-export function ParityPanel({
-  commitPairs,
-  matchedCount,
-  mismatchedCount,
-}: ParityPanelProps) {
+export function ParityPanel({ commitPairs, matchedCount, mismatchedCount }: ParityPanelProps) {
   const hasCommitPairs = commitPairs.length > 0;
   const mismatchStatus = mismatchedCount > 0 ? "mismatched" : "matched";
 

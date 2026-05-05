@@ -1,23 +1,34 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..500;1,9..144,400&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..500;1,9..144,400&display=swap");
 
 :root {
-  --bg: #F4F1E9;
-  --bg-raised: #FAF8F2;
-  --ink: #1F1E1C;
-  --ink-muted: #6E675E;
-  --ink-faint: #A89F94;
-  --coral: #CC785C;
-  --coral-deep: #B4624A;
-  --coral-wash: #F0DACE;
-  --border: rgba(31, 30, 28, 0.10);
+  --bg: #f4f1e9;
+  --bg-raised: #faf8f2;
+  --ink: #1f1e1c;
+  --ink-muted: #6e675e;
+  --ink-faint: #a89f94;
+  --coral: #cc785c;
+  --coral-deep: #b4624a;
+  --coral-wash: #f0dace;
+  --border: rgba(31, 30, 28, 0.1);
   --border-strong: rgba(31, 30, 28, 0.16);
-  --font-serif: 'Fraunces', Georgia, serif;
-  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-serif: "Fraunces", Georgia, serif;
+  --font-sans:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
-*, *::before, *::after { box-sizing: border-box; }
-html, body, #root { margin: 0; padding: 0; min-height: 100vh; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
 body {
   background: var(--bg);
   color: var(--ink);
@@ -58,9 +69,13 @@ body {
   padding: 12px 0;
   border-top: 1px solid var(--border);
 }
-.row:last-of-type { border-bottom: 1px solid var(--border); }
+.row:last-of-type {
+  border-bottom: 1px solid var(--border);
+}
 
-.row__label { min-width: 0; }
+.row__label {
+  min-width: 0;
+}
 .row__label-title {
   font-family: var(--font-serif);
   font-size: 15px;
@@ -85,15 +100,23 @@ body {
   padding: 8px 14px;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
   display: inline-flex;
   align-items: center;
   gap: 10px;
   white-space: nowrap;
   flex-shrink: 0;
 }
-.btn:hover { border-color: var(--coral); }
-.btn:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+.btn:hover {
+  border-color: var(--coral);
+}
+.btn:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+}
 
 .btn__meta {
   font-size: 11.5px;
@@ -106,10 +129,13 @@ body {
 
 .btn--coral {
   background: var(--coral);
-  color: #FAF8F2;
+  color: #faf8f2;
   border-color: var(--coral-deep);
 }
-.btn--coral:hover { background: var(--coral-deep); border-color: var(--coral-deep); }
+.btn--coral:hover {
+  background: var(--coral-deep);
+  border-color: var(--coral-deep);
+}
 .btn--coral .btn__meta {
   color: rgba(250, 248, 242, 0.75);
   border-left-color: rgba(250, 248, 242, 0.3);
@@ -120,7 +146,9 @@ body {
   border-color: rgba(204, 120, 92, 0.45);
   color: var(--coral-deep);
 }
-.btn--outline:hover { background: var(--coral-wash); }
+.btn--outline:hover {
+  background: var(--coral-wash);
+}
 .btn--outline .btn__meta {
   color: var(--coral-deep);
   opacity: 0.7;
