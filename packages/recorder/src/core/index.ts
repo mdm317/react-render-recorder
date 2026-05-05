@@ -2,25 +2,14 @@ import { onCommitFiber } from "@react-record/devtools-api";
 
 import { onReactCommit } from "./on-react-commit";
 import { onReactPaint } from "./on-react-paint";
+import { exposeRecorderApi } from "./recorder-api";
 import { renderRecorderUI } from "./render-recorder-ui";
-import { endRecording, getFiberChanges, startRecording } from "../services/recording";
 import { createRecorderStore } from "../store";
-
-const RECORDER_GLOBAL = "__REACT_RENDER_RECORDER__";
-
-function exposeRecorderControl(recorderStore: ReturnType<typeof createRecorderStore>): void {
-  if (typeof window === "undefined") return;
-  (window as unknown as Record<string, unknown>)[RECORDER_GLOBAL] = {
-    start: () => startRecording(recorderStore),
-    end: () => endRecording(recorderStore),
-    getFiberChanges: () => getFiberChanges(recorderStore),
-  };
-}
 
 export function installReactRenderRecorder(): void {
   const recorderStore = createRecorderStore();
 
-  exposeRecorderControl(recorderStore);
+  exposeRecorderApi(recorderStore);
   renderRecorderUI();
   onReactCommit((hook, rendererID, root, _priorityLevel) => {
     recorderStore.setFiberRoot(root);

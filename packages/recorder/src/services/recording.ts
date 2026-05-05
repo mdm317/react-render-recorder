@@ -1,7 +1,6 @@
 import {
   endRecording as endDevtoolsRecording,
   startRecording as startDevtoolsRecording,
-  type CommittedFiberChange,
 } from "@react-record/devtools-api";
 
 import type { RecorderStore } from "../store";
@@ -22,14 +21,4 @@ export function endRecording(store: RecorderStore) {
   const res = endDevtoolsRecording();
   store.endRecording(res);
   return res;
-}
-
-export type SerializableFiberChange = Omit<CommittedFiberChange, "fiber" | "prevFiber">;
-
-export function getFiberChanges(store: RecorderStore): SerializableFiberChange[][] {
-  return store
-    .getSnapshot()
-    .fiberChanges.map((commitChanges) =>
-      commitChanges.map(({ fiber: _fiber, prevFiber: _prevFiber, ...rest }) => rest),
-    );
 }
