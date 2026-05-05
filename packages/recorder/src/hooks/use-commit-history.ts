@@ -1,20 +1,14 @@
 import { useMemo } from "preact/hooks";
 
 import { buildFilteredCommits } from "../lib/build-filtered-commits";
-import {
-  buildCommitSegmentsByPaint,
-  buildCommitHistoryWithPaintText,
-  type CommitSegmentByPaint,
-} from "../lib/build-commit-segments-by-paint";
-import { buildRerenderCountLines } from "../lib/build-rerender-counts";
-import { formatCommitHookChangedHistoryForLLM } from "../lib/llm-logging";
+import { buildCommitHistoryTextByPaint } from "../lib/build-commit-segments-by-paint";
+import { formatCommitHookChangedHistoryForLLM } from "../lib/llm-logging/format-commit-hook-changed-history-for-llm";
 import { useRecorderStore } from "../store";
 
 type UseCommitHistoryResult = {
   commitCount: number;
   commitHistoryText: string;
-  commitSegmentsByPaint: CommitSegmentByPaint[];
-  commitHistoryWithPaintText: string;
+  commitHistoryTextByPaint: string[];
 };
 
 export function useCommitHistory(): UseCommitHistoryResult {
@@ -25,20 +19,13 @@ export function useCommitHistory(): UseCommitHistoryResult {
       fiberChanges: state.fiberChanges,
       paintCommitIndices: state.paintCommitIndices,
     });
-    const commitSegmentsByPaint = buildCommitSegmentsByPaint({
-      componentNameFilter: "",
-      fiberChanges: filteredFiberChanges,
-      paintCommitIndices: filteredPaintCommitIndices,
-    });
-    const rerenderCountLines = buildRerenderCountLines(filteredFiberChanges);
-
     return {
       commitCount: filteredFiberChanges.length,
-      commitHistoryText: formatCommitHookChangedHistoryForLLM(filteredFiberChanges, {
-        extraSummaryLines: rerenderCountLines,
+      commitHistoryText: formatCommitHookChangedHistoryForLLM(filteredFiberChanges),
+      commitHistoryTextByPaint: buildCommitHistoryTextByPaint({
+        fiberChanges: filteredFiberChanges,
+        paintCommitIndices: filteredPaintCommitIndices,
       }),
-      commitSegmentsByPaint,
-      commitHistoryWithPaintText: buildCommitHistoryWithPaintText(commitSegmentsByPaint),
     };
   }, [state]);
 }

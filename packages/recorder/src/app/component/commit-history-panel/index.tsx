@@ -10,8 +10,7 @@ import { PaintViewToggleButton } from "./component/paint-view-toggle";
 export function CommitHistoryPanel() {
   const [isOpen, setIsOpen] = useState(true);
   const [showPaintView, setShowPaintView] = useState(false);
-  const { commitCount, commitHistoryText, commitSegmentsByPaint, commitHistoryWithPaintText } =
-    useCommitHistory();
+  const { commitCount, commitHistoryText, commitHistoryTextByPaint } = useCommitHistory();
 
   if (commitCount === 0) {
     return null;
@@ -52,10 +51,7 @@ export function CommitHistoryPanel() {
         openClassName="mt-3"
       >
         {showPaintView ? (
-          <PaintCommitHistoryContent
-            commitSegmentsByPaint={commitSegmentsByPaint}
-            commitHistoryWithPaintText={commitHistoryWithPaintText}
-          />
+          <PaintCommitHistoryContent commitHistoryTextByPaint={commitHistoryTextByPaint} />
         ) : (
           <CommitHistoryContent commitHistoryText={commitHistoryText} />
         )}
