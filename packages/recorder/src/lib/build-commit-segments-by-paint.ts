@@ -2,7 +2,7 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
 import { filterFiberChangesByComponentPreservingCommitIndices } from "./component-filter";
-import { formatCommitHookChangedHistoryForLLM } from "./llm-logging";
+import { formatCommitHookChangedHistoryForLLM } from "./llm-logging/format-commit-hook-changed-history-for-llm";
 
 export type CommitSegmentByPaint = {
   endCommitIndex: number;

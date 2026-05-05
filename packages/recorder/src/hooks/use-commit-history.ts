@@ -6,8 +6,7 @@ import {
   buildCommitHistoryWithPaintText,
   type CommitSegmentByPaint,
 } from "../lib/build-commit-segments-by-paint";
-import { buildRerenderCountLines } from "../lib/build-rerender-counts";
-import { formatCommitHookChangedHistoryForLLM } from "../lib/llm-logging";
+import { formatCommitHookChangedHistoryForLLM } from "../lib/llm-logging/format-commit-hook-changed-history-for-llm";
 import { useRecorderStore } from "../store";
 
 type UseCommitHistoryResult = {
@@ -30,13 +29,9 @@ export function useCommitHistory(): UseCommitHistoryResult {
       fiberChanges: filteredFiberChanges,
       paintCommitIndices: filteredPaintCommitIndices,
     });
-    const rerenderCountLines = buildRerenderCountLines(filteredFiberChanges);
-
     return {
       commitCount: filteredFiberChanges.length,
-      commitHistoryText: formatCommitHookChangedHistoryForLLM(filteredFiberChanges, {
-        extraSummaryLines: rerenderCountLines,
-      }),
+      commitHistoryText: formatCommitHookChangedHistoryForLLM(filteredFiberChanges),
       commitSegmentsByPaint,
       commitHistoryWithPaintText: buildCommitHistoryWithPaintText(commitSegmentsByPaint),
     };
