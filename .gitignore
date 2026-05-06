@@ -1,6 +1,7 @@
 node_modules
 dist
 dist-dev-web
+dist-web
 .DS_Store
 *.tsbuildinfo
 pnpm-debug.log*

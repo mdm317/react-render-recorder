@@ -44,21 +44,132 @@ body {
   padding: 40px 28px;
 }
 
-.page__title {
+.hero {
+  padding-bottom: 8px;
+}
+
+.hero__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 44px;
+}
+
+.hero__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.01em;
+  color: var(--ink-muted);
+}
+.hero__brand-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--coral);
+  display: inline-block;
+  box-shadow: 0 0 0 3px rgba(204, 120, 92, 0.16);
+}
+.hero__brand-name {
+  font-feature-settings: "ss01" 1;
+}
+
+.hero__github {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 11px 6px 10px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    color 140ms ease;
+}
+.hero__github:hover {
+  border-color: var(--coral);
+  background: #fffdf7;
+}
+.hero__github:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+}
+.hero__github-icon {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+.hero__github-arrow {
+  font-size: 11px;
+  color: var(--coral-deep);
+  margin-left: -1px;
+}
+
+.hero__title {
   font-family: var(--font-serif);
   font-weight: 400;
-  font-size: 26px;
-  letter-spacing: -0.01em;
-  margin: 0 0 4px;
+  font-size: 40px;
+  line-height: 1.05;
+  letter-spacing: -0.022em;
+  margin: 0 0 18px;
+  color: var(--ink);
 }
-.page__title em {
+.hero__title em {
   font-style: italic;
+  font-weight: 500;
   color: var(--coral-deep);
 }
-.page__sub {
-  font-size: 13px;
+
+.hero__lede {
+  font-size: 14.5px;
+  line-height: 1.6;
   color: var(--ink-muted);
-  margin: 0 0 24px;
+  margin: 0;
+  max-width: 52ch;
+}
+.hero__lede-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.84em;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 1px 7px;
+  margin: 0 1px;
+  background: rgba(204, 120, 92, 0.09);
+  color: var(--coral-deep);
+  border-radius: 4px;
+  vertical-align: 1px;
+}
+
+.page__divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 40px 0 12px;
+}
+.page__divider::before,
+.page__divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.page__divider-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
 }
 
 .row {

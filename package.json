@@ -8,6 +8,7 @@
     "dev": "pnpm --filter react-render-recorder dev",
     "build": "pnpm --filter react-render-recorder build",
     "build:react-render-recorder": "pnpm --filter react-render-recorder build",
+    "build:web": "pnpm --filter react-render-recorder build:web",
     "format": "oxfmt --config .oxfmtrc.json .",
     "format:check": "oxfmt --config .oxfmtrc.json --check .",
     "lint": "oxlint --config .oxlintrc.json --deny-warnings packages",

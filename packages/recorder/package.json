@@ -16,6 +16,8 @@
     "dev": "vite",
     "dev:lib": "vite build --watch",
     "build": "rm -rf dist && vite build",
+    "build:web": "rm -rf dist-web && vite build --mode app",
+    "preview:web": "vite preview --outDir dist-web",
     "test:unit": "vitest run",
     "test:e2e": "playwright test --config e2e/playwright.config.ts"
   },
