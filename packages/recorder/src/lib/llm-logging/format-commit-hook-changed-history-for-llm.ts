@@ -1,5 +1,5 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
-import { buildRerenderCountLines } from "./util/build-rerender-count-lines";
+import { buildSummaryLines } from "./util/build-summary-lines";
 import { getCommitSectionLines } from "./util/format-commit-section";
 
 function countComponentsWithHookChanges(fiberChangesByCommit: CommittedFiberChange[][]): number {
@@ -14,8 +14,14 @@ function countComponentsWithHookChanges(fiberChangesByCommit: CommittedFiberChan
   return names.size;
 }
 
+type FormatOptions = {
+  includeRenderDuration?: boolean;
+  includeRerenderCount?: boolean;
+};
+
 export function formatCommitHookChangedHistoryForLLM(
   fiberChangesByCommit: CommittedFiberChange[][],
+  { includeRenderDuration = false, includeRerenderCount = true }: FormatOptions = {},
 ): string {
   const totalCommits = fiberChangesByCommit.length;
   const componentsWithHookChanges = countComponentsWithHookChanges(fiberChangesByCommit);
@@ -25,7 +31,7 @@ export function formatCommitHookChangedHistoryForLLM(
 
   const lines: string[] = [
     `${totalCommits} ${commitsLabel}, ${componentsWithHookChanges} ${componentsLabel} with hook changes`,
-    ...buildRerenderCountLines(fiberChangesByCommit),
+    ...buildSummaryLines(fiberChangesByCommit, { includeRerenderCount, includeRenderDuration }),
   ];
 
   fiberChangesByCommit.forEach((fiberChanges, commitIndex) => {

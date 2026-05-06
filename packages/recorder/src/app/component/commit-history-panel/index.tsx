@@ -6,11 +6,20 @@ import { useCommitHistory } from "../../../hooks/use-commit-history";
 import { CommitHistoryContent } from "./component/history-view";
 import { PaintCommitHistoryContent } from "./component/paint-view";
 import { PaintViewToggleButton } from "./component/paint-view-toggle";
+import {
+  INITIAL_RECORDER_OPTIONS,
+  type RecorderOptionsState,
+  ViewOptionsPopover,
+} from "./component/view-options-popover";
 
 export function CommitHistoryPanel() {
   const [isOpen, setIsOpen] = useState(true);
   const [showPaintView, setShowPaintView] = useState(false);
-  const { commitCount, commitHistoryText, commitHistoryTextByPaint } = useCommitHistory();
+  const [options, setOptions] = useState<RecorderOptionsState>(INITIAL_RECORDER_OPTIONS);
+  const { commitCount, commitHistoryText, commitHistoryTextByPaint } = useCommitHistory({
+    includeRenderDuration: options.isRenderDurationVisible,
+    includeRerenderCount: options.isRerenderCountVisible,
+  });
 
   if (commitCount === 0) {
     return null;
@@ -36,12 +45,15 @@ export function CommitHistoryPanel() {
         }
       />
 
-      <PaintViewToggleButton
-        isPressed={showPaintView}
-        onToggle={() => {
-          setShowPaintView((prev) => !prev);
-        }}
-      />
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <PaintViewToggleButton
+          isPressed={showPaintView}
+          onToggle={() => {
+            setShowPaintView((prev) => !prev);
+          }}
+        />
+        <ViewOptionsPopover options={options} setOptions={setOptions} />
+      </div>
 
       <CollapsibleContent
         className="min-h-0 flex-1"
