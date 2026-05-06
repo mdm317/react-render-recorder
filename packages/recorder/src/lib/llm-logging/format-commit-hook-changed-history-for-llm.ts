@@ -14,8 +14,13 @@ function countComponentsWithHookChanges(fiberChangesByCommit: CommittedFiberChan
   return names.size;
 }
 
+type FormatOptions = {
+  includeRerenderCount?: boolean;
+};
+
 export function formatCommitHookChangedHistoryForLLM(
   fiberChangesByCommit: CommittedFiberChange[][],
+  { includeRerenderCount = true }: FormatOptions = {},
 ): string {
   const totalCommits = fiberChangesByCommit.length;
   const componentsWithHookChanges = countComponentsWithHookChanges(fiberChangesByCommit);
@@ -25,7 +30,7 @@ export function formatCommitHookChangedHistoryForLLM(
 
   const lines: string[] = [
     `${totalCommits} ${commitsLabel}, ${componentsWithHookChanges} ${componentsLabel} with hook changes`,
-    ...buildRerenderCountLines(fiberChangesByCommit),
+    ...(includeRerenderCount ? buildRerenderCountLines(fiberChangesByCommit) : []),
   ];
 
   fiberChangesByCommit.forEach((fiberChanges, commitIndex) => {

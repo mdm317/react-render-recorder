@@ -5,13 +5,19 @@ import { buildCommitHistoryTextByPaint } from "../lib/build-commit-segments-by-p
 import { formatCommitHookChangedHistoryForLLM } from "../lib/llm-logging/format-commit-hook-changed-history-for-llm";
 import { useRecorderStore } from "../store";
 
+type UseCommitHistoryOptions = {
+  includeRerenderCount?: boolean;
+};
+
 type UseCommitHistoryResult = {
   commitCount: number;
   commitHistoryText: string;
   commitHistoryTextByPaint: string[];
 };
 
-export function useCommitHistory(): UseCommitHistoryResult {
+export function useCommitHistory({
+  includeRerenderCount = true,
+}: UseCommitHistoryOptions = {}): UseCommitHistoryResult {
   const { state } = useRecorderStore();
 
   return useMemo(() => {
@@ -21,11 +27,13 @@ export function useCommitHistory(): UseCommitHistoryResult {
     });
     return {
       commitCount: filteredFiberChanges.length,
-      commitHistoryText: formatCommitHookChangedHistoryForLLM(filteredFiberChanges),
+      commitHistoryText: formatCommitHookChangedHistoryForLLM(filteredFiberChanges, {
+        includeRerenderCount,
+      }),
       commitHistoryTextByPaint: buildCommitHistoryTextByPaint({
         fiberChanges: filteredFiberChanges,
         paintCommitIndices: filteredPaintCommitIndices,
       }),
     };
-  }, [state]);
+  }, [state, includeRerenderCount]);
 }
