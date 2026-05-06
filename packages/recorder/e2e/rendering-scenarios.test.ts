@@ -31,10 +31,9 @@ test.describe("rendering scenarios", () => {
         await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
       });
       const result = recorderByTestId(page, "component-filter-result");
-      await expect(result).toContainText("Component UpdateButton");
-      await expect(result).toContainText("Hook 0 (State)");
-      await expect(result).toContainText("Commit 1");
-      await expect(result).toContainText("0 -> 1");
+      await expect(result).toContainText("UpdateButton hook[0] State");
+      await expect(result).toContainText("## Commit 1");
+      await expect(result).toContainText("0 → 1");
     });
   });
 
@@ -51,13 +50,12 @@ test.describe("rendering scenarios", () => {
         await page.getByTestId(SCENARIO_BUTTON.DOUBLE_LAYOUT_EFFECT).click();
       });
       const result = recorderByTestId(page, "component-filter-result");
-      await expect(result).toContainText("Component DoubleUpdateLayoutEffectButton");
-      await expect(result).toContainText("Hook 0 (State)");
-      await expect(result).toContainText("Hook 1 (State)");
-      await expect(result).toContainText("Commit 1");
-      await expect(result).toContainText("Commit 2");
-      await expect(result).toContainText("0 -> 1");
-      await expect(result).toContainText("1 -> 2");
+      await expect(result).toContainText("DoubleUpdateLayoutEffectButton hook[0] State");
+      await expect(result).toContainText("DoubleUpdateLayoutEffectButton hook[1] State");
+      await expect(result).toContainText("## Commit 1");
+      await expect(result).toContainText("## Commit 2");
+      await expect(result).toContainText("0 → 1");
+      await expect(result).toContainText("1 → 2");
     });
   });
 
@@ -74,9 +72,8 @@ test.describe("rendering scenarios", () => {
         await page.getByTestId(SCENARIO_BUTTON.DOUBLE_EFFECT).click();
       });
       const result = recorderByTestId(page, "component-filter-result");
-      await expect(result).toContainText("Component DoubleUpdateEffectButton");
-      await expect(result).toContainText("Hook 0 (State)");
-      await expect(result).toContainText("Hook 1 (State)");
+      await expect(result).toContainText("DoubleUpdateEffectButton hook[0] State");
+      await expect(result).toContainText("DoubleUpdateEffectButton hook[1] State");
     });
   });
 
@@ -93,10 +90,9 @@ test.describe("rendering scenarios", () => {
         await page.getByTestId(SCENARIO_BUTTON.CUSTOM_HOOK).click();
       });
       const result = recorderByTestId(page, "component-filter-result");
-      await expect(result).toContainText("Component CustomHookButton");
-      await expect(result).toContainText("Hook 0 (HookCounter > State)");
-      await expect(result).toContainText("Commit 1");
-      await expect(result).toContainText("0 -> 1");
+      await expect(result).toContainText("CustomHookButton hook[0] State (in HookCounter)");
+      await expect(result).toContainText("## Commit 1");
+      await expect(result).toContainText("0 → 1");
     });
   });
 
@@ -107,10 +103,10 @@ test.describe("rendering scenarios", () => {
       });
       await expectRecorderCommitCount(page, 1);
       const result = recorderByTestId(page, "component-filter-result");
-      await expect(result).toContainText("Component DebugValueButton");
-      await expect(result).toContainText('DebugCounter("count = 1")');
-      await expect(result).toContainText("Commit 1");
-      await expect(result).toContainText("0 -> 1");
+      await expect(result).toContainText("DebugValueButton hook[0] State");
+      await expect(result).toContainText('in DebugCounter, debug="count = 1"');
+      await expect(result).toContainText("## Commit 1");
+      await expect(result).toContainText("0 → 1");
     });
   });
 
@@ -121,9 +117,9 @@ test.describe("rendering scenarios", () => {
       });
       await expectRecorderCommitCount(page, 1);
       const result = recorderByTestId(page, "component-filter-result");
-      await expect(result).toContainText("Component ElementStatePanel");
+      await expect(result).toContainText("ElementStatePanel hook[0] State");
       await expect(result).toContainText(
-        "null -> [HTMLElement button#hook-target-alpha.hook-target.alpha.primary]",
+        "null → [button#hook-target-alpha.hook-target.alpha.primary]",
       );
     });
 
@@ -133,13 +129,13 @@ test.describe("rendering scenarios", () => {
       });
       await expectRecorderCommitCount(page, 2);
       const result = recorderByTestId(page, "component-filter-result");
-      await expect(result).toContainText("Commit 1");
+      await expect(result).toContainText("## Commit 1");
       await expect(result).toContainText(
-        "null -> [HTMLElement button#hook-target-alpha.hook-target.alpha.primary]",
+        "null → [button#hook-target-alpha.hook-target.alpha.primary]",
       );
-      await expect(result).toContainText("Commit 2");
+      await expect(result).toContainText("## Commit 2");
       await expect(result).toContainText(
-        "[HTMLElement button#hook-target-alpha.hook-target.alpha.primary] -> null",
+        "[button#hook-target-alpha.hook-target.alpha.primary] → null",
       );
     });
   });
@@ -177,12 +173,12 @@ test.describe("rendering scenarios", () => {
 
       const paint1 = segments.nth(0);
       await expect(paint1).toContainText("Paint 1");
-      await expect(paint1).toContainText("Component UpdateButton, Hook 0 (State)");
-      await expect(paint1).toContainText("0 -> 1");
+      await expect(paint1).toContainText("UpdateButton hook[0] State");
+      await expect(paint1).toContainText("0 → 1");
 
       const paint2 = segments.nth(1);
       await expect(paint2).toContainText("Paint 2");
-      await expect(paint2).toContainText("1 -> 2");
+      await expect(paint2).toContainText("1 → 2");
     });
 
     test("useLayoutEffect 2 clicks produce two paints each grouping a pair of commits with hook data", async ({
@@ -199,17 +195,15 @@ test.describe("rendering scenarios", () => {
 
       const paint1 = segments.nth(0);
       await expect(paint1).toContainText("Paint 1");
-      await expect(paint1).toContainText(
-        "Component DoubleUpdateLayoutEffectButton, Hook 0 (State)",
-      );
-      await expect(paint1).toContainText("0 -> 1");
-      await expect(paint1).toContainText("1 -> 2");
-      await expect(paint1).toContainText("false -> true");
+      await expect(paint1).toContainText("DoubleUpdateLayoutEffectButton hook[0] State");
+      await expect(paint1).toContainText("0 → 1");
+      await expect(paint1).toContainText("1 → 2");
+      await expect(paint1).toContainText("false → true");
 
       const paint2 = segments.nth(1);
       await expect(paint2).toContainText("Paint 2");
-      await expect(paint2).toContainText("2 -> 3");
-      await expect(paint2).toContainText("3 -> 4");
+      await expect(paint2).toContainText("2 → 3");
+      await expect(paint2).toContainText("3 → 4");
     });
 
     test("shows empty state when a single click produces no paint marker", async ({ page }) => {
@@ -240,16 +234,16 @@ test.describe("rendering scenarios", () => {
 
       const paint1 = segments.nth(0);
       await expect(paint1).toContainText("Paint 1");
-      await expect(paint1).toContainText("Component UpdateButton, Hook 0 (State)");
-      await expect(paint1).toContainText("0 -> 1");
+      await expect(paint1).toContainText("UpdateButton hook[0] State");
+      await expect(paint1).toContainText("0 → 1");
 
       const paint2 = segments.nth(1);
       await expect(paint2).toContainText("Paint 2");
-      await expect(paint2).toContainText("1 -> 2");
+      await expect(paint2).toContainText("1 → 2");
 
       const paint3 = segments.nth(2);
       await expect(paint3).toContainText("Paint 3");
-      await expect(paint3).toContainText("2 -> 3");
+      await expect(paint3).toContainText("2 → 3");
     });
 
     test("useLayoutEffect 3 clicks produce 3 paints each grouping a pair of commits with hook data", async ({
@@ -267,21 +261,19 @@ test.describe("rendering scenarios", () => {
 
       const paint1 = segments.nth(0);
       await expect(paint1).toContainText("Paint 1");
-      await expect(paint1).toContainText(
-        "Component DoubleUpdateLayoutEffectButton, Hook 0 (State)",
-      );
-      await expect(paint1).toContainText("0 -> 1");
-      await expect(paint1).toContainText("1 -> 2");
+      await expect(paint1).toContainText("DoubleUpdateLayoutEffectButton hook[0] State");
+      await expect(paint1).toContainText("0 → 1");
+      await expect(paint1).toContainText("1 → 2");
 
       const paint2 = segments.nth(1);
       await expect(paint2).toContainText("Paint 2");
-      await expect(paint2).toContainText("2 -> 3");
-      await expect(paint2).toContainText("3 -> 4");
+      await expect(paint2).toContainText("2 → 3");
+      await expect(paint2).toContainText("3 → 4");
 
       const paint3 = segments.nth(2);
       await expect(paint3).toContainText("Paint 3");
-      await expect(paint3).toContainText("4 -> 5");
-      await expect(paint3).toContainText("5 -> 6");
+      await expect(paint3).toContainText("4 → 5");
+      await expect(paint3).toContainText("5 → 6");
     });
   });
 });

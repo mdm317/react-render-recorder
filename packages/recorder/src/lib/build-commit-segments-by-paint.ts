@@ -18,7 +18,8 @@ export function buildCommitHistoryTextByPaint({
   let currentLines: string[] = [];
 
   fiberChanges.forEach((commit, commitIndex) => {
-    currentLines.push(`Commit ${commitIndex + 1}`, ...getCommitSectionLines(commit));
+    if (currentLines.length > 0) currentLines.push("");
+    currentLines.push(`## Commit ${commitIndex + 1}`, ...getCommitSectionLines(commit));
 
     if (paintCommitSet.has(commitIndex)) {
       paintTexts.push(currentLines.join("\n"));

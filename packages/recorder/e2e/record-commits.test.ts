@@ -55,7 +55,7 @@ test.describe("react-render-recorder E2E", () => {
 
       await expectRecorderCommitCount(page, 1);
       const result = recorderByTestId(page, "component-filter-result");
-      await expect(result).toContainText("Component UpdateButton");
+      await expect(result).toContainText("UpdateButton hook[0] State");
     });
   });
 
@@ -69,7 +69,7 @@ test.describe("react-render-recorder E2E", () => {
     await recorderByTestId(page, "copy-commit-history-button").click();
     await expect
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
-      .toContain("Commit 1");
+      .toContain("## Commit 1");
   });
 
   test("commit history panel can be collapsed and expanded when results exist", async ({
@@ -87,7 +87,7 @@ test.describe("react-render-recorder E2E", () => {
     const result = recorderByTestId(page, "component-filter-result");
 
     await expect(toggle).toHaveAttribute("aria-expanded", "true");
-    await expect(result).toContainText("Component ElementStatePanel");
+    await expect(result).toContainText("ElementStatePanel hook[0] State");
 
     await toggle.click();
 
@@ -104,7 +104,7 @@ test.describe("react-render-recorder E2E", () => {
     await expect
       .poll(() => panel.evaluate((el) => Math.round(el.getBoundingClientRect().height)))
       .toBeGreaterThan(0);
-    await expect(result).toContainText("Component ElementStatePanel");
+    await expect(result).toContainText("ElementStatePanel hook[0] State");
   });
 });
 
@@ -176,7 +176,7 @@ test.describe.skip("component name filter", () => {
     await fillRecorderComponentFilter(page, "elementstate");
 
     const result = recorderByTestId(page, "component-filter-result");
-    await expect(result).toContainText("Component ElementStatePanel");
+    await expect(result).toContainText("ElementStatePanel hook[0] State");
     await expect(result).not.toContainText("Component UpdateButton");
   });
 
@@ -192,7 +192,7 @@ test.describe.skip("component name filter", () => {
 
     const result = recorderByTestId(page, "component-filter-result");
     await expect(result).toContainText("Component UpdateButton");
-    await expect(result).toContainText("Component ElementStatePanel");
+    await expect(result).toContainText("ElementStatePanel hook[0] State");
     await expect(result).toContainText("Component CustomHookButton");
   });
 
