@@ -6,6 +6,7 @@ import { formatCommitHookChangedHistoryForLLM } from "../lib/llm-logging/format-
 import { useRecorderStore } from "../store";
 
 type UseCommitHistoryOptions = {
+  includeRenderDuration?: boolean;
   includeRerenderCount?: boolean;
 };
 
@@ -16,6 +17,7 @@ type UseCommitHistoryResult = {
 };
 
 export function useCommitHistory({
+  includeRenderDuration = false,
   includeRerenderCount = true,
 }: UseCommitHistoryOptions = {}): UseCommitHistoryResult {
   const { state } = useRecorderStore();
@@ -28,6 +30,7 @@ export function useCommitHistory({
     return {
       commitCount: filteredFiberChanges.length,
       commitHistoryText: formatCommitHookChangedHistoryForLLM(filteredFiberChanges, {
+        includeRenderDuration,
         includeRerenderCount,
       }),
       commitHistoryTextByPaint: buildCommitHistoryTextByPaint({
@@ -35,5 +38,5 @@ export function useCommitHistory({
         paintCommitIndices: filteredPaintCommitIndices,
       }),
     };
-  }, [state, includeRerenderCount]);
+  }, [state, includeRenderDuration, includeRerenderCount]);
 }

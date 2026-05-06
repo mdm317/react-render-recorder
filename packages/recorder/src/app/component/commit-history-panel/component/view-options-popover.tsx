@@ -3,12 +3,14 @@ import type { Dispatch, StateUpdater } from "preact/hooks";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 
 export type RecorderOptionsState = {
+  isRenderDurationVisible: boolean;
   isRerenderCountVisible: boolean;
 };
 
 type RecorderOptionKey = keyof RecorderOptionsState;
 
 export const INITIAL_RECORDER_OPTIONS: RecorderOptionsState = {
+  isRenderDurationVisible: false,
   isRerenderCountVisible: false,
 };
 
@@ -19,6 +21,7 @@ type OptionDef = {
 
 const OPTION_DEFS: readonly OptionDef[] = [
   { key: "isRerenderCountVisible", label: "Show rerenders" },
+  { key: "isRenderDurationVisible", label: "Show render time" },
 ];
 
 type ViewOptionsPopoverProps = {

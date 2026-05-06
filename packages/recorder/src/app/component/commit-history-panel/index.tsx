@@ -17,6 +17,7 @@ export function CommitHistoryPanel() {
   const [showPaintView, setShowPaintView] = useState(false);
   const [options, setOptions] = useState<RecorderOptionsState>(INITIAL_RECORDER_OPTIONS);
   const { commitCount, commitHistoryText, commitHistoryTextByPaint } = useCommitHistory({
+    includeRenderDuration: options.isRenderDurationVisible,
     includeRerenderCount: options.isRerenderCountVisible,
   });
 
