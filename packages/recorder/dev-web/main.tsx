@@ -1,5 +1,4 @@
 import "./index.css";
-import "./install-recorder";
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";

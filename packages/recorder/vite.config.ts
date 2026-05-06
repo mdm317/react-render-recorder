@@ -6,11 +6,36 @@ import { defineConfig } from "vitest/config";
 
 const reactRenderRecorderEntry = fileURLToPath(new URL("./src/index.ts", import.meta.url));
 
+const RECORDER_UNPKG_URL =
+  "https://unpkg.com/react-render-recorder@0.1.0/dist/react-render-recorder.js";
+
+const injectRecorderScript = (mode: string) => ({
+  name: "inject-recorder-script",
+  transformIndexHtml() {
+    if (mode === "app") {
+      return [
+        {
+          tag: "script",
+          attrs: { crossorigin: "anonymous", src: RECORDER_UNPKG_URL },
+          injectTo: "head" as const,
+        },
+      ];
+    }
+    return [
+      {
+        tag: "script",
+        attrs: { type: "module", src: "/src/index.ts" },
+        injectTo: "head" as const,
+      },
+    ];
+  },
+});
+
 export default defineConfig(({ mode }) => {
   const isApp = mode === "app";
 
   return {
-    plugins: [tailwindcss(), react()],
+    plugins: [tailwindcss(), react(), injectRecorderScript(mode)],
     base: isApp ? "/react-render-recorder/" : "/",
     define: {
       "process.env.NODE_ENV": JSON.stringify("production"),
