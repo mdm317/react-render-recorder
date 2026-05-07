@@ -206,17 +206,18 @@ test.describe("rendering scenarios", () => {
       await expect(paint2).toContainText("3 → 4");
     });
 
-    test("shows empty state when a single click produces no paint marker", async ({ page }) => {
+    test("groups all commits into a single segment when no paint marker is recorded", async ({
+      page,
+    }) => {
       await recordCycle(page, async () => {
         await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
       });
 
       await recorderByTestId(page, "paint-view-toggle-paint").click();
 
-      await expect(recorderByTestId(page, "paint-history-empty")).toContainText(
-        "기록된 paint marker가 없습니다.",
-      );
-      await expect(recorderByTestId(page, "paint-segment-result")).toHaveCount(0);
+      const segments = recorderByTestId(page, "paint-segment-result").locator("article");
+      await expect(segments).toHaveCount(1);
+      await expect(segments.nth(0)).toContainText("## Commit 1");
     });
 
     test("single-render 3 clicks produce 3 separate paint segments with hook data", async ({

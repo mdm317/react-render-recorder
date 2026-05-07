@@ -11,8 +11,6 @@ export function buildCommitHistoryTextByPaint({
   fiberChanges,
   paintCommitIndices,
 }: BuildCommitHistoryTextByPaintInput): string[] {
-  if (paintCommitIndices.length === 0) return [];
-
   const paintCommitSet = new Set(paintCommitIndices);
   const paintTexts: string[] = [];
   let currentLines: string[] = [];

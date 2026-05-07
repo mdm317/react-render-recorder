@@ -8,17 +8,6 @@ type PaintCommitHistoryContentProps = {
 export function PaintCommitHistoryContent({
   commitHistoryTextByPaint,
 }: PaintCommitHistoryContentProps) {
-  if (commitHistoryTextByPaint.length === 0) {
-    return (
-      <p
-        data-testid="paint-history-empty"
-        className="mt-4 rounded-lg border border-sky-300/20 bg-sky-400/10 px-4 py-3 text-sm text-sky-100"
-      >
-        기록된 paint marker가 없습니다.
-      </p>
-    );
-  }
-
   const allText = commitHistoryTextByPaint.join("\n\n");
 
   return (
