@@ -9,12 +9,12 @@ function buildComponentStats(
 ): Map<string, ComponentStats> {
   const stats = new Map<string, ComponentStats>();
   for (const commit of fiberChangesByCommit) {
-    for (const { displayName, isFirstMount, actualDuration } of commit) {
+    for (const { displayName, isFirstMount, selfDuration } of commit) {
       if (displayName == null) continue;
       const existing = stats.get(displayName) ?? { rerenders: 0, totalDurationMs: null };
       if (!isFirstMount) existing.rerenders += 1;
-      if (actualDuration != null) {
-        existing.totalDurationMs = (existing.totalDurationMs ?? 0) + actualDuration;
+      if (selfDuration != null) {
+        existing.totalDurationMs = (existing.totalDurationMs ?? 0) + selfDuration;
       }
       stats.set(displayName, existing);
     }
