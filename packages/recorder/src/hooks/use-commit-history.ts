@@ -36,6 +36,8 @@ export function useCommitHistory({
       commitHistoryTextByPaint: buildCommitHistoryTextByPaint({
         fiberChanges: filteredFiberChanges,
         paintCommitIndices: filteredPaintCommitIndices,
+        includeRenderDuration,
+        includeRerenderCount,
       }),
     };
   }, [state, includeRenderDuration, includeRerenderCount]);
