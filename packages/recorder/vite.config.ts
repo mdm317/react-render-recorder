@@ -31,15 +31,18 @@ const injectRecorderScript = (mode: string) => ({
   },
 });
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const isApp = mode === "app";
+  const isLibBuild = command === "build" && !isApp;
 
   return {
     plugins: [tailwindcss(), react(), injectRecorderScript(mode)],
     base: isApp ? "/react-render-recorder/" : "/",
-    define: {
-      "process.env.NODE_ENV": JSON.stringify("production"),
-    },
+    define: isLibBuild
+      ? {
+          "process.env.NODE_ENV": JSON.stringify("production"),
+        }
+      : undefined,
     build: isApp
       ? {
           outDir: "dist-web",
