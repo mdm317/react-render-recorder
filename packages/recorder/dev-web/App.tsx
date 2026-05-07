@@ -94,6 +94,14 @@ export function App() {
         </div>
         <ElementStatePanel />
       </div>
+
+      <div className="row">
+        <div className="row__label">
+          <div className="row__label-title">Same component name</div>
+          <div className="row__label-sub">Two siblings both named “Twin”.</div>
+        </div>
+        <SameNameTwins />
+      </div>
     </main>
   );
 }
@@ -204,6 +212,32 @@ function DebugValueButton() {
     </button>
   );
 }
+
+function SameNameTwins() {
+  const [count, setCount] = useState(0);
+  return (
+    <button
+      type="button"
+      className="btn"
+      data-testid="same-name-twins-button"
+      onClick={() => setCount((c) => c + 1)}
+    >
+      <TwinA value={count} />
+      <TwinB value={count} />
+      <span className="btn__meta">{count}</span>
+    </button>
+  );
+}
+
+function TwinA({ value }: { value: number }) {
+  return <span className="twin">Twin A · {value}</span>;
+}
+TwinA.displayName = "Twin";
+
+function TwinB({ value }: { value: number }) {
+  return <span className="twin">Twin B · {value}</span>;
+}
+TwinB.displayName = "Twin";
 
 function ElementStatePanel() {
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
