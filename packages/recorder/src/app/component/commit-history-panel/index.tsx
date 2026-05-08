@@ -3,19 +3,23 @@ import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
 
 import { useCommitHistory } from "../../../hooks/use-commit-history";
+import { useQueryParameter } from "../../../hooks/use-query-parameter";
 import { CommitHistoryContent } from "./component/history-view";
 import { PaintCommitHistoryContent } from "./component/paint-view";
 import { PaintViewToggleButton } from "./component/paint-view-toggle";
 import {
-  INITIAL_RECORDER_OPTIONS,
+  buildInitialRecorderOptions,
   type RecorderOptionsState,
   ViewOptionsPopover,
 } from "./component/view-options-popover";
 
 export function CommitHistoryPanel() {
+  const queryParameters = useQueryParameter();
   const [isOpen, setIsOpen] = useState(true);
   const [showPaintView, setShowPaintView] = useState(false);
-  const [options, setOptions] = useState<RecorderOptionsState>(INITIAL_RECORDER_OPTIONS);
+  const [options, setOptions] = useState<RecorderOptionsState>(() =>
+    buildInitialRecorderOptions(queryParameters),
+  );
   const { commitCount, commitHistoryText, commitHistoryTextByPaint } = useCommitHistory({
     includeRenderDuration: options.isRenderDurationVisible,
     includeRerenderCount: options.isRerenderCountVisible,

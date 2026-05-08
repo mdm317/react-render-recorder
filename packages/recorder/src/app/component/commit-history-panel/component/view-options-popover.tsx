@@ -14,6 +14,16 @@ export const INITIAL_RECORDER_OPTIONS: RecorderOptionsState = {
   isRerenderCountVisible: false,
 };
 
+export function buildInitialRecorderOptions(
+  queryParameters: URLSearchParams | null,
+): RecorderOptionsState {
+  if (queryParameters == null) return INITIAL_RECORDER_OPTIONS;
+  return {
+    isRenderDurationVisible: queryParameters.get("renderTime") === "true",
+    isRerenderCountVisible: queryParameters.get("rerenders") === "true",
+  };
+}
+
 type OptionDef = {
   key: RecorderOptionKey;
   label: string;
