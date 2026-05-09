@@ -10,6 +10,11 @@ const RECORDER_GLOBAL = "__REACT_RENDER_RECORDER__";
 
 export type SerializableFiberChange = Omit<CommittedFiberChange, "fiber" | "prevFiber">;
 
+export type CommitHistoryTextOptions = {
+  includeRenderDuration?: boolean;
+  includeRerenderCount?: boolean;
+};
+
 function getFiberChanges(store: RecorderStore): SerializableFiberChange[][] {
   return store
     .getSnapshot()
@@ -18,13 +23,16 @@ function getFiberChanges(store: RecorderStore): SerializableFiberChange[][] {
     );
 }
 
-function getCommitHistoryText(store: RecorderStore): string {
+function getCommitHistoryText(store: RecorderStore, options: CommitHistoryTextOptions): string {
   const { fiberChanges, paintCommitIndices } = store.getSnapshot();
   const { filteredFiberChanges } = buildFilteredCommits({ fiberChanges, paintCommitIndices });
-  return formatCommitHookChangedHistoryForLLM(filteredFiberChanges);
+  return formatCommitHookChangedHistoryForLLM(filteredFiberChanges, options);
 }
 
-function getCommitHistoryTextByPaint(store: RecorderStore): string[] {
+function getCommitHistoryTextByPaint(
+  store: RecorderStore,
+  options: CommitHistoryTextOptions,
+): string[] {
   const { fiberChanges, paintCommitIndices } = store.getSnapshot();
   const { filteredFiberChanges, filteredPaintCommitIndices } = buildFilteredCommits({
     fiberChanges,
@@ -33,6 +41,7 @@ function getCommitHistoryTextByPaint(store: RecorderStore): string[] {
   return buildCommitHistoryTextByPaint({
     fiberChanges: filteredFiberChanges,
     paintCommitIndices: filteredPaintCommitIndices,
+    ...options,
   });
 }
 
@@ -42,7 +51,9 @@ export function exposeRecorderApi(store: RecorderStore): void {
     start: () => startRecording(store),
     end: () => endRecording(store),
     getFiberChanges: () => getFiberChanges(store),
-    getCommitHistoryText: () => getCommitHistoryText(store),
-    getCommitHistoryTextByPaint: () => getCommitHistoryTextByPaint(store),
+    getCommitHistoryText: (options: CommitHistoryTextOptions = {}) =>
+      getCommitHistoryText(store, options),
+    getCommitHistoryTextByPaint: (options: CommitHistoryTextOptions = {}) =>
+      getCommitHistoryTextByPaint(store, options),
   };
 }
