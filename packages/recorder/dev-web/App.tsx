@@ -1,4 +1,4 @@
-import { useDebugValue, useEffect, useLayoutEffect, useState } from "react";
+import { memo, useDebugValue, useEffect, useLayoutEffect, useState } from "react";
 
 import "./App.css";
 
@@ -101,6 +101,16 @@ export function App() {
           <div className="row__label-sub">Two siblings both named “Twin”.</div>
         </div>
         <SameNameTwins />
+      </div>
+
+      <div className="row">
+        <div className="row__label">
+          <div className="row__label-title">Parent cascade · hook-change filter</div>
+          <div className="row__label-sub">
+            Only the parent (own setState) should appear; children render but have no hook change.
+          </div>
+        </div>
+        <ParentCascadeButton />
       </div>
     </main>
   );
@@ -238,6 +248,35 @@ function TwinB({ value }: { value: number }) {
   return <span className="twin">Twin B · {value}</span>;
 }
 TwinB.displayName = "Twin";
+
+function PlainChild({ label }: { label: string }) {
+  return <span className="twin">{label}</span>;
+}
+
+const StableMemoChild = memo(function StableMemoChild() {
+  return <span className="twin">memo · stable</span>;
+});
+
+const ChangingMemoChild = memo(function ChangingMemoChild({ value }: { value: number }) {
+  return <span className="twin">memo · {value}</span>;
+});
+
+function ParentCascadeButton() {
+  const [count, setCount] = useState(0);
+  return (
+    <button
+      type="button"
+      className="btn"
+      data-testid="parent-cascade-button"
+      onClick={() => setCount((c) => c + 1)}
+    >
+      <PlainChild label="plain" />
+      <StableMemoChild />
+      <ChangingMemoChild value={count} />
+      <span className="btn__meta">{count}</span>
+    </button>
+  );
+}
 
 function ElementStatePanel() {
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);

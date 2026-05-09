@@ -70,7 +70,7 @@ test.describe("commit history view options", () => {
 
     const result = recorderByTestId(page, "component-filter-result");
     await expect(result).toContainText(
-      "component stats (rerender count + total render time including mount):",
+      "component stats (rerender count + total render time, hook changes only):",
     );
     await expect(result).toContainText(
       new RegExp(`- UpdateButton: 2 rerenders, ${DURATION_PATTERN} total render time`),

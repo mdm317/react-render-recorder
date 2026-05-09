@@ -9,10 +9,11 @@ function buildComponentStats(
 ): Map<string, ComponentStats> {
   const stats = new Map<string, ComponentStats>();
   for (const commit of fiberChangesByCommit) {
-    for (const { displayName, isFirstMount, selfDuration } of commit) {
+    for (const { displayName, hooks, selfDuration } of commit) {
       if (displayName == null) continue;
+      if (hooks == null || hooks.length === 0) continue;
       const existing = stats.get(displayName) ?? { rerenders: 0, totalDurationMs: null };
-      if (!isFirstMount) existing.rerenders += 1;
+      existing.rerenders += 1;
       if (selfDuration != null) {
         existing.totalDurationMs = (existing.totalDurationMs ?? 0) + selfDuration;
       }
@@ -45,7 +46,7 @@ export function buildSummaryLines(
       ([aName, a], [bName, b]) =>
         (b.totalDurationMs ?? -1) - (a.totalDurationMs ?? -1) || aName.localeCompare(bName),
     );
-    const lines = ["component stats (rerender count + total render time including mount):"];
+    const lines = ["component stats (rerender count + total render time, hook changes only):"];
     for (const [name, { rerenders, totalDurationMs }] of sorted) {
       const countLabel = rerenders === 1 ? "1 rerender" : `${rerenders} rerenders`;
       lines.push(
