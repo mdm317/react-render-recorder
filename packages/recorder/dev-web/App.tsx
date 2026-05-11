@@ -10,6 +10,7 @@ import { ObjectPartialUpdateButton } from "./buttons/ObjectPartialUpdateButton";
 import { ObjectSameValueButton } from "./buttons/ObjectSameValueButton";
 import { ParentCascadeButton } from "./buttons/ParentCascadeButton";
 import { SameNameTwins } from "./buttons/SameNameTwins";
+import { UnmountBeforeFlushPanel } from "./buttons/UnmountBeforeFlushPanel";
 import { UpdateButton } from "./buttons/UpdateButton";
 
 export function App() {
@@ -154,6 +155,18 @@ export function App() {
           </div>
         </div>
         <ObjectFunctionRefButton />
+      </div>
+
+      <div className="row">
+        <div className="row__label">
+          <div className="row__label-title">Unmount before flush · 3-step</div>
+          <div className="row__label-sub">
+            (1) update child, (2) unmount child, (3) update parent — each click is exactly one
+            commit. Verifies the recorder resolves hook metadata before passive cleanup wipes the
+            unmounted fiber.
+          </div>
+        </div>
+        <UnmountBeforeFlushPanel />
       </div>
     </main>
   );
