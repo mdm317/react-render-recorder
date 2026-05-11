@@ -173,17 +173,15 @@ function formatComponentLines(component: ComponentWithHookChanges): string[] {
       case "not-object": {
         const prevFormatted = formatValueForLLM(hook.prev);
         const nextFormatted = formatValueForLLM(hook.next);
-        const sameValueTag = prevFormatted === nextFormatted ? " [NO-OP: same value]" : "";
+        const equalTag = prevFormatted === nextFormatted ? " (equal)" : "";
         return [
-          `- ${component.displayName} ${tail}: ${prevFormatted} → ${nextFormatted}${sameValueTag}`,
+          `- ${component.displayName} ${tail}: ${prevFormatted} → ${nextFormatted}${equalTag}`,
         ];
       }
       case "equal":
-        return [`- ${component.displayName} ${tail}: [NO-OP: same value]`];
+        return [`- ${component.displayName} ${tail}: (equal)`];
       case "fn-noop":
-        return [
-          `- ${component.displayName} ${tail}: [NO-OP: only function ref identities differ; structural value identical]`,
-        ];
+        return [`- ${component.displayName} ${tail}: (equal — only function refs differ)`];
       case "changed":
         return [`- ${component.displayName} ${tail}: changed paths:`, ...classification.lines];
       default: {
