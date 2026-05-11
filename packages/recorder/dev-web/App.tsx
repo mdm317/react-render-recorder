@@ -5,6 +5,9 @@ import { DebugValueButton } from "./buttons/DebugValueButton";
 import { DoubleUpdateEffectButton } from "./buttons/DoubleUpdateEffectButton";
 import { DoubleUpdateLayoutEffectButton } from "./buttons/DoubleUpdateLayoutEffectButton";
 import { ElementStatePanel } from "./buttons/ElementStatePanel";
+import { ObjectFunctionRefButton } from "./buttons/ObjectFunctionRefButton";
+import { ObjectPartialUpdateButton } from "./buttons/ObjectPartialUpdateButton";
+import { ObjectSameValueButton } from "./buttons/ObjectSameValueButton";
 import { ParentCascadeButton } from "./buttons/ParentCascadeButton";
 import { SameNameTwins } from "./buttons/SameNameTwins";
 import { UpdateButton } from "./buttons/UpdateButton";
@@ -118,6 +121,39 @@ export function App() {
           </div>
         </div>
         <ParentCascadeButton />
+      </div>
+
+      <div className="row">
+        <div className="row__label">
+          <div className="row__label-title">Object state · partial field update</div>
+          <div className="row__label-sub">
+            useState&#123;x, y&#125; with only x advancing. Output should list a single changed leaf
+            path instead of dumping the whole object.
+          </div>
+        </div>
+        <ObjectPartialUpdateButton />
+      </div>
+
+      <div className="row">
+        <div className="row__label">
+          <div className="row__label-title">Object state · same-value setState</div>
+          <div className="row__label-sub">
+            Spread the previous object into a new one with identical fields. The row should be
+            flagged as a wasted render since prev and next are equivalent.
+          </div>
+        </div>
+        <ObjectSameValueButton />
+      </div>
+
+      <div className="row">
+        <div className="row__label">
+          <div className="row__label-title">Object state · function-ref churn</div>
+          <div className="row__label-sub">
+            Replace the inner handler with a freshly-named function each click. Structurally
+            equivalent — only the function reference identities differ.
+          </div>
+        </div>
+        <ObjectFunctionRefButton />
       </div>
     </main>
   );

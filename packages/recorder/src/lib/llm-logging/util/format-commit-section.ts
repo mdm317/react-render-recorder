@@ -22,7 +22,8 @@ function isFormattedElementSummaryString(value: unknown): value is string {
   return typeof value === "string" && value.startsWith("[HTMLElement ") && value.endsWith("]");
 }
 
-function isFunctionMarkerString(value: unknown): value is string {
+function isFunctionLike(value: unknown): boolean {
+  if (typeof value === "function") return true;
   return typeof value === "string" && value.startsWith("[Function ");
 }
 
@@ -149,10 +150,8 @@ function classifyPathDiff(prev: unknown, next: unknown): PathDiffClassification 
   collectPathDiffs(prev, next, "", diffs);
   if (diffs.length === 0) return { kind: "equal" };
 
-  const allFnMarkerChurn = diffs.every(
-    (diff) => isFunctionMarkerString(diff.prev) && isFunctionMarkerString(diff.next),
-  );
-  if (allFnMarkerChurn) return { kind: "fn-noop" };
+  const allFnChurn = diffs.every((diff) => isFunctionLike(diff.prev) && isFunctionLike(diff.next));
+  if (allFnChurn) return { kind: "fn-noop" };
 
   const lines = diffs.map(
     (diff) => `    ${diff.path}: ${formatDiffSide(diff.prev)} → ${formatDiffSide(diff.next)}`,
