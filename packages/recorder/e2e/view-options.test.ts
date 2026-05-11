@@ -39,7 +39,7 @@ test.describe("commit history view options", () => {
     await recorderByTestId(page, "view-option-isRerenderCountVisible").click();
 
     const result = recorderByTestId(page, "component-filter-result");
-    await expect(result).toContainText("rerenders: UpdateButton=2");
+    await expect(result).toContainText("rerenders: UpdateButton=1, UpdateButton=1");
     await expect(result).not.toContainText("render time:");
     await expect(result).not.toContainText("component stats");
   });
@@ -72,9 +72,15 @@ test.describe("commit history view options", () => {
     await expect(result).toContainText(
       "component stats (rerender count + total render time, hook changes only):",
     );
-    await expect(result).toContainText(
-      new RegExp(`- UpdateButton: 2 rerenders, ${DURATION_PATTERN} total render time`),
+    const perFiberStatPattern = new RegExp(
+      `- UpdateButton: 1 rerender, ${DURATION_PATTERN} total render time`,
+      "g",
     );
+    await expect
+      .poll(
+        async () => ((await result.textContent()) ?? "").match(perFiberStatPattern)?.length ?? 0,
+      )
+      .toBe(2);
     await expect(result).not.toContainText("rerenders: UpdateButton=");
     await expect(result).not.toContainText("render time: UpdateButton=");
   });
