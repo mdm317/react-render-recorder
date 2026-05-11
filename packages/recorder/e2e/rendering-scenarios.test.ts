@@ -206,6 +206,30 @@ test.describe("rendering scenarios", () => {
       await expect(paint2).toContainText("3 → 4");
     });
 
+    test("useEffect 1 click splits the two commits across two paints with hook data", async ({
+      page,
+    }) => {
+      await recordCycle(page, async () => {
+        await page.getByTestId(SCENARIO_BUTTON.DOUBLE_EFFECT).click();
+      });
+
+      await recorderByTestId(page, "paint-view-toggle-paint").click();
+
+      const segments = recorderByTestId(page, "paint-segment-result").locator("article");
+      await expect(segments).toHaveCount(2);
+
+      const paint1 = segments.nth(0);
+      await expect(paint1).toContainText("Paint 1");
+      await expect(paint1).toContainText("DoubleUpdateEffectButton hook[0] State");
+      await expect(paint1).toContainText("0 → 1");
+      await expect(paint1).toContainText("false → true");
+
+      const paint2 = segments.nth(1);
+      await expect(paint2).toContainText("Paint 2");
+      await expect(paint2).toContainText("1 → 2");
+      await expect(paint2).toContainText("true → false");
+    });
+
     test("groups all commits into a single segment when no paint marker is recorded", async ({
       page,
     }) => {

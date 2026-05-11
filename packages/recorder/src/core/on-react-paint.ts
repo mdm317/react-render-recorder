@@ -1,13 +1,17 @@
 export type ReactPaintCallback = () => void;
 
-// Experimental: this global patch can cause side effects and only observes React
-// paint-yield signals when React pauses work through MessageChannel.
+// React's Scheduler creates a MessageChannel and uses `port2.postMessage(null)` /
+// `port1.onmessage` to yield and resume. Subclassing MessageChannel lets us register
+// a `message` listener on port1 alongside React's own handler — it fires at the
+// moment React resumes from a yield, i.e. right after the browser had a chance to
+// paint.
 export function onReactPaint(callback: ReactPaintCallback) {
-  const original = MessagePort.prototype.postMessage;
+  const Original = MessageChannel;
 
-  MessagePort.prototype.postMessage = function (...args) {
-    callback();
-    // @ts-ignore
-    return original.apply(this, args);
+  globalThis.MessageChannel = class extends Original {
+    constructor() {
+      super();
+      this.port1.addEventListener("message", () => callback());
+    }
   };
 }

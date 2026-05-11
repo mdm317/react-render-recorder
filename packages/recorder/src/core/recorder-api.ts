@@ -23,6 +23,10 @@ function getFiberChanges(store: RecorderStore): SerializableFiberChange[][] {
     );
 }
 
+function getPaintCommitIndices(store: RecorderStore): number[] {
+  return [...store.getSnapshot().paintCommitIndices];
+}
+
 function getCommitHistoryText(store: RecorderStore, options: CommitHistoryTextOptions): string {
   const { fiberChanges, paintCommitIndices } = store.getSnapshot();
   const { filteredFiberChanges } = buildFilteredCommits({ fiberChanges, paintCommitIndices });
@@ -51,6 +55,7 @@ export function exposeRecorderApi(store: RecorderStore): void {
     start: () => startRecording(store),
     end: () => endRecording(store),
     getFiberChanges: () => getFiberChanges(store),
+    getPaintCommitIndices: () => getPaintCommitIndices(store),
     getCommitHistoryText: (options: CommitHistoryTextOptions = {}) =>
       getCommitHistoryText(store, options),
     getCommitHistoryTextByPaint: (options: CommitHistoryTextOptions = {}) =>
