@@ -22,6 +22,10 @@ function isFormattedElementSummaryString(value: unknown): value is string {
   return typeof value === "string" && value.startsWith("[HTMLElement ") && value.endsWith("]");
 }
 
+function isFunctionMarkerString(value: unknown): value is string {
+  return typeof value === "string" && value.startsWith("[Function ");
+}
+
 function elementSummaryToShortForm(formatted: string): string {
   return `[${formatted.slice("[HTMLElement ".length, -1)}]`;
 }
@@ -125,7 +129,13 @@ function formatDiffSide(value: unknown): string {
   return formatValueForLLM(value);
 }
 
-function tryFormatPathDiff(prev: unknown, next: unknown): string[] | null {
+type PathDiffClassification =
+  | { kind: "not-object" }
+  | { kind: "equal" }
+  | { kind: "fn-noop" }
+  | { kind: "changed"; lines: string[] };
+
+function classifyPathDiff(prev: unknown, next: unknown): PathDiffClassification {
   const prevIsArray = isPlainArray(prev);
   const nextIsArray = isPlainArray(next);
   const prevIsObject = isPlainObject(prev);
@@ -133,13 +143,21 @@ function tryFormatPathDiff(prev: unknown, next: unknown): string[] | null {
 
   const sameArray = prevIsArray && nextIsArray;
   const sameObject = prevIsObject && nextIsObject;
-  if (!sameArray && !sameObject) return null;
+  if (!sameArray && !sameObject) return { kind: "not-object" };
 
   const diffs: PathDiff[] = [];
   collectPathDiffs(prev, next, "", diffs);
-  return diffs.map(
+  if (diffs.length === 0) return { kind: "equal" };
+
+  const allFnMarkerChurn = diffs.every(
+    (diff) => isFunctionMarkerString(diff.prev) && isFunctionMarkerString(diff.next),
+  );
+  if (allFnMarkerChurn) return { kind: "fn-noop" };
+
+  const lines = diffs.map(
     (diff) => `    ${diff.path}: ${formatDiffSide(diff.prev)} → ${formatDiffSide(diff.next)}`,
   );
+  return { kind: "changed", lines };
 }
 
 function formatComponentLines(component: ComponentWithHookChanges): string[] {
@@ -150,16 +168,25 @@ function formatComponentLines(component: ComponentWithHookChanges): string[] {
   return sortedHooks.flatMap((hook) => {
     const label = formatHookLabel(hook);
     const tail = label === "" ? `hook[${hook.hookIndex}]` : `hook[${hook.hookIndex}] ${label}`;
-    const pathLines = tryFormatPathDiff(hook.prev, hook.next);
-    if (pathLines != null) {
-      if (pathLines.length === 0) {
+    const classification = classifyPathDiff(hook.prev, hook.next);
+    switch (classification.kind) {
+      case "not-object":
+        return [
+          `- ${component.displayName} ${tail}: ${formatValueForLLM(hook.prev)} → ${formatValueForLLM(hook.next)}`,
+        ];
+      case "equal":
         return [`- ${component.displayName} ${tail}: {object equal — no path differs}`];
+      case "fn-noop":
+        return [
+          `- ${component.displayName} ${tail}: [NO-OP: only function ref identities differ; structural value identical]`,
+        ];
+      case "changed":
+        return [`- ${component.displayName} ${tail}: changed paths:`, ...classification.lines];
+      default: {
+        const _exhaustive: never = classification;
+        return _exhaustive;
       }
-      return [`- ${component.displayName} ${tail}: changed paths:`, ...pathLines];
     }
-    return [
-      `- ${component.displayName} ${tail}: ${formatValueForLLM(hook.prev)} → ${formatValueForLLM(hook.next)}`,
-    ];
   });
 }
 
