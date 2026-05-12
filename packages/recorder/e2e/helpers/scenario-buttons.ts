@@ -8,6 +8,8 @@ export const SCENARIO_BUTTON = {
   OBJECT_PARTIAL_UPDATE: "object-partial-update-button",
   OBJECT_SAME_VALUE: "object-same-value-button",
   OBJECT_FUNCTION_REF: "object-function-ref-button",
+  PARENT_CASCADE: "parent-cascade-button",
+  RENDER_BY_PARENT: "render-by-parent-button",
 } as const;
 
 export type ScenarioButtonId = (typeof SCENARIO_BUTTON)[keyof typeof SCENARIO_BUTTON];

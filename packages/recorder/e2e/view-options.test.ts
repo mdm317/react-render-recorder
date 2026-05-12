@@ -70,7 +70,7 @@ test.describe("commit history view options", () => {
 
     const result = recorderByTestId(page, "component-filter-result");
     await expect(result).toContainText(
-      "component stats (rerender count + total render time, hook changes only):",
+      "component stats (rerender count + total render time, all renders):",
     );
     const perFiberStatPattern = new RegExp(
       `- UpdateButton: 1 rerender, ${DURATION_PATTERN} total render time`,
@@ -83,6 +83,46 @@ test.describe("commit history view options", () => {
       .toBe(2);
     await expect(result).not.toContainText("rerenders: UpdateButton=");
     await expect(result).not.toContainText("render time: UpdateButton=");
+  });
+
+  test("Show rerenders summary includes render-by-parent components (no hook change)", async ({
+    page,
+  }) => {
+    await recordCycle(page, async () => {
+      await clickTimes(page, SCENARIO_BUTTON.RENDER_BY_PARENT, 1);
+    });
+
+    await recorderByTestId(page, "view-options-button").click();
+    await recorderByTestId(page, "view-option-isRerenderCountVisible").click();
+
+    const result = recorderByTestId(page, "component-filter-result");
+    const text = (await result.textContent()) ?? "";
+    expect(text).toMatch(/rerenders:\s*[^\n]*RenderByParentButton=1/);
+    expect(text).toMatch(/StaticLeafA=1/);
+    expect(text).toMatch(/StaticLeafB=1/);
+    expect(text).toMatch(/StaticLeafC=1/);
+  });
+
+  test("combined component stats includes render-by-parent components with timing", async ({
+    page,
+  }) => {
+    await recordCycle(page, async () => {
+      await clickTimes(page, SCENARIO_BUTTON.RENDER_BY_PARENT, 1);
+    });
+
+    await recorderByTestId(page, "view-options-button").click();
+    await recorderByTestId(page, "view-option-isRerenderCountVisible").click();
+    await recorderByTestId(page, "view-option-isRenderDurationVisible").click();
+
+    const result = recorderByTestId(page, "component-filter-result");
+    await expect(result).toContainText(
+      "component stats (rerender count + total render time, all renders):",
+    );
+    for (const name of ["RenderByParentButton", "StaticLeafA", "StaticLeafB", "StaticLeafC"]) {
+      await expect(result).toContainText(
+        new RegExp(`- ${name}: 1 rerender, ${DURATION_PATTERN} total render time`),
+      );
+    }
   });
 
   test("disabling Show rerenders after enabling it removes the summary line", async ({ page }) => {

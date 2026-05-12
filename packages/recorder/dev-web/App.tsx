@@ -9,6 +9,7 @@ import { ObjectFunctionRefButton } from "./buttons/ObjectFunctionRefButton";
 import { ObjectPartialUpdateButton } from "./buttons/ObjectPartialUpdateButton";
 import { ObjectSameValueButton } from "./buttons/ObjectSameValueButton";
 import { ParentCascadeButton } from "./buttons/ParentCascadeButton";
+import { RenderByParentButton } from "./buttons/RenderByParentButton";
 import { SameNameTwins } from "./buttons/SameNameTwins";
 import { UnmountBeforeFlushPanel } from "./buttons/UnmountBeforeFlushPanel";
 import { UpdateButton } from "./buttons/UpdateButton";
@@ -116,12 +117,25 @@ export function App() {
 
       <div className="row">
         <div className="row__label">
-          <div className="row__label-title">Parent cascade · hook-change filter</div>
+          <div className="row__label-title">Parent cascade · memo vs plain</div>
           <div className="row__label-sub">
-            Only the parent (own setState) should appear; children render but have no hook change.
+            Parent setState triggers the plain child and the memo child whose prop changed; the
+            stable memo child bails out.
           </div>
         </div>
         <ParentCascadeButton />
+      </div>
+
+      <div className="row">
+        <div className="row__label">
+          <div className="row__label-title">Render by parent · summary visibility</div>
+          <div className="row__label-sub">
+            Parent setState re-renders three unmemoized leaves. Enable “Show rerenders” to confirm
+            every rendered component (count + time) appears in the summary, not just the ones with
+            hook changes.
+          </div>
+        </div>
+        <RenderByParentButton />
       </div>
 
       <div className="row">

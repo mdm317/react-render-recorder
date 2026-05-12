@@ -11,9 +11,8 @@ type ComponentStats = {
 function buildComponentStats(fiberChangesByCommit: CommittedFiberChange[][]): ComponentStats[] {
   const stats: ComponentStats[] = [];
   for (const commit of fiberChangesByCommit) {
-    for (const { displayName, hooks, selfDuration } of commit) {
+    for (const { displayName, selfDuration } of commit) {
       if (displayName == null) continue;
-      if (hooks == null || hooks.length === 0) continue;
       stats.push({ displayName, rerenders: 1, totalDurationMs: selfDuration ?? null });
     }
   }
@@ -42,7 +41,7 @@ export function buildSummaryLines(
         (b.totalDurationMs ?? -1) - (a.totalDurationMs ?? -1) ||
         a.displayName.localeCompare(b.displayName),
     );
-    const lines = ["component stats (rerender count + total render time, hook changes only):"];
+    const lines = ["component stats (rerender count + total render time, all renders):"];
     for (const { displayName, rerenders, totalDurationMs } of sorted) {
       const countLabel = rerenders === 1 ? "1 rerender" : `${rerenders} rerenders`;
       lines.push(
