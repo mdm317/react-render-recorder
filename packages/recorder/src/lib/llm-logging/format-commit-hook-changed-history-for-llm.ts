@@ -3,15 +3,15 @@ import { buildSummaryLines } from "./util/build-summary-lines";
 import { getCommitSectionLines } from "./util/format-commit-section";
 
 function countComponentsWithHookChanges(fiberChangesByCommit: CommittedFiberChange[][]): number {
-  let count = 0;
+  const names = new Set<string>();
   for (const commit of fiberChangesByCommit) {
     for (const { displayName, hooks } of commit) {
       if (displayName != null && hooks != null && hooks.length > 0) {
-        count += 1;
+        names.add(displayName);
       }
     }
   }
-  return count;
+  return names.size;
 }
 
 type FormatOptions = {
