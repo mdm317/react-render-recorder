@@ -26,9 +26,7 @@ export function buildCommitHistoryTextByPaint({
       includeRerenderCount,
       includeRenderDuration,
     });
-    const segmentLines =
-      summaryLines.length > 0 ? [...summaryLines, "", ...currentLines] : currentLines;
-    paintTexts.push(segmentLines.join("\n"));
+    paintTexts.push(["## Summary", ...summaryLines, "", ...currentLines].join("\n"));
     currentCommits = [];
     currentLines = [];
   };

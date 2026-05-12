@@ -4,30 +4,35 @@ import { formatDurationMsInline } from "../../../utils/format-duration";
 
 type ComponentStats = { rerenders: number; totalDurationMs: number | null };
 
-function buildComponentStats(
-  fiberChangesByCommit: CommittedFiberChange[][],
-): Map<string, ComponentStats> {
-  const stats = new Map<string, ComponentStats>();
-  for (const commit of fiberChangesByCommit) {
-    for (const { displayName, selfDuration } of commit) {
-      if (displayName == null) continue;
-      const existing = stats.get(displayName) ?? { rerenders: 0, totalDurationMs: null };
-      existing.rerenders += 1;
-      if (selfDuration != null) {
-        existing.totalDurationMs = (existing.totalDurationMs ?? 0) + selfDuration;
-      }
-      stats.set(displayName, existing);
-    }
-  }
-  return stats;
-}
-
 type BuildSummaryLinesOptions = {
   includeRerenderCount: boolean;
   includeRenderDuration: boolean;
 };
 
 export function buildSummaryLines(
+  fiberChangesByCommit: CommittedFiberChange[][],
+  options: BuildSummaryLinesOptions,
+): string[] {
+  return [buildCountLine(fiberChangesByCommit), ...buildStatsLines(fiberChangesByCommit, options)];
+}
+
+function buildCountLine(fiberChangesByCommit: CommittedFiberChange[][]): string {
+  const totalCommits = fiberChangesByCommit.length;
+  const names = new Set<string>();
+  for (const commit of fiberChangesByCommit) {
+    for (const { displayName, hooks } of commit) {
+      if (displayName != null && hooks != null && hooks.length > 0) {
+        names.add(displayName);
+      }
+    }
+  }
+  const componentsWithHookChanges = names.size;
+  const commitsLabel = totalCommits === 1 ? "commit" : "commits";
+  const componentsLabel = componentsWithHookChanges === 1 ? "component" : "components";
+  return `${totalCommits} ${commitsLabel}, ${componentsWithHookChanges} ${componentsLabel} with hook changes`;
+}
+
+function buildStatsLines(
   fiberChangesByCommit: CommittedFiberChange[][],
   { includeRerenderCount, includeRenderDuration }: BuildSummaryLinesOptions,
 ): string[] {
@@ -75,4 +80,22 @@ export function buildSummaryLines(
       .map(([name, s]) => `${name}=${formatDurationMsInline(s.totalDurationMs)}`)
       .join(", ")}`,
   ];
+}
+
+function buildComponentStats(
+  fiberChangesByCommit: CommittedFiberChange[][],
+): Map<string, ComponentStats> {
+  const stats = new Map<string, ComponentStats>();
+  for (const commit of fiberChangesByCommit) {
+    for (const { displayName, selfDuration } of commit) {
+      if (displayName == null) continue;
+      const existing = stats.get(displayName) ?? { rerenders: 0, totalDurationMs: null };
+      existing.rerenders += 1;
+      if (selfDuration != null) {
+        existing.totalDurationMs = (existing.totalDurationMs ?? 0) + selfDuration;
+      }
+      stats.set(displayName, existing);
+    }
+  }
+  return stats;
 }
