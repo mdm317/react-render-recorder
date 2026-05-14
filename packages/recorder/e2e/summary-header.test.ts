@@ -11,6 +11,8 @@ import { SCENARIO_BUTTON } from "./helpers/scenario-buttons";
 
 test.describe.configure({ mode: "parallel" });
 
+const DURATION_PATTERN = "[\\d.]+(?:s|ms|μs)";
+
 test.describe("summary header", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
@@ -52,6 +54,35 @@ test.describe("summary header", () => {
       await expect(segment).toContainText("## Summary");
       await expect(segment).toContainText("1 commit, 1 component with hook changes");
     }
+  });
+
+  test("history view totals line counts hook-changed-only renders for hook-only scenarios", async ({
+    page,
+  }) => {
+    await recordCycle(page, async () => {
+      await clickTimes(page, SCENARIO_BUTTON.UPDATE, 2);
+    });
+
+    const result = recorderByTestId(page, "component-filter-result");
+    await expect(result).toContainText(
+      new RegExp(`2 total rerenders, ${DURATION_PATTERN} total render time`),
+    );
+  });
+
+  test("history view totals line includes render-by-parent (no hook change) components", async ({
+    page,
+  }) => {
+    await recordCycle(page, async () => {
+      await clickTimes(page, SCENARIO_BUTTON.RENDER_BY_PARENT, 1);
+    });
+
+    const result = recorderByTestId(page, "component-filter-result");
+    // 1 commit, but 4 components render (RenderByParentButton + 3 static leaves).
+    // Only RenderByParentButton has a hook change — totals must still count all 4.
+    await expect(result).toContainText("1 commit, 1 component with hook changes");
+    await expect(result).toContainText(
+      new RegExp(`4 total rerenders, ${DURATION_PATTERN} total render time`),
+    );
   });
 
   test("paint view count line reflects multi-commit segments", async ({ page }) => {
