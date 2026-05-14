@@ -76,6 +76,7 @@ function formatShallowShape(value: unknown): string {
 }
 
 function isContainerValue(value: unknown): boolean {
+  if (isElementLike(value)) return false;
   return Array.isArray(value) || (typeof value === "object" && value !== null);
 }
 
