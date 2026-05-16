@@ -7,7 +7,7 @@ export default function Document() {
       <Head>
         <Script
           crossOrigin="anonymous"
-          src="https://unpkg.com/react-render-recorder@0.1.3/dist/react-render-recorder.js"
+          src="https://unpkg.com/react-render-recorder@0.1.4/dist/react-render-recorder.js"
           strategy="beforeInteractive"
         />
       </Head>
