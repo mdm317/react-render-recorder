@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import {
   clickTimes,
+  expectHookChange,
   recordButton,
   recorderByTestId,
   recordCycle,
@@ -23,7 +24,7 @@ test.describe("object-state scenarios", () => {
     });
 
     const result = recorderByTestId(page, "component-filter-result");
-    await expect(result).toContainText("ObjectPartialUpdateButton hook[0] State: changed paths:");
+    await expectHookChange(result, "ObjectPartialUpdateButton", "hook[0] State: changed paths:");
     await expect(result).toContainText("x: 0 → 1");
     await expect(result).not.toContainText('"y":0');
   });
@@ -34,7 +35,7 @@ test.describe("object-state scenarios", () => {
     });
 
     const result = recorderByTestId(page, "component-filter-result");
-    await expect(result).toContainText("ObjectSameValueButton hook[0] State: (equal)");
+    await expectHookChange(result, "ObjectSameValueButton", "hook[0] State: (equal)");
   });
 
   test("function-ref churn is flagged as (equal — only function refs differ)", async ({ page }) => {
@@ -43,8 +44,10 @@ test.describe("object-state scenarios", () => {
     });
 
     const result = recorderByTestId(page, "component-filter-result");
-    await expect(result).toContainText(
-      "ObjectFunctionRefButton hook[0] State: (equal — only function refs differ)",
+    await expectHookChange(
+      result,
+      "ObjectFunctionRefButton",
+      "hook[0] State: (equal — only function refs differ)",
     );
   });
 });

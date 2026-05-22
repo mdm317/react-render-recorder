@@ -187,47 +187,46 @@ function classifyPathDiff(prev: unknown, next: unknown): PathDiffClassification 
   if (allFnChurn) return { kind: "fn-noop" };
 
   const lines = diffs.map(
-    (diff) => `    ${diff.path}: ${formatDiffSide(diff.prev)} → ${formatDiffSide(diff.next)}`,
+    (diff) => `      ${diff.path}: ${formatDiffSide(diff.prev)} → ${formatDiffSide(diff.next)}`,
   );
   return { kind: "changed", lines };
+}
+
+function formatHookBulletLines(hook: HookChange): string[] {
+  const label = formatHookLabel(hook);
+  const tail = label === "" ? `hook[${hook.hookIndex}]` : `hook[${hook.hookIndex}] ${label}`;
+  const classification = classifyPathDiff(hook.prev, hook.next);
+  switch (classification.kind) {
+    case "not-object": {
+      const prevIsContainer = isContainerValue(hook.prev);
+      const nextIsContainer = isContainerValue(hook.next);
+      const prevFormatted = prevIsContainer
+        ? formatShallowShape(hook.prev)
+        : formatValueForLLM(hook.prev);
+      const nextFormatted = nextIsContainer
+        ? formatShallowShape(hook.next)
+        : formatValueForLLM(hook.next);
+      const equalTag = prevFormatted === nextFormatted ? " (equal)" : "";
+      return [`  - ${tail}: ${prevFormatted} → ${nextFormatted}${equalTag}`];
+    }
+    case "equal":
+      return [`  - ${tail}: (equal)`];
+    case "fn-noop":
+      return [`  - ${tail}: (equal — only function refs differ)`];
+    case "changed":
+      return [`  - ${tail}: changed paths:`, ...classification.lines];
+    default: {
+      const _exhaustive: never = classification;
+      return _exhaustive;
+    }
+  }
 }
 
 function formatComponentLines(component: ComponentWithHookChanges): string[] {
   const sortedHooks = component.hooks
     .slice()
     .sort((left, right) => left.hookIndex - right.hookIndex);
-
-  return sortedHooks.flatMap((hook) => {
-    const label = formatHookLabel(hook);
-    const tail = label === "" ? `hook[${hook.hookIndex}]` : `hook[${hook.hookIndex}] ${label}`;
-    const classification = classifyPathDiff(hook.prev, hook.next);
-    switch (classification.kind) {
-      case "not-object": {
-        const prevIsContainer = isContainerValue(hook.prev);
-        const nextIsContainer = isContainerValue(hook.next);
-        const prevFormatted = prevIsContainer
-          ? formatShallowShape(hook.prev)
-          : formatValueForLLM(hook.prev);
-        const nextFormatted = nextIsContainer
-          ? formatShallowShape(hook.next)
-          : formatValueForLLM(hook.next);
-        const equalTag = prevFormatted === nextFormatted ? " (equal)" : "";
-        return [
-          `- ${component.displayName} ${tail}: ${prevFormatted} → ${nextFormatted}${equalTag}`,
-        ];
-      }
-      case "equal":
-        return [`- ${component.displayName} ${tail}: (equal)`];
-      case "fn-noop":
-        return [`- ${component.displayName} ${tail}: (equal — only function refs differ)`];
-      case "changed":
-        return [`- ${component.displayName} ${tail}: changed paths:`, ...classification.lines];
-      default: {
-        const _exhaustive: never = classification;
-        return _exhaustive;
-      }
-    }
-  });
+  return [`- ${component.displayName}:`, ...sortedHooks.flatMap(formatHookBulletLines)];
 }
 
 export function getCommitSectionLines(fiberChanges: CommittedFiberChange[]): string[] {

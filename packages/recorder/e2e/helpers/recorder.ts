@@ -65,3 +65,12 @@ export async function fillRecorderComponentFilter(page: Page, value: string) {
 export async function expectRecorderCommitCount(page: Page, count: number) {
   await expect(recorderByTestId(page, "commit-count")).toHaveText(`${count} commit(s)`);
 }
+
+export async function expectHookChange(
+  locator: Locator,
+  displayName: string,
+  hookTail: string,
+): Promise<void> {
+  await expect(locator).toContainText(`- ${displayName}:`);
+  await expect(locator).toContainText(hookTail);
+}

@@ -33,21 +33,22 @@ describe("format-commit-section shallow shape for null↔object", () => {
       syncOnly: false,
     };
 
-    const [line] = getCommitSectionLines([
+    const lines = getCommitSectionLines([
       makeChange("NavRoot", [
         { hookIndex: 13, hookName: "State", hookPath: ["State"], prev: null, next },
       ]),
     ]);
 
-    expect(line).toBe(
-      "- NavRoot hook[13] State: null → " +
+    expect(lines).toEqual([
+      "- NavRoot:",
+      "  - hook[13] State: null → " +
         "{subscribe: [Function], getSnapshot: [Function], state: [object], " +
         "listeners: [object], updateTick: 6, syncOnly: false}",
-    );
+    ]);
   });
 
   it("renders undefined → object the same way", () => {
-    const [line] = getCommitSectionLines([
+    const lines = getCommitSectionLines([
       makeChange("Foo", [
         {
           hookIndex: 0,
@@ -59,11 +60,11 @@ describe("format-commit-section shallow shape for null↔object", () => {
       ]),
     ]);
 
-    expect(line).toBe('- Foo hook[0] State: undefined → {a: 1, b: "two"}');
+    expect(lines).toEqual(["- Foo:", '  - hook[0] State: undefined → {a: 1, b: "two"}']);
   });
 
   it("renders object → null using the shallow shape on the prev side", () => {
-    const [line] = getCommitSectionLines([
+    const lines = getCommitSectionLines([
       makeChange("Foo", [
         {
           hookIndex: 0,
@@ -75,11 +76,14 @@ describe("format-commit-section shallow shape for null↔object", () => {
       ]),
     ]);
 
-    expect(line).toBe("- Foo hook[0] State: {a: 1, nested: [object], items: [Array(3)]} → null");
+    expect(lines).toEqual([
+      "- Foo:",
+      "  - hook[0] State: {a: 1, nested: [object], items: [Array(3)]} → null",
+    ]);
   });
 
   it("renders null → array with item summaries", () => {
-    const [line] = getCommitSectionLines([
+    const lines = getCommitSectionLines([
       makeChange("Foo", [
         {
           hookIndex: 0,
@@ -91,17 +95,17 @@ describe("format-commit-section shallow shape for null↔object", () => {
       ]),
     ]);
 
-    expect(line).toBe('- Foo hook[0] State: null → [1, "x", [object], [Array(2)]]');
+    expect(lines).toEqual(["- Foo:", '  - hook[0] State: null → [1, "x", [object], [Array(2)]]']);
   });
 
   it("leaves primitive → primitive untouched", () => {
-    const [line] = getCommitSectionLines([
+    const lines = getCommitSectionLines([
       makeChange("Foo", [
         { hookIndex: 0, hookName: "State", hookPath: ["State"], prev: false, next: true },
       ]),
     ]);
 
-    expect(line).toBe("- Foo hook[0] State: false → true");
+    expect(lines).toEqual(["- Foo:", "  - hook[0] State: false → true"]);
   });
 
   it("still produces path-diff lines for object → object (no regression)", () => {
@@ -117,6 +121,33 @@ describe("format-commit-section shallow shape for null↔object", () => {
       ]),
     ]);
 
-    expect(lines).toEqual(["- Foo hook[0] State: changed paths:", "    x: 0 → 1"]);
+    expect(lines).toEqual(["- Foo:", "  - hook[0] State: changed paths:", "      x: 0 → 1"]);
+  });
+
+  it("groups multiple hook changes under a single component header", () => {
+    const lines = getCommitSectionLines([
+      makeChange("Foo", [
+        { hookIndex: 0, hookName: "State", hookPath: ["State"], prev: false, next: true },
+        {
+          hookIndex: 2,
+          hookName: "Reducer",
+          hookPath: ["Reducer"],
+          prev: { x: 0, y: 0 },
+          next: { x: 1, y: 0 },
+        },
+      ]),
+      makeChange("Bar", [
+        { hookIndex: 0, hookName: "State", hookPath: ["State"], prev: 1, next: 2 },
+      ]),
+    ]);
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  - hook[0] State: false → true",
+      "  - hook[2] Reducer: changed paths:",
+      "      x: 0 → 1",
+      "- Bar:",
+      "  - hook[0] State: 1 → 2",
+    ]);
   });
 });
