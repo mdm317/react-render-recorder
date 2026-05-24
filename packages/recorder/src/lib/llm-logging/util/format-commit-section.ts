@@ -1,9 +1,14 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
+import { formatDurationMsInline } from "../../../utils/format-duration";
 import {
   createSafeJsonReplacer,
   formatElementSummary,
   isElementLike,
 } from "../../../utils/safe-json";
+
+type GetCommitSectionLinesOptions = {
+  includeRenderDuration: boolean;
+};
 
 type HookChange = NonNullable<CommittedFiberChange["hooks"]>[number];
 
@@ -222,15 +227,27 @@ function formatHookBulletLines(hook: HookChange): string[] {
   }
 }
 
-function formatComponentLines(component: ComponentWithHookChanges): string[] {
+function formatComponentLines(
+  component: ComponentWithHookChanges,
+  options: GetCommitSectionLinesOptions,
+): string[] {
   const sortedHooks = component.hooks
     .slice()
     .sort((left, right) => left.hookIndex - right.hookIndex);
-  return [`- ${component.displayName}:`, ...sortedHooks.flatMap(formatHookBulletLines)];
+  const durationSuffix = options.includeRenderDuration
+    ? ` (${formatDurationMsInline(component.selfDuration)})`
+    : "";
+  return [
+    `- ${component.displayName}${durationSuffix}:`,
+    ...sortedHooks.flatMap(formatHookBulletLines),
+  ];
 }
 
-export function getCommitSectionLines(fiberChanges: CommittedFiberChange[]): string[] {
+export function getCommitSectionLines(
+  fiberChanges: CommittedFiberChange[],
+  options: GetCommitSectionLinesOptions = { includeRenderDuration: false },
+): string[] {
   const changedComponents = fiberChanges.filter(isComponentWithHookChanges);
   if (changedComponents.length === 0) return ["(no hook changes)"];
-  return changedComponents.flatMap(formatComponentLines);
+  return changedComponents.flatMap((component) => formatComponentLines(component, options));
 }

@@ -7,14 +7,12 @@ type BuildCommitHistoryTextByPaintInput = {
   fiberChanges: CommittedFiberChange[][];
   paintCommitIndices: number[];
   includeRenderDuration?: boolean;
-  includeRerenderCount?: boolean;
 };
 
 export function buildCommitHistoryTextByPaint({
   fiberChanges,
   paintCommitIndices,
   includeRenderDuration = false,
-  includeRerenderCount = false,
 }: BuildCommitHistoryTextByPaintInput): string[] {
   const paintCommitSet = new Set(paintCommitIndices);
   const paintTexts: string[] = [];
@@ -22,10 +20,7 @@ export function buildCommitHistoryTextByPaint({
   let currentLines: string[] = [];
 
   const flush = () => {
-    const summaryLines = buildSummaryLines(currentCommits, {
-      includeRerenderCount,
-      includeRenderDuration,
-    });
+    const summaryLines = buildSummaryLines(currentCommits);
     paintTexts.push(["## Summary", ...summaryLines, "", ...currentLines].join("\n"));
     currentCommits = [];
     currentLines = [];
@@ -34,7 +29,10 @@ export function buildCommitHistoryTextByPaint({
   fiberChanges.forEach((commit, commitIndex) => {
     if (currentLines.length > 0) currentLines.push("");
     currentCommits.push(commit);
-    currentLines.push(`## Commit ${commitIndex + 1}`, ...getCommitSectionLines(commit));
+    currentLines.push(
+      `## Commit ${commitIndex + 1}`,
+      ...getCommitSectionLines(commit, { includeRenderDuration }),
+    );
 
     if (paintCommitSet.has(commitIndex)) {
       flush();

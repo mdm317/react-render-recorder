@@ -12,7 +12,6 @@ export type SerializableFiberChange = Omit<CommittedFiberChange, "fiber" | "prev
 
 export type CommitHistoryTextOptions = {
   includeRenderDuration?: boolean;
-  includeRerenderCount?: boolean;
 };
 
 function getFiberChanges(store: RecorderStore): SerializableFiberChange[][] {

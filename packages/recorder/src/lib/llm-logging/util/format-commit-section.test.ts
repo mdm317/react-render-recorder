@@ -6,6 +6,7 @@ import { getCommitSectionLines } from "./format-commit-section";
 function makeChange(
   displayName: string,
   hooks: NonNullable<CommittedFiberChange["hooks"]>,
+  selfDuration = 0,
 ): CommittedFiberChange {
   return {
     actualDuration: null,
@@ -17,7 +18,7 @@ function makeChange(
     isFirstMount: false,
     prevFiber: null,
     props: null,
-    selfDuration: 0,
+    selfDuration,
     state: null,
   };
 }
@@ -122,6 +123,21 @@ describe("format-commit-section shallow shape for null↔object", () => {
     ]);
 
     expect(lines).toEqual(["- Foo:", "  - hook[0] State: changed paths:", "      x: 0 → 1"]);
+  });
+
+  it("appends selfDuration to the component header when includeRenderDuration is true", () => {
+    const lines = getCommitSectionLines(
+      [
+        makeChange(
+          "Foo",
+          [{ hookIndex: 0, hookName: "State", hookPath: ["State"], prev: 0, next: 1 }],
+          0.5,
+        ),
+      ],
+      { includeRenderDuration: true },
+    );
+
+    expect(lines).toEqual(["- Foo (0.50ms):", "  - hook[0] State: 0 → 1"]);
   });
 
   it("groups multiple hook changes under a single component header", () => {

@@ -7,7 +7,6 @@ import { useRecorderStore } from "../store";
 
 type UseCommitHistoryOptions = {
   includeRenderDuration?: boolean;
-  includeRerenderCount?: boolean;
 };
 
 type UseCommitHistoryResult = {
@@ -18,7 +17,6 @@ type UseCommitHistoryResult = {
 
 export function useCommitHistory({
   includeRenderDuration = false,
-  includeRerenderCount = true,
 }: UseCommitHistoryOptions = {}): UseCommitHistoryResult {
   const { state } = useRecorderStore();
 
@@ -31,14 +29,12 @@ export function useCommitHistory({
       commitCount: filteredFiberChanges.length,
       commitHistoryText: formatCommitHookChangedHistoryForLLM(filteredFiberChanges, {
         includeRenderDuration,
-        includeRerenderCount,
       }),
       commitHistoryTextByPaint: buildCommitHistoryTextByPaint({
         fiberChanges: filteredFiberChanges,
         paintCommitIndices: filteredPaintCommitIndices,
         includeRenderDuration,
-        includeRerenderCount,
       }),
     };
-  }, [state, includeRenderDuration, includeRerenderCount]);
+  }, [state, includeRenderDuration]);
 }
