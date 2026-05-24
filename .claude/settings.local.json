@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm build:*)",
+      "Bash(pnpm install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(pnpm --filter @react-record/recorder test run)",
+      "Bash(pnpm --filter react-render-recorder test:unit)",
+      "Bash(pnpm lint *)",
+      "Bash(pnpm exec *)",
+      "Bash(git checkout *)",
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm --filter @react-record/recorder typecheck)",
+      "Bash(pnpm format *)",
+      "Bash(git log *)",
+      "Bash(git reset *)",
+      "Bash(git restore *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pnpm format:check && pnpm lint && pnpm test:e2e || { echo 'Pre-commit checks failed (oxfmt / oxlint / e2e). Fix the errors above before committing.' >&2; exit 2; }",
+            "if": "Bash(git commit*)",
+            "timeout": 600,
+            "statusMessage": "Running oxfmt + oxlint + e2e before commit..."
+          }
+        ]
+      }
+    ]
+  }
+}
