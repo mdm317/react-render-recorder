@@ -1,13 +1,12 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
+import type { CommitFormatOptions } from "./llm-logging/types";
 import { buildSummaryLines } from "./llm-logging/util/build-summary-lines";
 import { getCommitSectionLines } from "./llm-logging/util/format-commit-section";
 
-type BuildCommitHistoryTextByPaintInput = {
+type BuildCommitHistoryTextByPaintInput = CommitFormatOptions & {
   fiberChanges: CommittedFiberChange[][];
   paintCommitIndices: number[];
-  includeRenderDuration?: boolean;
-  includeHookPath?: boolean;
 };
 
 export function buildCommitHistoryTextByPaint({

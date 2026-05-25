@@ -3,16 +3,13 @@ import type { CommittedFiberChange } from "@react-record/devtools-api";
 import { buildCommitHistoryTextByPaint } from "../lib/build-commit-segments-by-paint";
 import { buildFilteredCommits } from "../lib/build-filtered-commits";
 import { formatCommitHookChangedHistoryForLLM } from "../lib/llm-logging/format-commit-hook-changed-history-for-llm";
+import type { CommitFormatOptions } from "../lib/llm-logging/types";
 import { endRecording, startRecording } from "../services/recording";
 import type { RecorderStore } from "../store";
 
 const RECORDER_GLOBAL = "__REACT_RENDER_RECORDER__";
 
 export type SerializableFiberChange = Omit<CommittedFiberChange, "fiber" | "prevFiber">;
-
-export type CommitHistoryTextOptions = {
-  includeRenderDuration?: boolean;
-};
 
 function getFiberChanges(store: RecorderStore): SerializableFiberChange[][] {
   return store
@@ -26,16 +23,13 @@ function getPaintCommitIndices(store: RecorderStore): number[] {
   return [...store.getSnapshot().paintCommitIndices];
 }
 
-function getCommitHistoryText(store: RecorderStore, options: CommitHistoryTextOptions): string {
+function getCommitHistoryText(store: RecorderStore, options: CommitFormatOptions): string {
   const { fiberChanges, paintCommitIndices } = store.getSnapshot();
   const { filteredFiberChanges } = buildFilteredCommits({ fiberChanges, paintCommitIndices });
   return formatCommitHookChangedHistoryForLLM(filteredFiberChanges, options);
 }
 
-function getCommitHistoryTextByPaint(
-  store: RecorderStore,
-  options: CommitHistoryTextOptions,
-): string[] {
+function getCommitHistoryTextByPaint(store: RecorderStore, options: CommitFormatOptions): string[] {
   const { fiberChanges, paintCommitIndices } = store.getSnapshot();
   const { filteredFiberChanges, filteredPaintCommitIndices } = buildFilteredCommits({
     fiberChanges,
@@ -55,9 +49,9 @@ export function exposeRecorderApi(store: RecorderStore): void {
     end: () => endRecording(store),
     getFiberChanges: () => getFiberChanges(store),
     getPaintCommitIndices: () => getPaintCommitIndices(store),
-    getCommitHistoryText: (options: CommitHistoryTextOptions = {}) =>
+    getCommitHistoryText: (options: CommitFormatOptions = {}) =>
       getCommitHistoryText(store, options),
-    getCommitHistoryTextByPaint: (options: CommitHistoryTextOptions = {}) =>
+    getCommitHistoryTextByPaint: (options: CommitFormatOptions = {}) =>
       getCommitHistoryTextByPaint(store, options),
   };
 }

@@ -5,11 +5,7 @@ import {
   formatElementSummary,
   isElementLike,
 } from "../../../utils/safe-json";
-
-type GetCommitSectionLinesOptions = {
-  includeRenderDuration?: boolean;
-  includeHookPath?: boolean;
-};
+import type { CommitFormatOptions } from "../types";
 
 type HookChange = NonNullable<CommittedFiberChange["hooks"]>[number];
 
@@ -252,7 +248,7 @@ function formatComponentLines(
 
 export function getCommitSectionLines(
   fiberChanges: CommittedFiberChange[],
-  options: GetCommitSectionLinesOptions = {},
+  options: CommitFormatOptions = {},
 ): string[] {
   const changedComponents = fiberChanges.filter(isComponentWithHookChanges);
   if (changedComponents.length === 0) return ["(no hook changes)"];

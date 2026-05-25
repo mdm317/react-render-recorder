@@ -3,12 +3,8 @@ import { useMemo } from "preact/hooks";
 import { buildFilteredCommits } from "../lib/build-filtered-commits";
 import { buildCommitHistoryTextByPaint } from "../lib/build-commit-segments-by-paint";
 import { formatCommitHookChangedHistoryForLLM } from "../lib/llm-logging/format-commit-hook-changed-history-for-llm";
+import type { CommitFormatOptions } from "../lib/llm-logging/types";
 import { useRecorderStore } from "../store";
-
-type UseCommitHistoryOptions = {
-  includeRenderDuration?: boolean;
-  includeHookPath?: boolean;
-};
 
 type UseCommitHistoryResult = {
   commitCount: number;
@@ -19,7 +15,7 @@ type UseCommitHistoryResult = {
 export function useCommitHistory({
   includeRenderDuration = false,
   includeHookPath = false,
-}: UseCommitHistoryOptions = {}): UseCommitHistoryResult {
+}: CommitFormatOptions = {}): UseCommitHistoryResult {
   const { state } = useRecorderStore();
 
   return useMemo(() => {
