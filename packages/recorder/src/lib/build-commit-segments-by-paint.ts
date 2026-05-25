@@ -7,12 +7,14 @@ type BuildCommitHistoryTextByPaintInput = {
   fiberChanges: CommittedFiberChange[][];
   paintCommitIndices: number[];
   includeRenderDuration?: boolean;
+  includeHookPath?: boolean;
 };
 
 export function buildCommitHistoryTextByPaint({
   fiberChanges,
   paintCommitIndices,
   includeRenderDuration = false,
+  includeHookPath = false,
 }: BuildCommitHistoryTextByPaintInput): string[] {
   const paintCommitSet = new Set(paintCommitIndices);
   const paintTexts: string[] = [];
@@ -31,7 +33,7 @@ export function buildCommitHistoryTextByPaint({
     currentCommits.push(commit);
     currentLines.push(
       `## Commit ${commitIndex + 1}`,
-      ...getCommitSectionLines(commit, { includeRenderDuration }),
+      ...getCommitSectionLines(commit, { includeRenderDuration, includeHookPath }),
     );
 
     if (paintCommitSet.has(commitIndex)) {

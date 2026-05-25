@@ -90,6 +90,8 @@ test.describe("rendering scenarios", () => {
       await recordCycle(page, async () => {
         await page.getByTestId(SCENARIO_BUTTON.CUSTOM_HOOK).click();
       });
+      await recorderByTestId(page, "view-options-button").click();
+      await recorderByTestId(page, "view-option-isHookPathVisible").click();
       const result = recorderByTestId(page, "component-filter-result");
       await expectHookChange(result, "CustomHookButton", "hook[0] State (in HookCounter)");
       await expect(result).toContainText("## Commit 1");
@@ -103,6 +105,8 @@ test.describe("rendering scenarios", () => {
         await page.getByTestId(SCENARIO_BUTTON.DEBUG_VALUE).click();
       });
       await expectRecorderCommitCount(page, 1);
+      await recorderByTestId(page, "view-options-button").click();
+      await recorderByTestId(page, "view-option-isHookPathVisible").click();
       const result = recorderByTestId(page, "component-filter-result");
       await expectHookChange(result, "DebugValueButton", "hook[0] State");
       await expect(result).toContainText('in DebugCounter, debug="count = 1"');

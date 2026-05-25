@@ -64,4 +64,25 @@ test.describe("commit history view options", () => {
     const text = (await result.textContent()) ?? "";
     expect(text).not.toMatch(/- UpdateButton \(/);
   });
+
+  test("Show hook path toggle reveals the wrapper chain for custom hooks", async ({ page }) => {
+    await recordCycle(page, async () => {
+      await clickTimes(page, SCENARIO_BUTTON.CUSTOM_HOOK, 1);
+    });
+
+    const optionsButton = recorderByTestId(page, "view-options-button");
+    const hookPathToggle = recorderByTestId(page, "view-option-isHookPathVisible");
+    const result = recorderByTestId(page, "component-filter-result");
+
+    const initialText = (await result.textContent()) ?? "";
+    expect(initialText).not.toMatch(/\(in HookCounter\)/);
+
+    await optionsButton.click();
+    await hookPathToggle.click();
+    await expect(result).toContainText("(in HookCounter)");
+
+    await hookPathToggle.click();
+    const finalText = (await result.textContent()) ?? "";
+    expect(finalText).not.toMatch(/\(in HookCounter\)/);
+  });
 });

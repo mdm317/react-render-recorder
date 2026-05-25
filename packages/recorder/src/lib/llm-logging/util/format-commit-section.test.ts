@@ -140,6 +140,44 @@ describe("format-commit-section shallow shape for null↔object", () => {
     expect(lines).toEqual(["- Foo (0.50ms):", "  - hook[0] State: 0 → 1"]);
   });
 
+  it("omits the wrapper chain by default for multi-segment hookPaths", () => {
+    const lines = getCommitSectionLines([
+      makeChange("Combo", [
+        {
+          hookIndex: 0,
+          hookName: "SyncExternalStore",
+          hookPath: ["ComboboxRootContext", "FloatingRootContext", "SyncExternalStore"],
+          prev: 0,
+          next: 1,
+        },
+      ]),
+    ]);
+
+    expect(lines).toEqual(["- Combo:", "  - hook[0] SyncExternalStore: 0 → 1"]);
+  });
+
+  it("renders the wrapper chain when includeHookPath is true", () => {
+    const lines = getCommitSectionLines(
+      [
+        makeChange("Combo", [
+          {
+            hookIndex: 0,
+            hookName: "SyncExternalStore",
+            hookPath: ["ComboboxRootContext", "FloatingRootContext", "SyncExternalStore"],
+            prev: 0,
+            next: 1,
+          },
+        ]),
+      ],
+      { includeHookPath: true },
+    );
+
+    expect(lines).toEqual([
+      "- Combo:",
+      "  - hook[0] SyncExternalStore (in ComboboxRootContext > FloatingRootContext): 0 → 1",
+    ]);
+  });
+
   it("groups multiple hook changes under a single component header", () => {
     const lines = getCommitSectionLines([
       makeChange("Foo", [

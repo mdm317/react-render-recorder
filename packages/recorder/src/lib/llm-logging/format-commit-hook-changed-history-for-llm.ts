@@ -4,11 +4,12 @@ import { getCommitSectionLines } from "./util/format-commit-section";
 
 type FormatOptions = {
   includeRenderDuration?: boolean;
+  includeHookPath?: boolean;
 };
 
 export function formatCommitHookChangedHistoryForLLM(
   fiberChangesByCommit: CommittedFiberChange[][],
-  { includeRenderDuration = false }: FormatOptions = {},
+  { includeRenderDuration = false, includeHookPath = false }: FormatOptions = {},
 ): string {
   const lines: string[] = ["## Summary", ...buildSummaryLines(fiberChangesByCommit)];
 
@@ -16,7 +17,7 @@ export function formatCommitHookChangedHistoryForLLM(
     lines.push(
       "",
       `## Commit ${commitIndex + 1}`,
-      ...getCommitSectionLines(fiberChanges, { includeRenderDuration }),
+      ...getCommitSectionLines(fiberChanges, { includeRenderDuration, includeHookPath }),
     );
   });
 

@@ -22,6 +22,7 @@ export function CommitHistoryPanel() {
   );
   const { commitCount, commitHistoryText, commitHistoryTextByPaint } = useCommitHistory({
     includeRenderDuration: options.isRenderDurationVisible,
+    includeHookPath: options.isHookPathVisible,
   });
 
   if (commitCount === 0) {

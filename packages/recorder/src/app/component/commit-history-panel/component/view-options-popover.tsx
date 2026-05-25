@@ -4,12 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 
 export type RecorderOptionsState = {
   isRenderDurationVisible: boolean;
+  isHookPathVisible: boolean;
 };
 
 type RecorderOptionKey = keyof RecorderOptionsState;
 
 export const INITIAL_RECORDER_OPTIONS: RecorderOptionsState = {
   isRenderDurationVisible: false,
+  isHookPathVisible: false,
 };
 
 export function buildInitialRecorderOptions(
@@ -18,6 +20,7 @@ export function buildInitialRecorderOptions(
   if (queryParameters == null) return INITIAL_RECORDER_OPTIONS;
   return {
     isRenderDurationVisible: queryParameters.get("renderTime") === "true",
+    isHookPathVisible: queryParameters.get("hookPath") === "true",
   };
 }
 
@@ -28,6 +31,7 @@ type OptionDef = {
 
 const OPTION_DEFS: readonly OptionDef[] = [
   { key: "isRenderDurationVisible", label: "Show render time" },
+  { key: "isHookPathVisible", label: "Show hook path" },
 ];
 
 type ViewOptionsPopoverProps = {

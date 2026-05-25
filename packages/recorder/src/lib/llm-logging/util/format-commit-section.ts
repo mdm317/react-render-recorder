@@ -7,7 +7,8 @@ import {
 } from "../../../utils/safe-json";
 
 type GetCommitSectionLinesOptions = {
-  includeRenderDuration: boolean;
+  includeRenderDuration?: boolean;
+  includeHookPath?: boolean;
 };
 
 type HookChange = NonNullable<CommittedFiberChange["hooks"]>[number];
@@ -87,12 +88,13 @@ function isContainerValue(value: unknown): boolean {
 
 const WRAPPER_HOOK_PATTERN = /^(.+?)\("(.+)"\)$/;
 
-function formatHookLabel(hook: HookChange): string {
+function formatHookLabel(hook: HookChange, includeHookPath: boolean): string {
   const hookPath = "hookPath" in hook ? hook.hookPath : null;
   const hookName = "hookName" in hook ? hook.hookName : null;
 
   if (hookPath != null && hookPath.length > 0) {
     const leaf = hookPath[hookPath.length - 1];
+    if (!includeHookPath) return leaf;
     const wrappers = hookPath.slice(0, -1);
     if (wrappers.length === 0) return leaf;
     if (wrappers.length === 1) {
@@ -197,8 +199,8 @@ function classifyPathDiff(prev: unknown, next: unknown): PathDiffClassification 
   return { kind: "changed", lines };
 }
 
-function formatHookBulletLines(hook: HookChange): string[] {
-  const label = formatHookLabel(hook);
+function formatHookBulletLines(hook: HookChange, includeHookPath: boolean): string[] {
+  const label = formatHookLabel(hook, includeHookPath);
   const tail = label === "" ? `hook[${hook.hookIndex}]` : `hook[${hook.hookIndex}] ${label}`;
   const classification = classifyPathDiff(hook.prev, hook.next);
   switch (classification.kind) {
@@ -227,9 +229,14 @@ function formatHookBulletLines(hook: HookChange): string[] {
   }
 }
 
+type ResolvedOptions = {
+  includeRenderDuration: boolean;
+  includeHookPath: boolean;
+};
+
 function formatComponentLines(
   component: ComponentWithHookChanges,
-  options: GetCommitSectionLinesOptions,
+  options: ResolvedOptions,
 ): string[] {
   const sortedHooks = component.hooks
     .slice()
@@ -239,15 +246,19 @@ function formatComponentLines(
     : "";
   return [
     `- ${component.displayName}${durationSuffix}:`,
-    ...sortedHooks.flatMap(formatHookBulletLines),
+    ...sortedHooks.flatMap((hook) => formatHookBulletLines(hook, options.includeHookPath)),
   ];
 }
 
 export function getCommitSectionLines(
   fiberChanges: CommittedFiberChange[],
-  options: GetCommitSectionLinesOptions = { includeRenderDuration: false },
+  options: GetCommitSectionLinesOptions = {},
 ): string[] {
   const changedComponents = fiberChanges.filter(isComponentWithHookChanges);
   if (changedComponents.length === 0) return ["(no hook changes)"];
-  return changedComponents.flatMap((component) => formatComponentLines(component, options));
+  const resolved: ResolvedOptions = {
+    includeRenderDuration: options.includeRenderDuration ?? false,
+    includeHookPath: options.includeHookPath ?? false,
+  };
+  return changedComponents.flatMap((component) => formatComponentLines(component, resolved));
 }
