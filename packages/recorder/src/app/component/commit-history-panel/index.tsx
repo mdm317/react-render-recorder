@@ -31,9 +31,12 @@ export function CommitHistoryPanel() {
 
   return (
     <section className="flex min-h-0 w-full flex-col overflow-hidden rounded-[1.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(24,24,27,0.96)_0%,rgba(9,9,11,0.98)_100%)] p-4 text-white shadow-[0_20px_48px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-      <div className="mb-3 flex justify-end">
-        <div className="text-right text-[0.7rem] text-white/45">
-          <p data-testid="commit-count">{commitCount} commit(s)</p>
+      <div className="mb-3 flex items-center justify-between gap-4">
+        <p className="text-[0.65rem] font-bold uppercase tracking-[0.24em] text-rose-300/90">
+          Rerender Recorder
+        </p>
+        <div className="flex items-center gap-3 text-[0.7rem] text-white/45">
+          <span data-testid="commit-count">{commitCount} commit(s)</span>
           <button
             data-testid="commit-history-toggle"
             type="button"
@@ -42,7 +45,7 @@ export function CommitHistoryPanel() {
             onClick={() => {
               setIsOpen((prev) => !prev);
             }}
-            className="mt-3 inline-flex min-w-20 items-center justify-center rounded-full border border-white/12 bg-white/6 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-white/72 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+            className="inline-flex min-w-20 items-center justify-center rounded-full border border-white/12 bg-white/6 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-white/72 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
           >
             {isOpen ? "닫기" : "열기"}
           </button>
