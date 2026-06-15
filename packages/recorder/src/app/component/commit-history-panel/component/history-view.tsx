@@ -7,7 +7,7 @@ type CommitHistoryContentProps = {
 
 export function CommitHistoryContent({ commitHistoryText }: CommitHistoryContentProps) {
   return (
-    <div data-testid="component-filter-result" className="mt-4 space-y-4">
+    <div data-testid="commit-history-result" className="mt-4 space-y-4">
       <HistoryText
         accentClassName="text-sky-200"
         section="commit"

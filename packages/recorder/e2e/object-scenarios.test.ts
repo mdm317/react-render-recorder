@@ -23,7 +23,7 @@ test.describe("object-state scenarios", () => {
       await clickTimes(page, SCENARIO_BUTTON.OBJECT_PARTIAL_UPDATE, 1);
     });
 
-    const result = recorderByTestId(page, "component-filter-result");
+    const result = recorderByTestId(page, "commit-history-result");
     await expectHookChange(result, "ObjectPartialUpdateButton", "hook[0] State: changed paths:");
     await expect(result).toContainText("x: 0 → 1");
     await expect(result).not.toContainText('"y":0');
@@ -34,7 +34,7 @@ test.describe("object-state scenarios", () => {
       await clickTimes(page, SCENARIO_BUTTON.OBJECT_SAME_VALUE, 1);
     });
 
-    const result = recorderByTestId(page, "component-filter-result");
+    const result = recorderByTestId(page, "commit-history-result");
     await expectHookChange(result, "ObjectSameValueButton", "hook[0] State: (equal)");
   });
 
@@ -43,7 +43,7 @@ test.describe("object-state scenarios", () => {
       await clickTimes(page, SCENARIO_BUTTON.OBJECT_FUNCTION_REF, 1);
     });
 
-    const result = recorderByTestId(page, "component-filter-result");
+    const result = recorderByTestId(page, "commit-history-result");
     await expectHookChange(
       result,
       "ObjectFunctionRefButton",

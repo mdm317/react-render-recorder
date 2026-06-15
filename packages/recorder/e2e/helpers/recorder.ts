@@ -58,10 +58,6 @@ export async function clickTimes(page: Page, testId: string, times: number) {
   }
 }
 
-export async function fillRecorderComponentFilter(page: Page, value: string) {
-  await recorderByTestId(page, "component-filter-input").fill(value);
-}
-
 export async function expectRecorderCommitCount(page: Page, count: number) {
   await expect(recorderByTestId(page, "commit-count")).toHaveText(`${count} commit(s)`);
 }

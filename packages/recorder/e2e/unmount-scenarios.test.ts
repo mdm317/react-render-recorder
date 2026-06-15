@@ -41,7 +41,7 @@ test.describe("unmount-before-flush scenarios", () => {
   test("commit 1 records child-only hook change", async ({ page }) => {
     await recordCycle(page, () => runThreeStep(page));
 
-    const result = recorderByTestId(page, "component-filter-result");
+    const result = recorderByTestId(page, "commit-history-result");
     await expect(result).toContainText("## Commit 1");
     await expect(result).toContainText("ForwardRef(UnmountReproChild)");
     await expect(result).toContainText("0 → 1");
@@ -52,7 +52,7 @@ test.describe("unmount-before-flush scenarios", () => {
   }) => {
     await recordCycle(page, () => runThreeStep(page));
 
-    const result = recorderByTestId(page, "component-filter-result");
+    const result = recorderByTestId(page, "commit-history-result");
     await expect(result).toContainText("## Commit 2");
     await expect(result).toContainText("UnmountBeforeFlushPanel");
     await expect(result).toContainText("true → false");
@@ -61,7 +61,7 @@ test.describe("unmount-before-flush scenarios", () => {
   test("commit 3 still records a parent update after the dangerous unmount", async ({ page }) => {
     await recordCycle(page, () => runThreeStep(page));
 
-    const result = recorderByTestId(page, "component-filter-result");
+    const result = recorderByTestId(page, "commit-history-result");
     await expect(result).toContainText("## Commit 3");
     await expect(result).toContainText("UnmountBeforeFlushPanel");
     await expect(result).toContainText("0 → 1");

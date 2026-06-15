@@ -24,7 +24,7 @@ test.describe("summary header", () => {
       await clickTimes(page, SCENARIO_BUTTON.UPDATE, 2);
     });
 
-    const result = recorderByTestId(page, "component-filter-result");
+    const result = recorderByTestId(page, "commit-history-result");
     await expect(result).toContainText("## Summary");
     await expect(result).toContainText("2 commits, 1 component with hook changes");
   });
@@ -34,7 +34,7 @@ test.describe("summary header", () => {
       await clickTimes(page, SCENARIO_BUTTON.UPDATE, 1);
     });
 
-    const result = recorderByTestId(page, "component-filter-result");
+    const result = recorderByTestId(page, "commit-history-result");
     await expect(result).toContainText("## Summary");
     await expect(result).toContainText("1 commit, 1 component with hook changes");
   });
@@ -63,7 +63,7 @@ test.describe("summary header", () => {
       await clickTimes(page, SCENARIO_BUTTON.UPDATE, 2);
     });
 
-    const result = recorderByTestId(page, "component-filter-result");
+    const result = recorderByTestId(page, "commit-history-result");
     await expect(result).toContainText(
       new RegExp(`2 total rerenders, ${DURATION_PATTERN} total render time`),
     );
@@ -76,7 +76,7 @@ test.describe("summary header", () => {
       await clickTimes(page, SCENARIO_BUTTON.RENDER_BY_PARENT, 1);
     });
 
-    const result = recorderByTestId(page, "component-filter-result");
+    const result = recorderByTestId(page, "commit-history-result");
     // 1 commit, but 4 components render (RenderByParentButton + 3 static leaves).
     // Only RenderByParentButton has a hook change — totals must still count all 4.
     await expect(result).toContainText("1 commit, 1 component with hook changes");

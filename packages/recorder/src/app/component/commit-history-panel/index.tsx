@@ -31,9 +31,9 @@ export function CommitHistoryPanel() {
 
   return (
     <section className="flex min-h-0 w-full flex-col overflow-hidden rounded-[1.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(24,24,27,0.96)_0%,rgba(9,9,11,0.98)_100%)] p-4 text-white shadow-[0_20px_48px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-      <CommitHistoryHeader
-        commitCount={commitCount}
-        headerAction={
+      <div className="mb-3 flex justify-end">
+        <div className="text-right text-[0.7rem] text-white/45">
+          <p data-testid="commit-count">{commitCount} commit(s)</p>
           <button
             data-testid="commit-history-toggle"
             type="button"
@@ -46,8 +46,8 @@ export function CommitHistoryPanel() {
           >
             {isOpen ? "닫기" : "열기"}
           </button>
-        }
-      />
+        </div>
+      </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <PaintViewToggleButton
@@ -73,30 +73,6 @@ export function CommitHistoryPanel() {
         )}
       </CollapsibleContent>
     </section>
-  );
-}
-
-type CommitHistoryHeaderProps = {
-  commitCount: number;
-  headerAction: ComponentChildren;
-};
-
-function CommitHistoryHeader({ commitCount, headerAction }: CommitHistoryHeaderProps) {
-  return (
-    <div className="mb-3 flex items-start justify-between gap-4">
-      <div>
-        <p className="text-[0.65rem] font-bold uppercase tracking-[0.24em] text-rose-300">
-          Component Filter
-        </p>
-        <p className="mt-1 text-sm text-white/70">
-          녹화가 끝났습니다. 비워두면 전체를, 입력하면 해당 데이터만 표시합니다.
-        </p>
-      </div>
-      <div className="text-right text-[0.7rem] text-white/45">
-        <p data-testid="commit-count">{commitCount} commit(s)</p>
-        {headerAction}
-      </div>
-    </div>
   );
 }
 
