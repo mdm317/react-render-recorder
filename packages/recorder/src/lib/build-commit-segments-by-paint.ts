@@ -5,43 +5,32 @@ import { buildSummaryLines } from "./llm-logging/util/build-summary-lines";
 import { getCommitSectionLines } from "./llm-logging/util/format-commit-section";
 
 type BuildCommitHistoryTextByPaintInput = CommitFormatOptions & {
-  fiberChanges: CommittedFiberChange[][];
-  paintCommitIndices: number[];
+  fiberChangesByPaint: CommittedFiberChange[][][];
 };
 
 export function buildCommitHistoryTextByPaint({
-  fiberChanges,
-  paintCommitIndices,
+  fiberChangesByPaint,
   includeRenderDuration = false,
   includeHookPath = false,
 }: BuildCommitHistoryTextByPaintInput): string[] {
-  const paintCommitSet = new Set(paintCommitIndices);
   const paintTexts: string[] = [];
-  let currentCommits: CommittedFiberChange[][] = [];
-  let currentLines: string[] = [];
+  let commitIndex = 0;
 
-  const flush = () => {
-    const summaryLines = buildSummaryLines(currentCommits);
-    paintTexts.push(["## Summary", ...summaryLines, "", ...currentLines].join("\n"));
-    currentCommits = [];
-    currentLines = [];
-  };
+  for (const paintFiberChanges of fiberChangesByPaint) {
+    const currentLines: string[] = [];
 
-  fiberChanges.forEach((commit, commitIndex) => {
-    if (currentLines.length > 0) currentLines.push("");
-    currentCommits.push(commit);
-    currentLines.push(
-      `## Commit ${commitIndex + 1}`,
-      ...getCommitSectionLines(commit, { includeRenderDuration, includeHookPath }),
-    );
-
-    if (paintCommitSet.has(commitIndex)) {
-      flush();
+    for (const commit of paintFiberChanges) {
+      if (currentLines.length > 0) currentLines.push("");
+      currentLines.push(
+        `## Commit ${commitIndex + 1}`,
+        ...getCommitSectionLines(commit, { includeRenderDuration, includeHookPath }),
+      );
+      commitIndex += 1;
     }
-  });
 
-  if (currentLines.length > 0) {
-    flush();
+    paintTexts.push(
+      ["## Summary", ...buildSummaryLines(paintFiberChanges), "", ...currentLines].join("\n"),
+    );
   }
 
   return paintTexts;

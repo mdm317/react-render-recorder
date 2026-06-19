@@ -1,7 +1,7 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
 import { buildCommitHistoryTextByPaint } from "../lib/build-commit-segments-by-paint";
-import { buildFilteredCommits } from "../lib/build-filtered-commits";
+import { groupCommitsByPaint } from "../lib/group-commits-by-paint";
 import { formatCommitHookChangedHistoryForLLM } from "../lib/llm-logging/format-commit-hook-changed-history-for-llm";
 import type { CommitFormatOptions } from "../lib/llm-logging/types";
 import { endRecording, startRecording } from "../services/recording";
@@ -25,19 +25,21 @@ function getPaintCommitIndices(store: RecorderStore): number[] {
 
 function getCommitHistoryText(store: RecorderStore, options: CommitFormatOptions): string {
   const { fiberChanges, paintCommitIndices } = store.getSnapshot();
-  const { filteredFiberChanges } = buildFilteredCommits({ fiberChanges, paintCommitIndices });
-  return formatCommitHookChangedHistoryForLLM(filteredFiberChanges, options);
+  const fiberChangeGroupsByPaint = groupCommitsByPaint({
+    fiberChangesByCommit: fiberChanges,
+    paintCommitIndices,
+  });
+  return formatCommitHookChangedHistoryForLLM(fiberChangeGroupsByPaint.flat(), options);
 }
 
 function getCommitHistoryTextByPaint(store: RecorderStore, options: CommitFormatOptions): string[] {
   const { fiberChanges, paintCommitIndices } = store.getSnapshot();
-  const { filteredFiberChanges, filteredPaintCommitIndices } = buildFilteredCommits({
-    fiberChanges,
+  const fiberChangeGroupsByPaint = groupCommitsByPaint({
+    fiberChangesByCommit: fiberChanges,
     paintCommitIndices,
   });
   return buildCommitHistoryTextByPaint({
-    fiberChanges: filteredFiberChanges,
-    paintCommitIndices: filteredPaintCommitIndices,
+    fiberChangesByPaint: fiberChangeGroupsByPaint,
     ...options,
   });
 }
