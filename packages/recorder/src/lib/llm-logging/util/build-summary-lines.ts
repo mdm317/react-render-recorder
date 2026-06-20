@@ -3,37 +3,30 @@ import type { CommittedFiberChange } from "@react-record/devtools-api";
 import { formatDurationMsInline } from "../../../utils/format-duration";
 
 export function buildSummaryLines(fiberChangesByCommit: CommittedFiberChange[][]): string[] {
-  return [buildCountLine(fiberChangesByCommit), buildTotalsLine(fiberChangesByCommit)];
+  return [buildCountLine(fiberChangesByCommit), buildRenderTimeLine(fiberChangesByCommit)];
 }
 
 function buildCountLine(fiberChangesByCommit: CommittedFiberChange[][]): string {
   const totalCommits = fiberChangesByCommit.length;
-  const names = new Set<string>();
+  let rerenderedComponents = 0;
   for (const commit of fiberChangesByCommit) {
-    for (const { displayName, hooks } of commit) {
-      if (displayName != null && hooks != null && hooks.length > 0) {
-        names.add(displayName);
+    for (const { hooks } of commit) {
+      if (hooks != null) {
+        rerenderedComponents += 1;
       }
     }
   }
-  const componentsWithHookChanges = names.size;
-  const commitsLabel = totalCommits === 1 ? "commit" : "commits";
-  const componentsLabel = componentsWithHookChanges === 1 ? "component" : "components";
-  return `${totalCommits} ${commitsLabel}, ${componentsWithHookChanges} ${componentsLabel} with hook changes`;
+  return `${totalCommits} commits, ${rerenderedComponents} components rerendered`;
 }
 
-function buildTotalsLine(fiberChangesByCommit: CommittedFiberChange[][]): string {
-  let totalRerenders = 0;
+function buildRenderTimeLine(fiberChangesByCommit: CommittedFiberChange[][]): string {
   let totalDurationMs: number | null = null;
   for (const commit of fiberChangesByCommit) {
-    for (const { displayName, selfDuration } of commit) {
-      if (displayName == null) continue;
-      totalRerenders += 1;
+    for (const { selfDuration } of commit) {
       if (selfDuration != null) {
         totalDurationMs = (totalDurationMs ?? 0) + selfDuration;
       }
     }
   }
-  const rerendersLabel = totalRerenders === 1 ? "rerender" : "rerenders";
-  return `${totalRerenders} total ${rerendersLabel}, ${formatDurationMsInline(totalDurationMs)} total render time`;
+  return `${formatDurationMsInline(totalDurationMs)} total render time`;
 }

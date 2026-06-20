@@ -19,24 +19,24 @@ test.describe("summary header", () => {
     await expect(recordButton(page, START_BUTTON_TEXT)).toBeVisible();
   });
 
-  test("history view shows ## Summary with the count line (plural)", async ({ page }) => {
+  test("history view shows ## Summary with the count line", async ({ page }) => {
     await recordCycle(page, async () => {
       await clickTimes(page, SCENARIO_BUTTON.UPDATE, 2);
     });
 
     const result = recorderByTestId(page, "commit-history-result");
     await expect(result).toContainText("## Summary");
-    await expect(result).toContainText("2 commits, 1 component with hook changes");
+    await expect(result).toContainText("2 commits, 2 components rerendered");
   });
 
-  test("history view count line uses singular for 1 commit / 1 component", async ({ page }) => {
+  test("history view count line for a single commit", async ({ page }) => {
     await recordCycle(page, async () => {
       await clickTimes(page, SCENARIO_BUTTON.UPDATE, 1);
     });
 
     const result = recorderByTestId(page, "commit-history-result");
     await expect(result).toContainText("## Summary");
-    await expect(result).toContainText("1 commit, 1 component with hook changes");
+    await expect(result).toContainText("1 commits, 1 components rerendered");
   });
 
   test("paint view shows ## Summary with a count line per segment", async ({ page }) => {
@@ -52,24 +52,20 @@ test.describe("summary header", () => {
     for (const i of [0, 1]) {
       const segment = segments.nth(i);
       await expect(segment).toContainText("## Summary");
-      await expect(segment).toContainText("1 commit, 1 component with hook changes");
+      await expect(segment).toContainText("1 commits, 1 components rerendered");
     }
   });
 
-  test("history view totals line counts hook-changed-only renders for hook-only scenarios", async ({
-    page,
-  }) => {
+  test("history view render time line shows total render time", async ({ page }) => {
     await recordCycle(page, async () => {
       await clickTimes(page, SCENARIO_BUTTON.UPDATE, 2);
     });
 
     const result = recorderByTestId(page, "commit-history-result");
-    await expect(result).toContainText(
-      new RegExp(`2 total rerenders, ${DURATION_PATTERN} total render time`),
-    );
+    await expect(result).toContainText(new RegExp(`${DURATION_PATTERN} total render time`));
   });
 
-  test("history view totals line includes render-by-parent (no hook change) components", async ({
+  test("count line counts only hook-changed components, not parent-driven leaves", async ({
     page,
   }) => {
     await recordCycle(page, async () => {
@@ -77,12 +73,11 @@ test.describe("summary header", () => {
     });
 
     const result = recorderByTestId(page, "commit-history-result");
-    // 1 commit, but 4 components render (RenderByParentButton + 3 static leaves).
-    // Only RenderByParentButton has a hook change — totals must still count all 4.
-    await expect(result).toContainText("1 commit, 1 component with hook changes");
-    await expect(result).toContainText(
-      new RegExp(`4 total rerenders, ${DURATION_PATTERN} total render time`),
-    );
+    // 1 commit in which 4 components render (RenderByParentButton + 3 static
+    // leaves), but only RenderByParentButton has a hook change, so the count
+    // line counts just the 1 hook-changed component.
+    await expect(result).toContainText("1 commits, 1 components rerendered");
+    await expect(result).toContainText(new RegExp(`${DURATION_PATTERN} total render time`));
   });
 
   test("paint view count line reflects multi-commit segments", async ({ page }) => {
@@ -98,7 +93,7 @@ test.describe("summary header", () => {
     for (const i of [0, 1]) {
       const segment = segments.nth(i);
       await expect(segment).toContainText("## Summary");
-      await expect(segment).toContainText("2 commits, 1 component with hook changes");
+      await expect(segment).toContainText("2 commits, 2 components rerendered");
     }
   });
 });
