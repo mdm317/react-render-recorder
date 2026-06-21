@@ -134,7 +134,7 @@ describe("format-commit-section shallow shape for null↔object", () => {
           0.5,
         ),
       ],
-      { includeRenderDuration: true },
+      { includeRenderDuration: true, includeHookPath: false },
     );
 
     expect(lines).toEqual(["- Foo (0.50ms):", "  - hook[0] State: 0 → 1"]);
@@ -169,7 +169,7 @@ describe("format-commit-section shallow shape for null↔object", () => {
           },
         ]),
       ],
-      { includeHookPath: true },
+      { includeRenderDuration: false, includeHookPath: true },
     );
 
     expect(lines).toEqual([

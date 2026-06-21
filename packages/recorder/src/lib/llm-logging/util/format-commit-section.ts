@@ -5,7 +5,7 @@ import {
   formatElementSummary,
   isElementLike,
 } from "../../../utils/safe-json";
-import type { CommitFormatOptions } from "../types";
+import type { RecorderOptions } from "@/types";
 
 type HookChange = NonNullable<CommittedFiberChange["hooks"]>[number];
 
@@ -225,36 +225,22 @@ function formatHookBulletLines(hook: HookChange, includeHookPath: boolean): stri
   }
 }
 
-type ResolvedOptions = {
-  includeRenderDuration: boolean;
-  includeHookPath: boolean;
-};
-
-function formatComponentLines(
-  component: ComponentWithHookChanges,
-  options: ResolvedOptions,
-): string[] {
-  const sortedHooks = component.hooks
-    .slice()
-    .sort((left, right) => left.hookIndex - right.hookIndex);
-  const durationSuffix = options.includeRenderDuration
-    ? ` (${formatDurationMsInline(component.selfDuration)})`
-    : "";
-  return [
-    `- ${component.displayName}${durationSuffix}:`,
-    ...sortedHooks.flatMap((hook) => formatHookBulletLines(hook, options.includeHookPath)),
-  ];
-}
-
 export function getCommitSectionLines(
   fiberChanges: CommittedFiberChange[],
-  options: CommitFormatOptions = {},
+  options: RecorderOptions = { includeRenderDuration: false, includeHookPath: false },
 ): string[] {
   const changedComponents = fiberChanges.filter(isComponentWithHookChanges);
   if (changedComponents.length === 0) return ["(no hook changes)"];
-  const resolved: ResolvedOptions = {
-    includeRenderDuration: options.includeRenderDuration ?? false,
-    includeHookPath: options.includeHookPath ?? false,
-  };
-  return changedComponents.flatMap((component) => formatComponentLines(component, resolved));
+  return changedComponents.flatMap((component) => {
+    const sortedHooks = component.hooks
+      .slice()
+      .sort((left, right) => left.hookIndex - right.hookIndex);
+    const durationSuffix = options.includeRenderDuration
+      ? ` (${formatDurationMsInline(component.selfDuration)})`
+      : "";
+    return [
+      `- ${component.displayName}${durationSuffix}:`,
+      ...sortedHooks.flatMap((hook) => formatHookBulletLines(hook, options.includeHookPath)),
+    ];
+  });
 }

@@ -2,25 +2,22 @@
 import type { Dispatch, StateUpdater } from "preact/hooks";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 
-export type RecorderOptionsState = {
-  isRenderDurationVisible: boolean;
-  isHookPathVisible: boolean;
-};
+import type { RecorderOptions } from "@/types";
 
-type RecorderOptionKey = keyof RecorderOptionsState;
+type RecorderOptionKey = keyof RecorderOptions;
 
-export const INITIAL_RECORDER_OPTIONS: RecorderOptionsState = {
-  isRenderDurationVisible: false,
-  isHookPathVisible: false,
+export const INITIAL_RECORDER_OPTIONS: RecorderOptions = {
+  includeRenderDuration: false,
+  includeHookPath: false,
 };
 
 export function buildInitialRecorderOptions(
   queryParameters: URLSearchParams | null,
-): RecorderOptionsState {
+): RecorderOptions {
   if (queryParameters == null) return INITIAL_RECORDER_OPTIONS;
   return {
-    isRenderDurationVisible: queryParameters.get("renderTime") === "true",
-    isHookPathVisible: queryParameters.get("hookPath") === "true",
+    includeRenderDuration: queryParameters.get("renderTime") === "true",
+    includeHookPath: queryParameters.get("hookPath") === "true",
   };
 }
 
@@ -30,13 +27,13 @@ type OptionDef = {
 };
 
 const OPTION_DEFS: readonly OptionDef[] = [
-  { key: "isRenderDurationVisible", label: "Show render time" },
-  { key: "isHookPathVisible", label: "Show hook path" },
+  { key: "includeRenderDuration", label: "Show render time" },
+  { key: "includeHookPath", label: "Show hook path" },
 ];
 
 type ViewOptionsPopoverProps = {
-  options: RecorderOptionsState;
-  setOptions: Dispatch<StateUpdater<RecorderOptionsState>>;
+  options: RecorderOptions;
+  setOptions: Dispatch<StateUpdater<RecorderOptions>>;
 };
 
 export function ViewOptionsPopover({ options, setOptions }: ViewOptionsPopoverProps) {

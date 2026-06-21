@@ -91,7 +91,7 @@ test.describe("rendering scenarios", () => {
         await page.getByTestId(SCENARIO_BUTTON.CUSTOM_HOOK).click();
       });
       await recorderByTestId(page, "view-options-button").click();
-      await recorderByTestId(page, "view-option-isHookPathVisible").click();
+      await recorderByTestId(page, "view-option-includeHookPath").click();
       const result = recorderByTestId(page, "commit-history-result");
       await expectHookChange(result, "CustomHookButton", "hook[0] State (in HookCounter)");
       await expect(result).toContainText("## Commit 1");
@@ -106,7 +106,7 @@ test.describe("rendering scenarios", () => {
       });
       await expectRecorderCommitCount(page, 1);
       await recorderByTestId(page, "view-options-button").click();
-      await recorderByTestId(page, "view-option-isHookPathVisible").click();
+      await recorderByTestId(page, "view-option-includeHookPath").click();
       const result = recorderByTestId(page, "commit-history-result");
       await expectHookChange(result, "DebugValueButton", "hook[0] State");
       await expect(result).toContainText('in DebugCounter, debug="count = 1"');

@@ -37,6 +37,11 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     plugins: [tailwindcss(), react(), injectRecorderScript(mode)],
+    resolve: {
+      alias: {
+        "@": fileURLToPath(new URL("./src", import.meta.url)),
+      },
+    },
     base: isApp ? "/react-render-recorder/" : "/",
     define: isLibBuild
       ? {
