@@ -122,7 +122,7 @@ describe("format-commit-section shallow shape for null↔object", () => {
       ]),
     ]);
 
-    expect(lines).toEqual(["- Foo:", "  - hook[0] State: changed paths:", "      x: 0 → 1"]);
+    expect(lines).toEqual(["- Foo:", "  - hook[0] State: changed fields:", "      x: 0 → 1"]);
   });
 
   it("appends selfDuration to the component header when includeRenderDuration is true", () => {
@@ -198,7 +198,7 @@ describe("format-commit-section shallow shape for null↔object", () => {
     expect(lines).toEqual([
       "- Foo:",
       "  - hook[0] State: false → true",
-      "  - hook[2] Reducer: changed paths:",
+      "  - hook[2] Reducer: changed fields:",
       "      x: 0 → 1",
       "- Bar:",
       "  - hook[0] State: 1 → 2",

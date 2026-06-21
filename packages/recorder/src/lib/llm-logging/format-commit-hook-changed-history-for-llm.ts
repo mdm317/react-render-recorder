@@ -7,7 +7,7 @@ export function formatCommitHookChangedHistoryForLLM(
   fiberChangesByCommit: CommittedFiberChange[][],
   options: RecorderOptions,
 ): string {
-  const lines: string[] = ["## Summary", ...buildSummaryLines(fiberChangesByCommit)];
+  const lines: string[] = buildSummaryLines(fiberChangesByCommit);
 
   fiberChangesByCommit.forEach((fiberChanges, commitIndex) => {
     lines.push("", `## Commit ${commitIndex + 1}`, ...getCommitSectionLines(fiberChanges, options));

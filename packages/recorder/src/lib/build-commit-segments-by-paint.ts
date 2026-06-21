@@ -28,9 +28,7 @@ export function buildCommitHistoryTextByPaint({
       commitIndex += 1;
     }
 
-    paintTexts.push(
-      ["## Summary", ...buildSummaryLines(paintFiberChanges), "", ...currentLines].join("\n"),
-    );
+    paintTexts.push([...buildSummaryLines(paintFiberChanges), "", ...currentLines].join("\n"));
   }
 
   return paintTexts;

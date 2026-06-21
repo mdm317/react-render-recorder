@@ -3,7 +3,11 @@ import type { CommittedFiberChange } from "@react-record/devtools-api";
 import { formatDurationMsInline } from "../../../utils/format-duration";
 
 export function buildSummaryLines(fiberChangesByCommit: CommittedFiberChange[][]): string[] {
-  return [buildCountLine(fiberChangesByCommit), buildRenderTimeLine(fiberChangesByCommit)];
+  return [
+    "## Summary",
+    buildCountLine(fiberChangesByCommit),
+    buildRenderTimeLine(fiberChangesByCommit),
+  ];
 }
 
 function buildCountLine(fiberChangesByCommit: CommittedFiberChange[][]): string {

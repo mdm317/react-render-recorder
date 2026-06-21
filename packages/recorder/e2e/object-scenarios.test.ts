@@ -24,7 +24,7 @@ test.describe("object-state scenarios", () => {
     });
 
     const result = recorderByTestId(page, "commit-history-result");
-    await expectHookChange(result, "ObjectPartialUpdateButton", "hook[0] State: changed paths:");
+    await expectHookChange(result, "ObjectPartialUpdateButton", "hook[0] State: changed fields:");
     await expect(result).toContainText("x: 0 → 1");
     await expect(result).not.toContainText('"y":0');
   });
@@ -38,16 +38,13 @@ test.describe("object-state scenarios", () => {
     await expectHookChange(result, "ObjectSameValueButton", "hook[0] State: (equal)");
   });
 
-  test("function-ref churn is flagged as (equal — only function refs differ)", async ({ page }) => {
+  test("function-ref change is shown as a changed field", async ({ page }) => {
     await recordCycle(page, async () => {
       await clickTimes(page, SCENARIO_BUTTON.OBJECT_FUNCTION_REF, 1);
     });
 
     const result = recorderByTestId(page, "commit-history-result");
-    await expectHookChange(
-      result,
-      "ObjectFunctionRefButton",
-      "hook[0] State: (equal — only function refs differ)",
-    );
+    await expectHookChange(result, "ObjectFunctionRefButton", "hook[0] State: changed fields:");
+    await expect(result).toContainText("handler:");
   });
 });

@@ -24,11 +24,6 @@ function isFormattedElementSummaryString(value: unknown): value is string {
   return typeof value === "string" && value.startsWith("[HTMLElement ") && value.endsWith("]");
 }
 
-function isFunctionLike(value: unknown): boolean {
-  if (typeof value === "function") return true;
-  return typeof value === "string" && value.startsWith("[Function ");
-}
-
 function elementSummaryToShortForm(formatted: string): string {
   return `[${formatted.slice("[HTMLElement ".length, -1)}]`;
 }
@@ -77,9 +72,12 @@ function formatShallowShape(value: unknown): string {
   return formatValueForLLM(value);
 }
 
-function isContainerValue(value: unknown): boolean {
-  if (isElementLike(value)) return false;
-  return Array.isArray(value) || (typeof value === "object" && value !== null);
+// Non-element objects/arrays render as a one-level-deep shape; everything else via formatValueForLLM.
+function formatHookValue(value: unknown): string {
+  if (typeof value === "object" && value !== null && !isElementLike(value)) {
+    return formatShallowShape(value);
+  }
+  return formatValueForLLM(value);
 }
 
 const WRAPPER_HOOK_PATTERN = /^(.+?)\("(.+)"\)$/;
@@ -166,63 +164,36 @@ function formatDiffSide(value: unknown): string {
   return formatValueForLLM(value);
 }
 
-type PathDiffClassification =
-  | { kind: "not-object" }
-  | { kind: "equal" }
-  | { kind: "fn-noop" }
-  | { kind: "changed"; lines: string[] };
-
-function classifyPathDiff(prev: unknown, next: unknown): PathDiffClassification {
-  const prevIsArray = isPlainArray(prev);
-  const nextIsArray = isPlainArray(next);
-  const prevIsObject = isPlainObject(prev);
-  const nextIsObject = isPlainObject(next);
-
-  const sameArray = prevIsArray && nextIsArray;
-  const sameObject = prevIsObject && nextIsObject;
-  if (!sameArray && !sameObject) return { kind: "not-object" };
-
+// Assumes prev and next are the same container kind (both objects or both arrays).
+function formatDeepDiffLines(prev: unknown, next: unknown): string[] {
   const diffs: PathDiff[] = [];
   collectPathDiffs(prev, next, "", diffs);
-  if (diffs.length === 0) return { kind: "equal" };
 
-  const allFnChurn = diffs.every((diff) => isFunctionLike(diff.prev) && isFunctionLike(diff.next));
-  if (allFnChurn) return { kind: "fn-noop" };
+  if (diffs.length === 0) return ["(equal)"];
 
-  const lines = diffs.map(
-    (diff) => `      ${diff.path}: ${formatDiffSide(diff.prev)} → ${formatDiffSide(diff.next)}`,
-  );
-  return { kind: "changed", lines };
+  return [
+    "changed fields:",
+    ...diffs.map(
+      (diff) => `      ${diff.path}: ${formatDiffSide(diff.prev)} → ${formatDiffSide(diff.next)}`,
+    ),
+  ];
 }
 
 function formatHookBulletLines(hook: HookChange, includeHookPath: boolean): string[] {
-  const label = formatHookLabel(hook, includeHookPath);
-  const tail = label === "" ? `hook[${hook.hookIndex}]` : `hook[${hook.hookIndex}] ${label}`;
-  const classification = classifyPathDiff(hook.prev, hook.next);
-  switch (classification.kind) {
-    case "not-object": {
-      const prevIsContainer = isContainerValue(hook.prev);
-      const nextIsContainer = isContainerValue(hook.next);
-      const prevFormatted = prevIsContainer
-        ? formatShallowShape(hook.prev)
-        : formatValueForLLM(hook.prev);
-      const nextFormatted = nextIsContainer
-        ? formatShallowShape(hook.next)
-        : formatValueForLLM(hook.next);
-      const equalTag = prevFormatted === nextFormatted ? " (equal)" : "";
-      return [`  - ${tail}: ${prevFormatted} → ${nextFormatted}${equalTag}`];
-    }
-    case "equal":
-      return [`  - ${tail}: (equal)`];
-    case "fn-noop":
-      return [`  - ${tail}: (equal — only function refs differ)`];
-    case "changed":
-      return [`  - ${tail}: changed paths:`, ...classification.lines];
-    default: {
-      const _exhaustive: never = classification;
-      return _exhaustive;
-    }
+  // hook display name (useState → "State"), or "State (in HookCounter)" when includeHookPath is on
+  const hookLabel = formatHookLabel(hook, includeHookPath);
+  const [summary, ...diffLines] = formatHookDiffLines(hook.prev, hook.next);
+  return [`  - hook[${hook.hookIndex}] ${hookLabel}: ${summary}`, ...diffLines];
+}
+
+function formatHookDiffLines(prev: unknown, next: unknown): string[] {
+  const bothObjects = isPlainObject(prev) && isPlainObject(next);
+  const bothArrays = isPlainArray(prev) && isPlainArray(next);
+  if (!bothObjects && !bothArrays) {
+    return [`${formatHookValue(prev)} → ${formatHookValue(next)}`];
   }
+
+  return formatDeepDiffLines(prev, next);
 }
 
 export function getCommitSectionLines(
@@ -232,15 +203,12 @@ export function getCommitSectionLines(
   const changedComponents = fiberChanges.filter(isComponentWithHookChanges);
   if (changedComponents.length === 0) return ["(no hook changes)"];
   return changedComponents.flatMap((component) => {
-    const sortedHooks = component.hooks
-      .slice()
-      .sort((left, right) => left.hookIndex - right.hookIndex);
     const durationSuffix = options.includeRenderDuration
       ? ` (${formatDurationMsInline(component.selfDuration)})`
       : "";
     return [
       `- ${component.displayName}${durationSuffix}:`,
-      ...sortedHooks.flatMap((hook) => formatHookBulletLines(hook, options.includeHookPath)),
+      ...component.hooks.flatMap((hook) => formatHookBulletLines(hook, options.includeHookPath)),
     ];
   });
 }
