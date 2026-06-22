@@ -1,9 +1,9 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
 import type { RecorderOptions } from "@/types";
-import { buildCommitHistoryTextByPaint } from "../lib/build-commit-segments-by-paint";
+import { buildCommitHistoryByPaint } from "../lib/format/build-commit-history-by-paint";
 import { groupCommitsByPaint } from "../lib/group-commits-by-paint";
-import { formatCommitHookChangedHistoryForLLM } from "../lib/llm-logging/format-commit-hook-changed-history-for-llm";
+import { formatCommitHistoryForLLM } from "../lib/format/format-commit-history-for-llm";
 import { endRecording, startRecording } from "../services/recording";
 import type { RecorderStore } from "../store";
 
@@ -29,7 +29,7 @@ function getCommitHistoryText(store: RecorderStore, options: RecorderOptions): s
     fiberChangesByCommit: fiberChanges,
     paintCommitIndices,
   });
-  return formatCommitHookChangedHistoryForLLM(fiberChangeGroupsByPaint.flat(), options);
+  return formatCommitHistoryForLLM(fiberChangeGroupsByPaint.flat(), options);
 }
 
 function getCommitHistoryTextByPaint(store: RecorderStore, options: RecorderOptions): string[] {
@@ -38,7 +38,7 @@ function getCommitHistoryTextByPaint(store: RecorderStore, options: RecorderOpti
     fiberChangesByCommit: fiberChanges,
     paintCommitIndices,
   });
-  return buildCommitHistoryTextByPaint({
+  return buildCommitHistoryByPaint({
     fiberChangesByPaint: fiberChangeGroupsByPaint,
     ...options,
   });

@@ -1,7 +1,7 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 import { describe, expect, it } from "vitest";
 
-import { getCommitSectionLines } from "./format-commit-section";
+import { buildCommitSectionLines } from "./build-commit-section";
 
 function makeChange(
   displayName: string,
@@ -23,7 +23,7 @@ function makeChange(
   };
 }
 
-describe("format-commit-section shallow shape for null↔object", () => {
+describe("build-commit-section shallow shape for null↔object", () => {
   it("renders null → object as a one-level-deep shape, not a full dump", () => {
     const next = {
       subscribe: () => {},
@@ -34,7 +34,7 @@ describe("format-commit-section shallow shape for null↔object", () => {
       syncOnly: false,
     };
 
-    const lines = getCommitSectionLines([
+    const lines = buildCommitSectionLines([
       makeChange("NavRoot", [
         { hookIndex: 13, hookName: "State", hookPath: ["State"], prev: null, next },
       ]),
@@ -49,7 +49,7 @@ describe("format-commit-section shallow shape for null↔object", () => {
   });
 
   it("renders undefined → object the same way", () => {
-    const lines = getCommitSectionLines([
+    const lines = buildCommitSectionLines([
       makeChange("Foo", [
         {
           hookIndex: 0,
@@ -65,7 +65,7 @@ describe("format-commit-section shallow shape for null↔object", () => {
   });
 
   it("renders object → null using the shallow shape on the prev side", () => {
-    const lines = getCommitSectionLines([
+    const lines = buildCommitSectionLines([
       makeChange("Foo", [
         {
           hookIndex: 0,
@@ -84,7 +84,7 @@ describe("format-commit-section shallow shape for null↔object", () => {
   });
 
   it("renders null → array with item summaries", () => {
-    const lines = getCommitSectionLines([
+    const lines = buildCommitSectionLines([
       makeChange("Foo", [
         {
           hookIndex: 0,
@@ -100,7 +100,7 @@ describe("format-commit-section shallow shape for null↔object", () => {
   });
 
   it("leaves primitive → primitive untouched", () => {
-    const lines = getCommitSectionLines([
+    const lines = buildCommitSectionLines([
       makeChange("Foo", [
         { hookIndex: 0, hookName: "State", hookPath: ["State"], prev: false, next: true },
       ]),
@@ -110,7 +110,7 @@ describe("format-commit-section shallow shape for null↔object", () => {
   });
 
   it("still produces path-diff lines for object → object (no regression)", () => {
-    const lines = getCommitSectionLines([
+    const lines = buildCommitSectionLines([
       makeChange("Foo", [
         {
           hookIndex: 0,
@@ -126,7 +126,7 @@ describe("format-commit-section shallow shape for null↔object", () => {
   });
 
   it("appends selfDuration to the component header when includeRenderDuration is true", () => {
-    const lines = getCommitSectionLines(
+    const lines = buildCommitSectionLines(
       [
         makeChange(
           "Foo",
@@ -141,7 +141,7 @@ describe("format-commit-section shallow shape for null↔object", () => {
   });
 
   it("omits the wrapper chain by default for multi-segment hookPaths", () => {
-    const lines = getCommitSectionLines([
+    const lines = buildCommitSectionLines([
       makeChange("Combo", [
         {
           hookIndex: 0,
@@ -157,7 +157,7 @@ describe("format-commit-section shallow shape for null↔object", () => {
   });
 
   it("renders the wrapper chain when includeHookPath is true", () => {
-    const lines = getCommitSectionLines(
+    const lines = buildCommitSectionLines(
       [
         makeChange("Combo", [
           {
@@ -179,7 +179,7 @@ describe("format-commit-section shallow shape for null↔object", () => {
   });
 
   it("groups multiple hook changes under a single component header", () => {
-    const lines = getCommitSectionLines([
+    const lines = buildCommitSectionLines([
       makeChange("Foo", [
         { hookIndex: 0, hookName: "State", hookPath: ["State"], prev: false, next: true },
         {

@@ -1,14 +1,14 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
 import type { RecorderOptions } from "@/types";
-import { buildSummaryLines } from "./llm-logging/util/build-summary-lines";
-import { getCommitSectionLines } from "./llm-logging/util/format-commit-section";
+import { buildSummaryLines } from "./util/build-summary-lines";
+import { buildCommitSectionLines } from "./util/build-commit-section";
 
 type BuildCommitHistoryTextByPaintInput = RecorderOptions & {
   fiberChangesByPaint: CommittedFiberChange[][][];
 };
 
-export function buildCommitHistoryTextByPaint({
+export function buildCommitHistoryByPaint({
   fiberChangesByPaint,
   includeRenderDuration,
   includeHookPath,
@@ -23,7 +23,7 @@ export function buildCommitHistoryTextByPaint({
       if (currentLines.length > 0) currentLines.push("");
       currentLines.push(
         `## Commit ${commitIndex + 1}`,
-        ...getCommitSectionLines(commit, { includeRenderDuration, includeHookPath }),
+        ...buildCommitSectionLines(commit, { includeRenderDuration, includeHookPath }),
       );
       commitIndex += 1;
     }

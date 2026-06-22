@@ -1,8 +1,8 @@
 import { useMemo } from "preact/hooks";
 
-import { buildCommitHistoryTextByPaint } from "../lib/build-commit-segments-by-paint";
+import { buildCommitHistoryByPaint } from "../lib/format/build-commit-history-by-paint";
 import { groupCommitsByPaint } from "../lib/group-commits-by-paint";
-import { formatCommitHookChangedHistoryForLLM } from "../lib/llm-logging/format-commit-hook-changed-history-for-llm";
+import { formatCommitHistoryForLLM } from "../lib/format/format-commit-history-for-llm";
 import type { RecorderOptions } from "@/types";
 import { useRecorderStore } from "../store";
 
@@ -27,11 +27,11 @@ export function useCommitHistory({
 
     return {
       commitCount: fiberChanges.length,
-      commitHistoryText: formatCommitHookChangedHistoryForLLM(fiberChanges, {
+      commitHistoryText: formatCommitHistoryForLLM(fiberChanges, {
         includeRenderDuration,
         includeHookPath,
       }),
-      commitHistoryTextByPaint: buildCommitHistoryTextByPaint({
+      commitHistoryTextByPaint: buildCommitHistoryByPaint({
         fiberChangesByPaint: fiberChangeGroupsByPaint,
         includeRenderDuration,
         includeHookPath,
