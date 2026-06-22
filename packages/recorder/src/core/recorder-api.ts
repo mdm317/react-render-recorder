@@ -1,9 +1,9 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
-import { buildCommitHistoryTextByPaint } from "../lib/build-commit-segments-by-paint";
-import { buildFilteredCommits } from "../lib/build-filtered-commits";
-import { formatCommitHookChangedHistoryForLLM } from "../lib/llm-logging/format-commit-hook-changed-history-for-llm";
-import type { CommitFormatOptions } from "../lib/llm-logging/types";
+import type { RecorderOptions } from "@/types";
+import { buildCommitHistoryByPaint } from "../lib/format/build-commit-history-by-paint";
+import { groupCommitsByPaint } from "../lib/group-commits-by-paint";
+import { formatCommitHistoryForLLM } from "../lib/format/format-commit-history-for-llm";
 import { endRecording, startRecording } from "../services/recording";
 import type { RecorderStore } from "../store";
 
@@ -23,21 +23,23 @@ function getPaintCommitIndices(store: RecorderStore): number[] {
   return [...store.getSnapshot().paintCommitIndices];
 }
 
-function getCommitHistoryText(store: RecorderStore, options: CommitFormatOptions): string {
+function getCommitHistoryText(store: RecorderStore, options: RecorderOptions): string {
   const { fiberChanges, paintCommitIndices } = store.getSnapshot();
-  const { filteredFiberChanges } = buildFilteredCommits({ fiberChanges, paintCommitIndices });
-  return formatCommitHookChangedHistoryForLLM(filteredFiberChanges, options);
-}
-
-function getCommitHistoryTextByPaint(store: RecorderStore, options: CommitFormatOptions): string[] {
-  const { fiberChanges, paintCommitIndices } = store.getSnapshot();
-  const { filteredFiberChanges, filteredPaintCommitIndices } = buildFilteredCommits({
-    fiberChanges,
+  const fiberChangeGroupsByPaint = groupCommitsByPaint({
+    fiberChangesByCommit: fiberChanges,
     paintCommitIndices,
   });
-  return buildCommitHistoryTextByPaint({
-    fiberChanges: filteredFiberChanges,
-    paintCommitIndices: filteredPaintCommitIndices,
+  return formatCommitHistoryForLLM(fiberChangeGroupsByPaint.flat(), options);
+}
+
+function getCommitHistoryTextByPaint(store: RecorderStore, options: RecorderOptions): string[] {
+  const { fiberChanges, paintCommitIndices } = store.getSnapshot();
+  const fiberChangeGroupsByPaint = groupCommitsByPaint({
+    fiberChangesByCommit: fiberChanges,
+    paintCommitIndices,
+  });
+  return buildCommitHistoryByPaint({
+    fiberChangesByPaint: fiberChangeGroupsByPaint,
     ...options,
   });
 }
@@ -49,9 +51,11 @@ export function exposeRecorderApi(store: RecorderStore): void {
     end: () => endRecording(store),
     getFiberChanges: () => getFiberChanges(store),
     getPaintCommitIndices: () => getPaintCommitIndices(store),
-    getCommitHistoryText: (options: CommitFormatOptions = {}) =>
-      getCommitHistoryText(store, options),
-    getCommitHistoryTextByPaint: (options: CommitFormatOptions = {}) =>
-      getCommitHistoryTextByPaint(store, options),
+    getCommitHistoryText: (
+      options: RecorderOptions = { includeRenderDuration: false, includeHookPath: false },
+    ) => getCommitHistoryText(store, options),
+    getCommitHistoryTextByPaint: (
+      options: RecorderOptions = { includeRenderDuration: false, includeHookPath: false },
+    ) => getCommitHistoryTextByPaint(store, options),
   };
 }

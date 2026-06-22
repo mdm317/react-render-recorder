@@ -1,9 +1,9 @@
 import { useMemo } from "preact/hooks";
 
-import { buildFilteredCommits } from "../lib/build-filtered-commits";
-import { buildCommitHistoryTextByPaint } from "../lib/build-commit-segments-by-paint";
-import { formatCommitHookChangedHistoryForLLM } from "../lib/llm-logging/format-commit-hook-changed-history-for-llm";
-import type { CommitFormatOptions } from "../lib/llm-logging/types";
+import { buildCommitHistoryByPaint } from "../lib/format/build-commit-history-by-paint";
+import { groupCommitsByPaint } from "../lib/group-commits-by-paint";
+import { formatCommitHistoryForLLM } from "../lib/format/format-commit-history-for-llm";
+import type { RecorderOptions } from "@/types";
 import { useRecorderStore } from "../store";
 
 type UseCommitHistoryResult = {
@@ -13,25 +13,26 @@ type UseCommitHistoryResult = {
 };
 
 export function useCommitHistory({
-  includeRenderDuration = false,
-  includeHookPath = false,
-}: CommitFormatOptions = {}): UseCommitHistoryResult {
+  includeRenderDuration,
+  includeHookPath,
+}: RecorderOptions): UseCommitHistoryResult {
   const { state } = useRecorderStore();
 
   return useMemo(() => {
-    const { filteredFiberChanges, filteredPaintCommitIndices } = buildFilteredCommits({
-      fiberChanges: state.fiberChanges,
+    const fiberChangeGroupsByPaint = groupCommitsByPaint({
+      fiberChangesByCommit: state.fiberChanges,
       paintCommitIndices: state.paintCommitIndices,
     });
+    const fiberChanges = fiberChangeGroupsByPaint.flat();
+
     return {
-      commitCount: filteredFiberChanges.length,
-      commitHistoryText: formatCommitHookChangedHistoryForLLM(filteredFiberChanges, {
+      commitCount: fiberChanges.length,
+      commitHistoryText: formatCommitHistoryForLLM(fiberChanges, {
         includeRenderDuration,
         includeHookPath,
       }),
-      commitHistoryTextByPaint: buildCommitHistoryTextByPaint({
-        fiberChanges: filteredFiberChanges,
-        paintCommitIndices: filteredPaintCommitIndices,
+      commitHistoryTextByPaint: buildCommitHistoryByPaint({
+        fiberChangesByPaint: fiberChangeGroupsByPaint,
         includeRenderDuration,
         includeHookPath,
       }),

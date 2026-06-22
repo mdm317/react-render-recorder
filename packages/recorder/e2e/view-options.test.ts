@@ -24,7 +24,7 @@ test.describe("commit history view options", () => {
       await clickTimes(page, SCENARIO_BUTTON.UPDATE, 2);
     });
 
-    const result = recorderByTestId(page, "component-filter-result");
+    const result = recorderByTestId(page, "commit-history-result");
     await expect(result).toContainText("- UpdateButton:");
     const text = (await result.textContent()) ?? "";
     expect(text).not.toMatch(/- UpdateButton \(/);
@@ -38,9 +38,9 @@ test.describe("commit history view options", () => {
     });
 
     await recorderByTestId(page, "view-options-button").click();
-    await recorderByTestId(page, "view-option-isRenderDurationVisible").click();
+    await recorderByTestId(page, "view-option-includeRenderDuration").click();
 
-    const result = recorderByTestId(page, "component-filter-result");
+    const result = recorderByTestId(page, "commit-history-result");
     await expect(result).toContainText(new RegExp(`- UpdateButton \\(${DURATION_PATTERN}\\):`));
   });
 
@@ -52,8 +52,8 @@ test.describe("commit history view options", () => {
     });
 
     const optionsButton = recorderByTestId(page, "view-options-button");
-    const renderTimeToggle = recorderByTestId(page, "view-option-isRenderDurationVisible");
-    const result = recorderByTestId(page, "component-filter-result");
+    const renderTimeToggle = recorderByTestId(page, "view-option-includeRenderDuration");
+    const result = recorderByTestId(page, "commit-history-result");
 
     await optionsButton.click();
     await renderTimeToggle.click();
@@ -71,8 +71,8 @@ test.describe("commit history view options", () => {
     });
 
     const optionsButton = recorderByTestId(page, "view-options-button");
-    const hookPathToggle = recorderByTestId(page, "view-option-isHookPathVisible");
-    const result = recorderByTestId(page, "component-filter-result");
+    const hookPathToggle = recorderByTestId(page, "view-option-includeHookPath");
+    const result = recorderByTestId(page, "commit-history-result");
 
     const initialText = (await result.textContent()) ?? "";
     expect(initialText).not.toMatch(/\(in HookCounter\)/);

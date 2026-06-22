@@ -2,28 +2,22 @@
 import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
 
+import type { RecorderOptions } from "@/types";
 import { useCommitHistory } from "../../../hooks/use-commit-history";
 import { useQueryParameter } from "../../../hooks/use-query-parameter";
 import { CommitHistoryContent } from "./component/history-view";
 import { PaintCommitHistoryContent } from "./component/paint-view";
 import { PaintViewToggleButton } from "./component/paint-view-toggle";
-import {
-  buildInitialRecorderOptions,
-  type RecorderOptionsState,
-  ViewOptionsPopover,
-} from "./component/view-options-popover";
+import { buildInitialRecorderOptions, ViewOptionsPopover } from "./component/view-options-popover";
 
 export function CommitHistoryPanel() {
   const queryParameters = useQueryParameter();
   const [isOpen, setIsOpen] = useState(true);
   const [showPaintView, setShowPaintView] = useState(false);
-  const [options, setOptions] = useState<RecorderOptionsState>(() =>
+  const [options, setOptions] = useState<RecorderOptions>(() =>
     buildInitialRecorderOptions(queryParameters),
   );
-  const { commitCount, commitHistoryText, commitHistoryTextByPaint } = useCommitHistory({
-    includeRenderDuration: options.isRenderDurationVisible,
-    includeHookPath: options.isHookPathVisible,
-  });
+  const { commitCount, commitHistoryText, commitHistoryTextByPaint } = useCommitHistory(options);
 
   if (commitCount === 0) {
     return null;
@@ -31,9 +25,12 @@ export function CommitHistoryPanel() {
 
   return (
     <section className="flex min-h-0 w-full flex-col overflow-hidden rounded-[1.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(24,24,27,0.96)_0%,rgba(9,9,11,0.98)_100%)] p-4 text-white shadow-[0_20px_48px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-      <CommitHistoryHeader
-        commitCount={commitCount}
-        headerAction={
+      <div className="mb-3 flex items-center justify-between gap-4">
+        <p className="text-[0.65rem] font-bold uppercase tracking-[0.24em] text-rose-300/90">
+          Rerender Recorder
+        </p>
+        <div className="flex items-center gap-3 text-[0.7rem] text-white/45">
+          <span data-testid="commit-count">{commitCount} commit(s)</span>
           <button
             data-testid="commit-history-toggle"
             type="button"
@@ -42,12 +39,12 @@ export function CommitHistoryPanel() {
             onClick={() => {
               setIsOpen((prev) => !prev);
             }}
-            className="mt-3 inline-flex min-w-20 items-center justify-center rounded-full border border-white/12 bg-white/6 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-white/72 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+            className="inline-flex min-w-20 items-center justify-center rounded-full border border-white/12 bg-white/6 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-white/72 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
           >
             {isOpen ? "닫기" : "열기"}
           </button>
-        }
-      />
+        </div>
+      </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <PaintViewToggleButton
@@ -73,30 +70,6 @@ export function CommitHistoryPanel() {
         )}
       </CollapsibleContent>
     </section>
-  );
-}
-
-type CommitHistoryHeaderProps = {
-  commitCount: number;
-  headerAction: ComponentChildren;
-};
-
-function CommitHistoryHeader({ commitCount, headerAction }: CommitHistoryHeaderProps) {
-  return (
-    <div className="mb-3 flex items-start justify-between gap-4">
-      <div>
-        <p className="text-[0.65rem] font-bold uppercase tracking-[0.24em] text-rose-300">
-          Component Filter
-        </p>
-        <p className="mt-1 text-sm text-white/70">
-          녹화가 끝났습니다. 비워두면 전체를, 입력하면 해당 데이터만 표시합니다.
-        </p>
-      </div>
-      <div className="text-right text-[0.7rem] text-white/45">
-        <p data-testid="commit-count">{commitCount} commit(s)</p>
-        {headerAction}
-      </div>
-    </div>
   );
 }
 

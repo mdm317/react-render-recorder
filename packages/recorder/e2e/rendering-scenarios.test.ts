@@ -31,7 +31,7 @@ test.describe("rendering scenarios", () => {
       await recordCycle(page, async () => {
         await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
       });
-      const result = recorderByTestId(page, "component-filter-result");
+      const result = recorderByTestId(page, "commit-history-result");
       await expectHookChange(result, "UpdateButton", "hook[0] State");
       await expect(result).toContainText("## Commit 1");
       await expect(result).toContainText("0 → 1");
@@ -50,7 +50,7 @@ test.describe("rendering scenarios", () => {
       await recordCycle(page, async () => {
         await page.getByTestId(SCENARIO_BUTTON.DOUBLE_LAYOUT_EFFECT).click();
       });
-      const result = recorderByTestId(page, "component-filter-result");
+      const result = recorderByTestId(page, "commit-history-result");
       await expectHookChange(result, "DoubleUpdateLayoutEffectButton", "hook[0] State");
       await expectHookChange(result, "DoubleUpdateLayoutEffectButton", "hook[1] State");
       await expect(result).toContainText("## Commit 1");
@@ -72,7 +72,7 @@ test.describe("rendering scenarios", () => {
       await recordCycle(page, async () => {
         await page.getByTestId(SCENARIO_BUTTON.DOUBLE_EFFECT).click();
       });
-      const result = recorderByTestId(page, "component-filter-result");
+      const result = recorderByTestId(page, "commit-history-result");
       await expectHookChange(result, "DoubleUpdateEffectButton", "hook[0] State");
       await expectHookChange(result, "DoubleUpdateEffectButton", "hook[1] State");
     });
@@ -91,8 +91,8 @@ test.describe("rendering scenarios", () => {
         await page.getByTestId(SCENARIO_BUTTON.CUSTOM_HOOK).click();
       });
       await recorderByTestId(page, "view-options-button").click();
-      await recorderByTestId(page, "view-option-isHookPathVisible").click();
-      const result = recorderByTestId(page, "component-filter-result");
+      await recorderByTestId(page, "view-option-includeHookPath").click();
+      const result = recorderByTestId(page, "commit-history-result");
       await expectHookChange(result, "CustomHookButton", "hook[0] State (in HookCounter)");
       await expect(result).toContainText("## Commit 1");
       await expect(result).toContainText("0 → 1");
@@ -106,8 +106,8 @@ test.describe("rendering scenarios", () => {
       });
       await expectRecorderCommitCount(page, 1);
       await recorderByTestId(page, "view-options-button").click();
-      await recorderByTestId(page, "view-option-isHookPathVisible").click();
-      const result = recorderByTestId(page, "component-filter-result");
+      await recorderByTestId(page, "view-option-includeHookPath").click();
+      const result = recorderByTestId(page, "commit-history-result");
       await expectHookChange(result, "DebugValueButton", "hook[0] State");
       await expect(result).toContainText('in DebugCounter, debug="count = 1"');
       await expect(result).toContainText("## Commit 1");
@@ -121,7 +121,7 @@ test.describe("rendering scenarios", () => {
         await page.getByTestId(SCENARIO_BUTTON.ELEMENT_ALPHA).click();
       });
       await expectRecorderCommitCount(page, 1);
-      const result = recorderByTestId(page, "component-filter-result");
+      const result = recorderByTestId(page, "commit-history-result");
       await expectHookChange(result, "ElementStatePanel", "hook[0] State");
       await expect(result).toContainText(
         "null → [button#hook-target-alpha.hook-target.alpha.primary]",
@@ -133,7 +133,7 @@ test.describe("rendering scenarios", () => {
         await clickTimes(page, SCENARIO_BUTTON.ELEMENT_ALPHA, 2);
       });
       await expectRecorderCommitCount(page, 2);
-      const result = recorderByTestId(page, "component-filter-result");
+      const result = recorderByTestId(page, "commit-history-result");
       await expect(result).toContainText("## Commit 1");
       await expect(result).toContainText(
         "null → [button#hook-target-alpha.hook-target.alpha.primary]",
