@@ -55,10 +55,24 @@ function createRecorderStoreInstance(): RecorderStore {
     });
   }
 
+  function recordPaint() {
+    if (!state.isRecording || recordedCommitCount === 0) {
+      return;
+    }
+
+    const paintCommitIndex = recordedCommitCount - 1;
+    if (state.paintCommitIndices[state.paintCommitIndices.length - 1] === paintCommitIndex) {
+      return;
+    }
+
+    state.paintCommitIndices.push(paintCommitIndex);
+  }
+
   function endRecording(recordedFiberChanges: CommittedFiberChange[][]) {
     if (!state.isRecording) {
       return;
     }
+    recordPaint();
 
     recordedCommitCount = 0;
     setState({
@@ -89,18 +103,7 @@ function createRecorderStoreInstance(): RecorderStore {
       recordedCommitCount += 1;
     },
 
-    recordPaint() {
-      if (!state.isRecording || recordedCommitCount === 0) {
-        return;
-      }
-
-      const paintCommitIndex = recordedCommitCount - 1;
-      if (state.paintCommitIndices[state.paintCommitIndices.length - 1] === paintCommitIndex) {
-        return;
-      }
-
-      state.paintCommitIndices.push(paintCommitIndex);
-    },
+    recordPaint,
 
     startRecording,
 
