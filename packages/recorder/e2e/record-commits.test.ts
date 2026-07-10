@@ -39,6 +39,28 @@ test.describe("react-render-recorder E2E", () => {
       await expectRecorderCommitCount(page, 2);
     });
 
+    test("two clicks in different frames split into two paint groups", async ({ page }) => {
+      await startRecording(page);
+
+      // Paint boundaries are frame-granular (marker rAF), so a frame must
+      // pass between the clicks for them to land in separate groups.
+      await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
+      await page.evaluate(() => new Promise(requestAnimationFrame));
+      await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
+
+      await stopRecording(page);
+
+      await expectRecorderCommitCount(page, 2);
+      const paintCommitIndices = await page.evaluate(() =>
+        (
+          window as unknown as {
+            __REACT_RENDER_RECORDER__: { getPaintCommitIndices: () => number[] };
+          }
+        ).__REACT_RENDER_RECORDER__.getPaintCommitIndices(),
+      );
+      expect(paintCommitIndices).toEqual([0, 1]);
+    });
+
     test("commits are ignored while recording is off", async ({ page }) => {
       await clickTimes(page, SCENARIO_BUTTON.UPDATE, 2);
 
