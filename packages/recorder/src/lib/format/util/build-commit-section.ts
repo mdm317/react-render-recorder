@@ -38,7 +38,9 @@ export function buildCommitSectionLines(
   fiberChanges: CommittedFiberChange[],
   options: RecorderOptions = { includeRenderDuration: false, includeHookPath: false },
 ): string[] {
-  const changedComponents = fiberChanges.filter(isComponentWithHookChanges);
+  const changedComponents = fiberChanges
+    .filter(isComponentWithHookChanges)
+    .sort((a, b) => (b.selfDuration ?? 0) - (a.selfDuration ?? 0));
   if (changedComponents.length === 0) return ["(no hook changes)"];
   return changedComponents.flatMap((component) => {
     const durationSuffix = options.includeRenderDuration

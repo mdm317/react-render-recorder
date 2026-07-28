@@ -140,6 +140,23 @@ describe("build-commit-section shallow shape for null↔object", () => {
     expect(lines).toEqual(["- Foo (0.50ms):", "  - hook[0] State: 0 → 1"]);
   });
 
+  it("sorts components by descending selfDuration", () => {
+    const hook: NonNullable<CommittedFiberChange["hooks"]> = [
+      { hookIndex: 0, hookName: "State", hookPath: ["State"], prev: 0, next: 1 },
+    ];
+    const lines = buildCommitSectionLines([
+      makeChange("Fast", hook, 0.1),
+      makeChange("Slow", hook, 2),
+      makeChange("Medium", hook, 0.5),
+    ]);
+
+    expect(lines.filter((line) => line.startsWith("- "))).toEqual([
+      "- Slow:",
+      "- Medium:",
+      "- Fast:",
+    ]);
+  });
+
   it("omits the wrapper chain by default for multi-segment hookPaths", () => {
     const lines = buildCommitSectionLines([
       makeChange("Combo", [
