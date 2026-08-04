@@ -3,12 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createRecorderStore } from "../store";
 import type { ReactCommitCallback } from "./on-react-commit";
-import type { ReactPaintCallback } from "./on-react-paint";
 
 const mocks = vi.hoisted(() => ({
   commitCallbacks: [] as ReactCommitCallback[],
   onCommitFiber: vi.fn(() => []),
-  paintCallbacks: [] as ReactPaintCallback[],
 }));
 
 vi.mock("@react-record/devtools-api", () => ({
@@ -28,20 +26,29 @@ vi.mock("./on-react-commit", () => ({
   }),
 }));
 
-vi.mock("./on-react-paint", () => ({
-  onReactPaint: vi.fn((callback: ReactPaintCallback) => {
-    mocks.paintCallbacks.push(callback);
-    return () => {};
-  }),
-}));
+let frameCallbacks: FrameRequestCallback[] = [];
+
+function tickFrame() {
+  const callbacks = frameCallbacks;
+  frameCallbacks = [];
+  for (const callback of callbacks) {
+    callback(0);
+  }
+}
 
 describe("installReactRenderRecorder", () => {
   beforeEach(() => {
     createRecorderStore().reset();
     mocks.commitCallbacks.length = 0;
-    mocks.paintCallbacks.length = 0;
     mocks.onCommitFiber.mockClear();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    frameCallbacks = [];
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      frameCallbacks.push(callback);
+      return frameCallbacks.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
   });
 
   it("skips commit collection while recording is off", async () => {
@@ -100,27 +107,65 @@ describe("installReactRenderRecorder", () => {
     expect(recordCommit).not.toHaveBeenCalled();
   });
 
-  it("skips paint recording while recording is off", async () => {
+  it("defers input-dispatch commits to the frame marker", async () => {
+    vi.stubGlobal("window", { event: new Event("click") });
     const { installReactRenderRecorder } = await import("./index");
     const recorderStore = createRecorderStore();
-    const recordPaint = vi.spyOn(recorderStore, "recordPaint");
-
-    installReactRenderRecorder();
-    mocks.paintCallbacks[0]();
-
-    expect(recordPaint).not.toHaveBeenCalled();
-  });
-
-  it("records paints while recording is on", async () => {
-    const { installReactRenderRecorder } = await import("./index");
-    const recorderStore = createRecorderStore();
-    const recordPaint = vi.spyOn(recorderStore, "recordPaint");
 
     installReactRenderRecorder();
     recorderStore.startRecording();
-    mocks.paintCallbacks[0]();
+    mocks.commitCallbacks[0](createHook(), 1, createMountedRoot());
+    mocks.commitCallbacks[0](createHook(), 1, createMountedRoot());
+    await Promise.resolve();
+    expect(recorderStore.getSnapshot().paintCommitIndices).toEqual([]);
 
-    expect(recordPaint).toHaveBeenCalledTimes(1);
+    tickFrame();
+    mocks.commitCallbacks[0](createHook(), 1, createMountedRoot());
+    tickFrame();
+    tickFrame();
+
+    expect(recorderStore.getSnapshot().paintCommitIndices).toEqual([1, 2]);
+  });
+
+  it("closes non-dispatch commits at the end of their task via microtask", async () => {
+    const { installReactRenderRecorder } = await import("./index");
+    const recorderStore = createRecorderStore();
+
+    installReactRenderRecorder();
+    recorderStore.startRecording();
+    mocks.commitCallbacks[0](createHook(), 1, createMountedRoot());
+    mocks.commitCallbacks[0](createHook(), 1, createMountedRoot());
+    await Promise.resolve();
+    mocks.commitCallbacks[0](createHook(), 1, createMountedRoot());
+    await Promise.resolve();
+
+    expect(recorderStore.getSnapshot().paintCommitIndices).toEqual([1, 2]);
+  });
+
+  it("flushes trailing commits when recording stops before the next frame", async () => {
+    const { installReactRenderRecorder } = await import("./index");
+    const recorderStore = createRecorderStore();
+
+    installReactRenderRecorder();
+    recorderStore.startRecording();
+    mocks.commitCallbacks[0](createHook(), 1, createMountedRoot());
+    recorderStore.endRecording([[]] as never);
+
+    expect(recorderStore.getSnapshot().paintCommitIndices).toEqual([0]);
+  });
+
+  it("starts the marker loop on recording start and cancels it on stop", async () => {
+    const { installReactRenderRecorder } = await import("./index");
+    const recorderStore = createRecorderStore();
+
+    installReactRenderRecorder();
+    expect(frameCallbacks.length).toBe(0);
+
+    recorderStore.startRecording();
+    expect(frameCallbacks.length).toBeGreaterThan(0);
+
+    recorderStore.endRecording([] as never);
+    expect(vi.mocked(cancelAnimationFrame)).toHaveBeenCalled();
   });
 
   it("exposes window.__REACT_RENDER_RECORDER__ with JSON-safe getFiberChanges", async () => {

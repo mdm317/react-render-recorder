@@ -1,5 +1,6 @@
 import "./App.css";
 
+import { ChainedTaskRenderButton } from "./buttons/ChainedTaskRenderButton";
 import { CustomHookButton } from "./buttons/CustomHookButton";
 import { DebugValueButton } from "./buttons/DebugValueButton";
 import { DoubleUpdateEffectButton } from "./buttons/DoubleUpdateEffectButton";
@@ -65,6 +66,17 @@ export function App() {
           <div className="row__label-sub">One setState, one render.</div>
         </div>
         <UpdateButton />
+      </div>
+
+      <div className="row">
+        <div className="row__label">
+          <div className="row__label-title">Chained task render · paint-boundary race</div>
+          <div className="row__label-sub">
+            One click, two render cycles in back-to-back tasks. The second commits before React's
+            scheduler message from the first is delivered — should still split into two paints.
+          </div>
+        </div>
+        <ChainedTaskRenderButton />
       </div>
 
       <div className="row">
