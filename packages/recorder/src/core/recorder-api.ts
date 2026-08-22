@@ -1,6 +1,6 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
-import type { RecorderOptions } from "@/types";
+import type { CommitHistoryFormatOptions } from "@/types";
 import { buildCommitHistoryByPaint } from "../lib/format/build-commit-history-by-paint";
 import { groupCommitsByPaint } from "../lib/group-commits-by-paint";
 import { formatCommitHistoryForLLM } from "../lib/format/format-commit-history-for-llm";
@@ -23,7 +23,7 @@ function getPaintCommitIndices(store: RecorderStore): number[] {
   return [...store.getSnapshot().paintCommitIndices];
 }
 
-function getCommitHistoryText(store: RecorderStore, options: RecorderOptions): string {
+function getCommitHistoryText(store: RecorderStore, options: CommitHistoryFormatOptions): string {
   const { fiberChanges, paintCommitIndices } = store.getSnapshot();
   const fiberChangeGroupsByPaint = groupCommitsByPaint({
     fiberChangesByCommit: fiberChanges,
@@ -32,7 +32,10 @@ function getCommitHistoryText(store: RecorderStore, options: RecorderOptions): s
   return formatCommitHistoryForLLM(fiberChangeGroupsByPaint.flat(), options);
 }
 
-function getCommitHistoryTextByPaint(store: RecorderStore, options: RecorderOptions): string[] {
+function getCommitHistoryTextByPaint(
+  store: RecorderStore,
+  options: CommitHistoryFormatOptions,
+): string[] {
   const { fiberChanges, paintCommitIndices } = store.getSnapshot();
   const fiberChangeGroupsByPaint = groupCommitsByPaint({
     fiberChangesByCommit: fiberChanges,
@@ -52,10 +55,16 @@ export function exposeRecorderApi(store: RecorderStore): void {
     getFiberChanges: () => getFiberChanges(store),
     getPaintCommitIndices: () => getPaintCommitIndices(store),
     getCommitHistoryText: (
-      options: RecorderOptions = { includeRenderDuration: false, includeHookPath: false },
+      options: CommitHistoryFormatOptions = {
+        includeRenderDuration: false,
+        includeHookPath: false,
+      },
     ) => getCommitHistoryText(store, options),
     getCommitHistoryTextByPaint: (
-      options: RecorderOptions = { includeRenderDuration: false, includeHookPath: false },
+      options: CommitHistoryFormatOptions = {
+        includeRenderDuration: false,
+        includeHookPath: false,
+      },
     ) => getCommitHistoryTextByPaint(store, options),
   };
 }

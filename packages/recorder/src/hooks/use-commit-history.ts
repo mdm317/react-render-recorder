@@ -3,7 +3,7 @@ import { useMemo } from "preact/hooks";
 import { buildCommitHistoryByPaint } from "../lib/format/build-commit-history-by-paint";
 import { groupCommitsByPaint } from "../lib/group-commits-by-paint";
 import { formatCommitHistoryForLLM } from "../lib/format/format-commit-history-for-llm";
-import type { RecorderOptions } from "@/types";
+import type { CommitHistoryFormatOptions } from "@/types";
 import { useRecorderStore } from "../store";
 
 type UseCommitHistoryResult = {
@@ -15,7 +15,7 @@ type UseCommitHistoryResult = {
 export function useCommitHistory({
   includeRenderDuration,
   includeHookPath,
-}: RecorderOptions): UseCommitHistoryResult {
+}: CommitHistoryFormatOptions): UseCommitHistoryResult {
   const { state } = useRecorderStore();
 
   return useMemo(() => {

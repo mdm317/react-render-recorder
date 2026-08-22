@@ -4,7 +4,7 @@ import { isPlainArray, isPlainObject } from "../../../utils/type-guards";
 import { buildObjectDiffLines } from "./build-object-diff";
 import { type HookChange, formatHookLabel } from "./format-hook-label";
 import { formatHookValue } from "./value-formatting";
-import type { RecorderOptions } from "@/types";
+import type { CommitHistoryFormatOptions } from "@/types";
 
 type ComponentWithHookChanges = CommittedFiberChange & {
   displayName: string;
@@ -36,7 +36,10 @@ function formatHookBulletLines(hook: HookChange, includeHookPath: boolean): stri
 
 export function buildCommitSectionLines(
   fiberChanges: CommittedFiberChange[],
-  options: RecorderOptions = { includeRenderDuration: false, includeHookPath: false },
+  options: CommitHistoryFormatOptions = {
+    includeRenderDuration: false,
+    includeHookPath: false,
+  },
 ): string[] {
   const changedComponents = fiberChanges
     .filter(isComponentWithHookChanges)

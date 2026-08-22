@@ -1,10 +1,10 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
-import type { RecorderOptions } from "@/types";
+import type { CommitHistoryFormatOptions } from "@/types";
 import { buildSummaryLines } from "./util/build-summary-lines";
 import { buildCommitSectionLines } from "./util/build-commit-section";
 
-type BuildCommitHistoryTextByPaintInput = RecorderOptions & {
+type BuildCommitHistoryTextByPaintInput = CommitHistoryFormatOptions & {
   fiberChangesByPaint: CommittedFiberChange[][][];
 };
 

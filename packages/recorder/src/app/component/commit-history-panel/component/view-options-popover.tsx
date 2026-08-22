@@ -2,24 +2,9 @@
 import type { Dispatch, StateUpdater } from "preact/hooks";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 
-import type { RecorderOptions } from "@/types";
+import type { CommitHistoryFormatOptions } from "@/types";
 
-type RecorderOptionKey = keyof RecorderOptions;
-
-export const INITIAL_RECORDER_OPTIONS: RecorderOptions = {
-  includeRenderDuration: false,
-  includeHookPath: false,
-};
-
-export function buildInitialRecorderOptions(
-  queryParameters: URLSearchParams | null,
-): RecorderOptions {
-  if (queryParameters == null) return INITIAL_RECORDER_OPTIONS;
-  return {
-    includeRenderDuration: queryParameters.get("renderTime") === "true",
-    includeHookPath: queryParameters.get("hookPath") === "true",
-  };
-}
+type RecorderOptionKey = keyof CommitHistoryFormatOptions;
 
 type OptionDef = {
   key: RecorderOptionKey;
@@ -32,8 +17,8 @@ const OPTION_DEFS: readonly OptionDef[] = [
 ];
 
 type ViewOptionsPopoverProps = {
-  options: RecorderOptions;
-  setOptions: Dispatch<StateUpdater<RecorderOptions>>;
+  options: CommitHistoryFormatOptions;
+  setOptions: Dispatch<StateUpdater<CommitHistoryFormatOptions>>;
 };
 
 export function ViewOptionsPopover({ options, setOptions }: ViewOptionsPopoverProps) {

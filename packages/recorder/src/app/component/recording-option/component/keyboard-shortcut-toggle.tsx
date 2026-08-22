@@ -3,15 +3,12 @@ import type { ComponentChildren } from "preact";
 import { useEffect, useState } from "preact/hooks";
 
 import { useRecordingControl } from "../../../../hooks/use-recording-control";
+import { readRecordingOption } from "../../../../lib/query-parameters";
 
 type KeycapProps = {
   children: ComponentChildren;
   isEnabled: boolean;
   widthClass: string;
-};
-
-type KeyboardShortcutToggleProps = {
-  defaultEnabled: boolean;
 };
 
 function Keycap({ children, isEnabled, widthClass }: KeycapProps) {
@@ -36,8 +33,8 @@ function Keycap({ children, isEnabled, widthClass }: KeycapProps) {
   );
 }
 
-export function KeyboardShortcutToggle({ defaultEnabled }: KeyboardShortcutToggleProps) {
-  const [isEnabled, setIsEnabled] = useState(defaultEnabled);
+export function KeyboardShortcutToggle() {
+  const [isEnabled, setIsEnabled] = useState(() => readRecordingOption().shortcut);
   const onToggle = () => {
     setIsEnabled((prev) => !prev);
   };
