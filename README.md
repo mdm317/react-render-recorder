@@ -82,11 +82,12 @@ export default function Document() {
 
 ## URL options
 
-Append boolean query parameters to the page URL to enable recorder options by default: `?shortcut=true&other-option=true`.
+Append boolean query parameters to the page URL to enable recorder options by default: `?record=true&shortcut=true`.
 
-| Option     | Effect                                                   |
-| ---------- | -------------------------------------------------------- |
-| `shortcut` | Start with the Ctrl+R recording shortcut already enabled |
+| Option     | Effect                                                                 |
+| ---------- | ---------------------------------------------------------------------- |
+| `record`   | Start recording automatically when the first React commit is available |
+| `shortcut` | Start with the Ctrl+R recording shortcut already enabled               |
 
 ## Notes
 

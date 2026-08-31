@@ -4,5 +4,6 @@ export type CommitHistoryFormatOptions = {
 };
 
 export type RecorderOptions = CommitHistoryFormatOptions & {
+  record: boolean;
   shortcut: boolean;
 };

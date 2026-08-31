@@ -8,6 +8,7 @@ import {
   recorderByTestId,
   recordCycle,
   START_BUTTON_TEXT,
+  STOP_BUTTON_TEXT,
   startRecording,
   stopRecording,
 } from "./helpers/recorder";
@@ -57,6 +58,13 @@ test.describe("react-render-recorder E2E", () => {
       const result = recorderByTestId(page, "commit-history-result");
       await expectHookChange(result, "UpdateButton", "hook[0] State");
     });
+  });
+
+  test("record URL option starts recording on page load", async ({ page }) => {
+    await page.goto("/?record=true", { waitUntil: "domcontentloaded" });
+    await expect(recordButton(page, STOP_BUTTON_TEXT)).toBeVisible();
+
+    await stopRecording(page);
   });
 
   test("copy commit history button copies the commit history text", async ({ page, context }) => {

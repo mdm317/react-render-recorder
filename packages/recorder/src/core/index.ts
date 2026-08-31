@@ -4,20 +4,29 @@ import { onReactCommit } from "./on-react-commit";
 import { onReactPaint } from "./on-react-paint";
 import { exposeRecorderApi } from "./recorder-api";
 import { renderRecorderUI } from "./render-recorder-ui";
+import { readRecordingOption } from "../lib/query-parameters";
+import { startRecording } from "../services/recording";
 import { createRecorderStore } from "../store";
 
 export function installReactRenderRecorder(): void {
   const recorderStore = createRecorderStore();
+  let autoStartPending = readRecordingOption().record;
 
   exposeRecorderApi(recorderStore);
   renderRecorderUI();
   onReactCommit((hook, rendererID, root, _priorityLevel) => {
     recorderStore.setFiberRoot(root);
-    if (!recorderStore.getSnapshot().isRecording) {
+
+    if (root.current?.child == null) {
       return;
     }
 
-    if (root.current?.child == null) {
+    if (autoStartPending) {
+      autoStartPending = false;
+      startRecording(recorderStore);
+    }
+
+    if (!recorderStore.getSnapshot().isRecording) {
       return;
     }
 

@@ -9,11 +9,12 @@ const mocks = vi.hoisted(() => ({
   commitCallbacks: [] as ReactCommitCallback[],
   onCommitFiber: vi.fn(() => []),
   paintCallbacks: [] as ReactPaintCallback[],
+  startRecording: vi.fn(),
 }));
 
 vi.mock("@react-record/devtools-api", () => ({
   onCommitFiber: mocks.onCommitFiber,
-  startRecording: vi.fn(),
+  startRecording: mocks.startRecording,
   endRecording: vi.fn(() => []),
 }));
 
@@ -41,7 +42,9 @@ describe("installReactRenderRecorder", () => {
     mocks.commitCallbacks.length = 0;
     mocks.paintCallbacks.length = 0;
     mocks.onCommitFiber.mockClear();
+    mocks.startRecording.mockClear();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("skips commit collection while recording is off", async () => {
@@ -54,6 +57,25 @@ describe("installReactRenderRecorder", () => {
 
     expect(mocks.onCommitFiber).not.toHaveBeenCalled();
     expect(recordCommit).not.toHaveBeenCalled();
+  });
+
+  it("starts recording on the first mounted commit when record is enabled in the URL", async () => {
+    vi.stubGlobal("window", { location: { search: "?record=true" } });
+    const { installReactRenderRecorder } = await import("./index");
+    const recorderStore = createRecorderStore();
+    const recordCommit = vi.spyOn(recorderStore, "recordCommit");
+    const root = createMountedRoot();
+
+    installReactRenderRecorder();
+    mocks.commitCallbacks[0](createHook(), 1, root);
+
+    expect(mocks.startRecording).toHaveBeenCalledWith([root]);
+    expect(recorderStore.getSnapshot().isRecording).toBe(true);
+    expect(recordCommit).toHaveBeenCalledTimes(1);
+
+    recorderStore.endRecording([] as never);
+    mocks.commitCallbacks[0](createHook(), 1, createMountedRoot());
+    expect(recorderStore.getSnapshot().isRecording).toBe(false);
   });
 
   it("stores recorded commits when recording stops", async () => {
