@@ -34,7 +34,7 @@ test.describe("react-render-recorder E2E", () => {
 
       await clickTimes(page, SCENARIO_BUTTON.UPDATE, 2);
 
-      await expect(recorderByTestId(page, "commit-count")).toHaveCount(0);
+      await expect(recorderByTestId(page, "commit-history-result")).toHaveCount(0);
 
       await stopRecording(page);
       await expectRecorderCommitCount(page, 2);
@@ -43,7 +43,7 @@ test.describe("react-render-recorder E2E", () => {
     test("commits are ignored while recording is off", async ({ page }) => {
       await clickTimes(page, SCENARIO_BUTTON.UPDATE, 2);
 
-      await expect(recorderByTestId(page, "commit-count")).toHaveCount(0);
+      await expect(recorderByTestId(page, "commit-history-result")).toHaveCount(0);
     });
 
     test("commit history appears only after recording finishes", async ({ page }) => {
@@ -80,7 +80,7 @@ test.describe("react-render-recorder E2E", () => {
       .toContain("## Commit 1");
   });
 
-  test("commit history panel can be collapsed and expanded when results exist", async ({
+  test("commit history panel can be animated closed and reopened when results exist", async ({
     page,
   }) => {
     await recordCycle(page, async () => {
@@ -91,24 +91,30 @@ test.describe("react-render-recorder E2E", () => {
     });
 
     const toggle = recorderByTestId(page, "commit-history-toggle");
-    const panel = recorderByTestId(page, "commit-history-panel-content");
+    const panel = recorderByTestId(page, "commit-history-panel");
     const result = recorderByTestId(page, "commit-history-result");
 
-    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await expect(toggle).toHaveAttribute("data-open", "true");
     await expectHookChange(result, "ElementStatePanel", "hook[0] State");
 
+    const toggleBounds = await toggle.boundingBox();
     await toggle.click();
 
-    await expect(toggle).toHaveAttribute("aria-expanded", "false");
-    await expect(panel).toHaveAttribute("aria-hidden", "true");
+    await expect(toggle).toHaveAttribute("data-open", "false");
+    await expect(panel).toHaveAttribute("data-open", "false");
+    await expect(panel).toBeHidden();
     await expect
       .poll(() => panel.evaluate((el) => Math.round(el.getBoundingClientRect().height)))
       .toBe(0);
+    const closedBounds = await toggle.boundingBox();
+    expect(closedBounds!.y).toBeGreaterThan(toggleBounds!.y);
 
     await toggle.click();
 
-    await expect(toggle).toHaveAttribute("aria-expanded", "true");
-    await expect(panel).toHaveAttribute("aria-hidden", "false");
+    await expect(toggle).toHaveAttribute("data-open", "true");
+    await expect(panel).toHaveAttribute("data-open", "true");
+    await expect(panel).toBeVisible();
+    await expect.poll(() => toggle.boundingBox()).toEqual(toggleBounds);
     await expect
       .poll(() => panel.evaluate((el) => Math.round(el.getBoundingClientRect().height)))
       .toBeGreaterThan(0);

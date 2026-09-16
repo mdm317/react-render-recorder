@@ -1,17 +1,20 @@
 /** @jsxImportSource preact */
-import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
 
 import type { CommitHistoryFormatOptions } from "@/types";
+import { Tabs } from "../../../ui/tabs";
+import { HistoryIcon } from "../common/icons/history-icon";
+import { PaintIcon } from "../common/icons/paint-icon";
+import { StatusIndicator } from "../common/icons/status-indicator";
 import { useCommitHistory } from "../../../hooks/use-commit-history";
 import { readRecordingOption } from "../../../lib/query-parameters";
+import { useCommitHistoryViewStore } from "../../../store";
 import { CommitHistoryContent } from "./component/history-view";
 import { PaintCommitHistoryContent } from "./component/paint-view";
-import { PaintViewToggleButton } from "./component/paint-view-toggle";
 import { ViewOptionsPopover } from "./component/view-options-popover";
 
 export function CommitHistoryPanel() {
-  const [isOpen, setIsOpen] = useState(true);
+  const { isOpen } = useCommitHistoryViewStore();
   const [showPaintView, setShowPaintView] = useState(false);
   const [options, setOptions] = useState<CommitHistoryFormatOptions>(readRecordingOption);
   const { commitCount, commitHistoryText, commitHistoryTextByPaint } = useCommitHistory(options);
@@ -21,87 +24,56 @@ export function CommitHistoryPanel() {
   }
 
   return (
-    <section className="flex min-h-0 w-full flex-col overflow-hidden rounded-[1.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(24,24,27,0.96)_0%,rgba(9,9,11,0.98)_100%)] p-4 text-white shadow-[0_20px_48px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-      <div className="mb-3 flex items-center justify-between gap-4">
-        <p className="text-[0.65rem] font-bold uppercase tracking-[0.24em] text-rose-300/90">
-          Rerender Recorder
-        </p>
-        <div className="flex items-center gap-3 text-[0.7rem] text-white/45">
-          <span data-testid="commit-count">{commitCount} commit(s)</span>
-          <button
-            data-testid="commit-history-toggle"
-            type="button"
-            aria-controls="commit-history-panel-content"
-            aria-expanded={isOpen}
-            onClick={() => {
-              setIsOpen((prev) => !prev);
-            }}
-            className="inline-flex min-w-20 items-center justify-center rounded-full border border-white/12 bg-white/6 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-white/72 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-          >
-            {isOpen ? "닫기" : "열기"}
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <PaintViewToggleButton
-          isPressed={showPaintView}
-          onToggle={() => {
-            setShowPaintView((prev) => !prev);
-          }}
-        />
-        <ViewOptionsPopover options={options} setOptions={setOptions} />
-      </div>
-
-      <CollapsibleContent
-        className="min-h-0 flex-1"
-        id="commit-history-panel-content"
-        innerClassName="recorder-scrollbar-hidden overflow-y-auto"
-        isOpen={isOpen}
-        openClassName="mt-3"
-      >
-        {showPaintView ? (
-          <PaintCommitHistoryContent commitHistoryTextByPaint={commitHistoryTextByPaint} />
-        ) : (
-          <CommitHistoryContent commitHistoryText={commitHistoryText} />
-        )}
-      </CollapsibleContent>
-    </section>
-  );
-}
-
-type CollapsibleContentProps = {
-  children: ComponentChildren;
-  className?: string;
-  id?: string;
-  innerClassName?: string;
-  isOpen: boolean;
-  openClassName?: string;
-};
-
-function CollapsibleContent({
-  children,
-  className,
-  id,
-  innerClassName,
-  isOpen,
-  openClassName,
-}: CollapsibleContentProps) {
-  return (
     <div
-      id={id}
-      data-testid={id}
       aria-hidden={!isOpen}
-      className={[
-        "grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-out",
-        className,
-        isOpen
-          ? [openClassName, "grid-rows-[1fr] opacity-100"].filter(Boolean).join(" ")
-          : "grid-rows-[0fr] opacity-0",
-      ].join(" ")}
+      data-open={isOpen ? "true" : "false"}
+      data-testid="commit-history-panel"
+      inert={!isOpen}
+      className="recorder-history-panel grid min-h-0 w-full"
     >
-      <div className={["min-h-0", innerClassName ?? "overflow-hidden"].filter(Boolean).join(" ")}>
-        {children}
+      <div className="min-h-0 overflow-hidden">
+        <section className="flex min-h-0 w-full flex-col overflow-hidden rounded-[1.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(24,24,27,0.96)_0%,rgba(9,9,11,0.98)_100%)] p-4 text-white shadow-[0_20px_48px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+          <Tabs.Root
+            value={showPaintView ? "paint" : "history"}
+            onValueChange={(value) => setShowPaintView(value === "paint")}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Tabs.List testId="paint-view-toggle">
+                <Tabs.Tab value="history" testId="paint-view-toggle-history">
+                  <HistoryIcon active={!showPaintView} />
+                  <span>By Commit</span>
+                </Tabs.Tab>
+                <span className="group relative inline-flex">
+                  <Tabs.Tab value="paint" tone="accent" testId="paint-view-toggle-paint">
+                    <PaintIcon active={showPaintView} />
+                    <span>By Paint</span>
+                  </Tabs.Tab>
+                  <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 -translate-x-1/2 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-400/50 bg-amber-400/15 px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.2em] text-amber-200 shadow-[0_0_16px_-2px_rgba(251,191,36,0.3),inset_0_1px_0_rgba(251,191,36,0.15)]">
+                      <StatusIndicator tone="warning" pulse />
+                      Experimental
+                    </span>
+                  </span>
+                </span>
+              </Tabs.List>
+              <ViewOptionsPopover options={options} setOptions={setOptions} />
+            </div>
+
+            <div
+              data-testid="commit-history-panel-content"
+              className="mt-3 grid min-h-0 flex-1 overflow-hidden"
+            >
+              <div className="recorder-scrollbar-hidden min-h-0 overflow-y-auto">
+                <Tabs.Panel value="history">
+                  <CommitHistoryContent commitHistoryText={commitHistoryText} />
+                </Tabs.Panel>
+                <Tabs.Panel value="paint">
+                  <PaintCommitHistoryContent commitHistoryTextByPaint={commitHistoryTextByPaint} />
+                </Tabs.Panel>
+              </div>
+            </div>
+          </Tabs.Root>
+        </section>
       </div>
     </div>
   );

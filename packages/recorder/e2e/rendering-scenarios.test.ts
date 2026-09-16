@@ -151,17 +151,17 @@ test.describe("rendering scenarios", () => {
         await page.getByTestId(SCENARIO_BUTTON.UPDATE).click();
       });
 
-      const historyToggle = recorderByTestId(page, "paint-view-toggle-history");
       const paintToggle = recorderByTestId(page, "paint-view-toggle-paint");
+      const historyResult = recorderByTestId(page, "commit-history-result");
+      const paintResult = recorderByTestId(page, "paint-segment-result");
 
-      await expect(historyToggle).toHaveAttribute("aria-checked", "true");
-      await expect(paintToggle).toHaveAttribute("aria-checked", "false");
-      await expect(recorderByTestId(page, "paint-segment-result")).toHaveCount(0);
+      await expect(historyResult).toHaveCount(1);
+      await expect(paintResult).toHaveCount(0);
 
       await paintToggle.click();
 
-      await expect(historyToggle).toHaveAttribute("aria-checked", "false");
-      await expect(paintToggle).toHaveAttribute("aria-checked", "true");
+      await expect(historyResult).toHaveCount(0);
+      await expect(paintResult).toHaveCount(1);
     });
 
     test("single-render 2 clicks produce one paint segment per commit with hook data", async ({

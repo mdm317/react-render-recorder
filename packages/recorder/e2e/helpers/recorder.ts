@@ -14,7 +14,7 @@ export function recorderByTestId(page: Page, testId: string): Locator {
 }
 
 export function recordButton(page: Page, label: RecordButtonLabel): Locator {
-  return recorderRoot(page).getByRole("button", { name: label, exact: true });
+  return recorderRoot(page).getByTitle(label);
 }
 
 export async function startRecording(page: Page) {
@@ -59,7 +59,7 @@ export async function clickTimes(page: Page, testId: string, times: number) {
 }
 
 export async function expectRecorderCommitCount(page: Page, count: number) {
-  await expect(recorderByTestId(page, "commit-count")).toHaveText(`${count} commit(s)`);
+  await expect(recorderByTestId(page, "commit-history-result")).toContainText(`${count} commits,`);
 }
 
 export async function expectHookChange(

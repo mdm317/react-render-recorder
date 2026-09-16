@@ -22,6 +22,7 @@
     "test:e2e": "playwright test --config e2e/playwright.config.ts"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
     "preact": "^10.29.1"
   },
   "devDependencies": {

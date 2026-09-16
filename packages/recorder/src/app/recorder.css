@@ -1,11 +1,52 @@
 @import "tailwindcss";
 
+@theme {
+  --color-recorder-ink: #09090b;
+  --color-recorder-surface: #18181b;
+  --color-recorder-border: rgb(255 255 255 / 10%);
+  --color-recorder-accent: #7dd3fc;
+  --color-recorder-record: #fb7185;
+  --ease-recorder-emphasized: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 :host {
   color: #0f172a;
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
   font-feature-settings:
     "ss01" on,
     "cv05" on;
+}
+
+.recorder-history-panel {
+  visibility: visible;
+  grid-template-rows: 1fr;
+  margin-top: 0.75rem;
+  opacity: 1;
+  transition:
+    grid-template-rows 220ms ease-in-out,
+    margin-top 220ms ease-in-out,
+    opacity 180ms ease-out,
+    visibility 0s;
+}
+
+.recorder-history-panel[data-open="false"] {
+  visibility: hidden;
+  grid-template-rows: 0fr;
+  margin-top: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    grid-template-rows 220ms ease-in-out,
+    margin-top 220ms ease-in-out,
+    opacity 120ms ease-out,
+    visibility 0s 220ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recorder-history-panel,
+  .recorder-history-panel[data-open="false"] {
+    transition: none;
+  }
 }
 
 .recorder-scrollbar-hidden {
@@ -27,41 +68,4 @@
 
 .recorder-scrollbar-stable > .recorder-scrollbar-overlay {
   right: 0.875rem;
-}
-
-@keyframes rec-pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(0.85);
-  }
-}
-
-@keyframes pulse-ring {
-  0% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0;
-    transform: scale(1.4);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.4);
-  }
-}
-
-@keyframes glow-shift {
-  0%,
-  100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
 }
