@@ -17,6 +17,7 @@ type OptionDef = {
 const OPTION_DEFS: readonly OptionDef[] = [
   { key: "includeRenderDuration", label: "Show render time" },
   { key: "includeHookPath", label: "Show hook path" },
+  { key: "includeSource", label: "Show source" },
 ];
 
 type ViewOptionsPopoverProps = {
@@ -45,14 +46,14 @@ export function ViewOptionsPopover({ options, setOptions }: ViewOptionsPopoverPr
               <button
                 type="button"
                 role="switch"
-                aria-checked={options[key]}
+                aria-checked={options[key] ?? false}
                 data-checked={options[key] ? "true" : "false"}
                 data-testid={`view-option-${key}`}
                 onClick={() => toggleOption(key)}
                 className="flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-1.5 text-left text-[0.78rem] text-white/85 transition hover:bg-white/5 focus-visible:bg-white/5 focus-visible:outline-none"
               >
                 <span>{label}</span>
-                <ToggleSwitch checked={options[key]} />
+                <ToggleSwitch checked={options[key] ?? false} />
               </button>
             </li>
           ))}
