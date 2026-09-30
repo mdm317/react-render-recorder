@@ -27,8 +27,8 @@ function fetchFileWithCaching(url: string): Promise<string> {
 
 export type SourceResults = Record<string, SourceMappedLocation | null>;
 
-export function sourceKey(source: HookSource): string {
-  return JSON.stringify([source.fileName, source.lineNumber, source.columnNumber]);
+export function getKeyFromHookSource(source: HookSource): string {
+  return `${source.fileName}:${source.lineNumber}:${source.columnNumber}`;
 }
 
 export async function inspectSymbolicateSource(
@@ -42,7 +42,7 @@ export async function inspectSymbolicateSource(
         if (source?.fileName == null || source.lineNumber == null || source.columnNumber == null) {
           continue;
         }
-        const key = sourceKey(source);
+        const key = getKeyFromHookSource(source);
         if (!requests.has(key)) {
           requests.set(
             key,

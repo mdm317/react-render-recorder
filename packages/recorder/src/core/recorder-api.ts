@@ -1,3 +1,4 @@
+import { buildCommitHistory } from "../lib/build-commit-history";
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
 import type { CommitHistoryFormatOptions } from "@/types";
@@ -24,11 +25,11 @@ function getPaintCommitIndices(store: RecorderStore): number[] {
 }
 
 function getCommitHistoryText(store: RecorderStore, options: CommitHistoryFormatOptions): string {
-  const { fiberChanges, paintCommitIndices } = store.getSnapshot();
+  const { fiberChanges, paintCommitIndices, sourceResults } = store.getSnapshot();
   const fiberChangeGroupsByPaint = groupCommitsByPaint({
     fiberChangesByCommit: fiberChanges,
     paintCommitIndices,
-  });
+  }).map((commits) => buildCommitHistory(commits, sourceResults));
   return formatCommitHistoryForLLM(fiberChangeGroupsByPaint.flat(), options);
 }
 
@@ -36,11 +37,11 @@ function getCommitHistoryTextByPaint(
   store: RecorderStore,
   options: CommitHistoryFormatOptions,
 ): string[] {
-  const { fiberChanges, paintCommitIndices } = store.getSnapshot();
+  const { fiberChanges, paintCommitIndices, sourceResults } = store.getSnapshot();
   const fiberChangeGroupsByPaint = groupCommitsByPaint({
     fiberChangesByCommit: fiberChanges,
     paintCommitIndices,
-  });
+  }).map((commits) => buildCommitHistory(commits, sourceResults));
   return buildCommitHistoryByPaint({
     fiberChangesByPaint: fiberChangeGroupsByPaint,
     ...options,

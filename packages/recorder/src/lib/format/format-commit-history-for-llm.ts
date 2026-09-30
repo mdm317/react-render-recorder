@@ -1,10 +1,10 @@
-import type { CommittedFiberChange } from "@react-record/devtools-api";
+import type { CommitHistoryFiberChange } from "../build-commit-history";
 import type { CommitHistoryFormatOptions } from "@/types";
 import { buildSummaryLines } from "./util/build-summary-lines";
 import { buildCommitSectionLines } from "./util/build-commit-section";
 
 export function formatCommitHistoryForLLM(
-  fiberChangesByCommit: CommittedFiberChange[][],
+  fiberChangesByCommit: CommitHistoryFiberChange[][],
   options: CommitHistoryFormatOptions,
 ): string {
   const lines: string[] = buildSummaryLines(fiberChangesByCommit);

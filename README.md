@@ -82,12 +82,15 @@ export default function Document() {
 
 ## URL options
 
+Enable **Show source** in the recording panel options to show the original file, line, and column beneath each hook change. Source locations resolve asynchronously; unavailable source maps fall back to the generated location marked `(unmapped)`. Both views and copied text include sources when enabled. Use `?source=true` to enable it by default.
+
 Append boolean query parameters to the page URL to enable recorder options by default: `?record=true&shortcut=true`.
 
 | Option     | Effect                                                                 |
 | ---------- | ---------------------------------------------------------------------- |
 | `record`   | Start recording automatically when the first React commit is available |
 | `shortcut` | Start with the Ctrl+R recording shortcut already enabled               |
+| `source`   | Show source locations beneath hook changes                             |
 
 ## Notes
 

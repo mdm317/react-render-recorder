@@ -1,14 +1,16 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 import { describe, expect, it } from "vitest";
 
+import { buildCommitHistory, type CommitHistoryFiberChange } from "../../build-commit-history";
+
 import { buildCommitSectionLines } from "./build-commit-section";
 
 function makeChange(
   displayName: string,
   hooks: NonNullable<CommittedFiberChange["hooks"]>,
   selfDuration = 0,
-): CommittedFiberChange {
-  return {
+): CommitHistoryFiberChange {
+  const change: CommittedFiberChange = {
     actualDuration: null,
     context: null,
     didHooksChange: true,
@@ -21,6 +23,7 @@ function makeChange(
     selfDuration,
     state: null,
   };
+  return buildCommitHistory([[change]])[0][0];
 }
 
 describe("build-commit-section shallow shape for null↔object", () => {
@@ -220,5 +223,72 @@ describe("build-commit-section shallow shape for null↔object", () => {
       "- Bar:",
       "  - hook[0] State: 1 → 2",
     ]);
+  });
+});
+
+describe("hook source formatting", () => {
+  const source = {
+    fileName: "http://localhost/bundle.js",
+    lineNumber: 48,
+    columnNumber: 9,
+    functionName: null,
+  };
+  const changes = [
+    makeChange("Counter", [
+      { hookIndex: 0, hookName: "State", prev: 0, next: 1, hookSource: source },
+    ]),
+  ];
+  const options = { includeRenderDuration: false, includeHookPath: false, includeSource: true };
+  const key = `${source.fileName}:${source.lineNumber}:${source.columnNumber}`;
+
+  it("shows resolved sources beneath hooks only when enabled", () => {
+    const results = {
+      [key]: {
+        location: ["", "src/Counter.tsx", 12, 27] as [string, string, number, number],
+        ignored: false,
+      },
+    };
+    expect(buildCommitSectionLines(buildCommitHistory([changes], results)[0], options)).toEqual([
+      "- Counter:",
+      "  - hook[0] State: 0 → 1",
+      "    Source: src/Counter.tsx:12:27",
+    ]);
+    expect(
+      buildCommitSectionLines(buildCommitHistory([changes], results)[0], {
+        includeRenderDuration: false,
+        includeHookPath: false,
+        includeSource: false,
+      }),
+    ).toHaveLength(2);
+  });
+
+  it("distinguishes pending, unmapped, and missing locations", () => {
+    expect(buildCommitSectionLines(changes, options)).toContain("    Source: Resolving…");
+    expect(
+      buildCommitSectionLines(buildCommitHistory([changes], { [key]: null })[0], options),
+    ).toContain("    Source: /bundle.js:48:9 (unmapped)");
+    expect(
+      buildCommitSectionLines(
+        [makeChange("Counter", [{ hookIndex: 0, prev: 0, next: 1 }])],
+        options,
+      ),
+    ).toContain("    Source: Unavailable");
+  });
+
+  it("omits the URL origin from resolved source locations", () => {
+    const results = {
+      [key]: {
+        location: ["", "http://localhost:5173/src/Counter.tsx", 12, 27] as [
+          string,
+          string,
+          number,
+          number,
+        ],
+        ignored: false,
+      },
+    };
+    expect(buildCommitSectionLines(buildCommitHistory([changes], results)[0], options)).toContain(
+      "    Source: /src/Counter.tsx:12:27",
+    );
   });
 });

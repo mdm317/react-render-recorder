@@ -86,3 +86,38 @@ test.describe("commit history view options", () => {
     expect(finalText).not.toMatch(/\(in HookCounter\)/);
   });
 });
+
+test("source option resolves locations in both views and copied output", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto("/");
+  await recordCycle(page, async () => {
+    await clickTimes(page, SCENARIO_BUTTON.UPDATE, 1);
+  });
+  const result = recorderByTestId(page, "commit-history-result");
+  await expect(result).not.toContainText("Source:");
+  await recorderByTestId(page, "view-options-button").click();
+  const toggle = recorderByTestId(page, "view-option-includeSource");
+  await toggle.click();
+  await expect(result).toContainText("Source:");
+  await expect(result).toContainText(/Source: .*UpdateButton\.tsx:4:\d+/);
+  await expect(result).not.toContainText("(unmapped)");
+  await toggle.click();
+  await expect(result).not.toContainText("Source:");
+  await toggle.click();
+  await recorderByTestId(page, "view-options-button").click();
+  await recorderByTestId(page, "paint-view-toggle-paint").click();
+  await expect(recorderByTestId(page, "paint-segment-result")).toContainText("Source:");
+  await recorderByTestId(page, "copy-paint-history-button").click();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain("Source:");
+});
+
+test("source URL option enables source display initially", async ({ page }) => {
+  await page.goto("/?source=true");
+  await recordCycle(page, async () => {
+    await clickTimes(page, SCENARIO_BUTTON.UPDATE, 1);
+  });
+  await expect(recorderByTestId(page, "commit-history-result")).toContainText("Source:");
+});

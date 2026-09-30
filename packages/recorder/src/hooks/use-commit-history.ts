@@ -1,3 +1,4 @@
+import { buildCommitHistory } from "../lib/build-commit-history";
 import { useMemo } from "preact/hooks";
 
 import { buildCommitHistoryByPaint } from "../lib/format/build-commit-history-by-paint";
@@ -15,6 +16,7 @@ type UseCommitHistoryResult = {
 export function useCommitHistory({
   includeRenderDuration,
   includeHookPath,
+  includeSource,
 }: CommitHistoryFormatOptions): UseCommitHistoryResult {
   const { state } = useRecorderStore();
 
@@ -22,7 +24,8 @@ export function useCommitHistory({
     const fiberChangeGroupsByPaint = groupCommitsByPaint({
       fiberChangesByCommit: state.fiberChanges,
       paintCommitIndices: state.paintCommitIndices,
-    });
+    }).map((commits) => buildCommitHistory(commits, state.sourceResults));
+
     const fiberChanges = fiberChangeGroupsByPaint.flat();
 
     return {
@@ -30,12 +33,14 @@ export function useCommitHistory({
       commitHistoryText: formatCommitHistoryForLLM(fiberChanges, {
         includeRenderDuration,
         includeHookPath,
+        includeSource,
       }),
       commitHistoryTextByPaint: buildCommitHistoryByPaint({
         fiberChangesByPaint: fiberChangeGroupsByPaint,
         includeRenderDuration,
         includeHookPath,
+        includeSource,
       }),
     };
-  }, [state, includeRenderDuration, includeHookPath]);
+  }, [state, includeRenderDuration, includeHookPath, includeSource]);
 }
