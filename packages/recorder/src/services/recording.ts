@@ -3,6 +3,7 @@ import {
   startRecording as startDevtoolsRecording,
 } from "@react-record/devtools-api";
 
+import { inspectSymbolicateSource } from "../lib/inspect-symbolicate-source";
 import type { RecorderStore } from "../store";
 
 export function startRecording(store: RecorderStore): void {
@@ -19,6 +20,9 @@ export function endRecording(store: RecorderStore) {
     return null;
   }
   const res = endDevtoolsRecording();
+  void inspectSymbolicateSource(res).catch((error: unknown) => {
+    console.error("symbolicateSource inspection failed:", error);
+  });
   store.endRecording(res);
   return res;
 }
