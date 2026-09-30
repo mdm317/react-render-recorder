@@ -1,4 +1,9 @@
-import { symbolicateSource, type CommittedFiberChange } from "@react-record/devtools-api";
+import {
+  symbolicateSource,
+  type CommittedFiberChange,
+  type HookSource,
+  type SourceMappedLocation,
+} from "@react-record/devtools-api";
 
 const fileCache = new Map<string, Promise<string>>();
 
@@ -20,11 +25,16 @@ function fetchFileWithCaching(url: string): Promise<string> {
   return request;
 }
 
+export type SourceResults = Record<string, SourceMappedLocation | null>;
+
+export function sourceKey(source: HookSource): string {
+  return JSON.stringify([source.fileName, source.lineNumber, source.columnNumber]);
+}
+
 export async function inspectSymbolicateSource(
   fiberChanges: CommittedFiberChange[][],
-): Promise<void> {
-  const requests: Promise<void>[] = [];
-
+): Promise<SourceResults> {
+  const requests = new Map<string, Promise<SourceResults[string]>>();
   for (const commit of fiberChanges) {
     for (const change of commit) {
       for (const hook of change.hooks ?? []) {
@@ -32,20 +42,22 @@ export async function inspectSymbolicateSource(
         if (source?.fileName == null || source.lineNumber == null || source.columnNumber == null) {
           continue;
         }
-
-        requests.push(
-          symbolicateSource(
-            fetchFileWithCaching,
-            source.fileName,
-            source.lineNumber,
-            source.columnNumber,
-          ).then((result) => {
-            console.log("symbolicateSource result:", result, source);
-          }),
-        );
+        const key = sourceKey(source);
+        if (!requests.has(key)) {
+          requests.set(
+            key,
+            symbolicateSource(
+              fetchFileWithCaching,
+              source.fileName,
+              source.lineNumber,
+              source.columnNumber,
+            ).catch(() => null),
+          );
+        }
       }
     }
   }
-
-  await Promise.all(requests);
+  return Object.fromEntries(
+    await Promise.all([...requests].map(async ([key, request]) => [key, await request])),
+  );
 }
