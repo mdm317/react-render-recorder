@@ -67,6 +67,7 @@ export function buildCommitSectionLines(
   options: CommitHistoryFormatOptions = {
     includeRenderDuration: false,
     includeHookPath: false,
+    includeSource: false,
   },
 ): string[] {
   const changedComponents = fiberChanges

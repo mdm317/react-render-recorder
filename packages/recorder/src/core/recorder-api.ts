@@ -55,17 +55,17 @@ export function exposeRecorderApi(store: RecorderStore): void {
     end: () => endRecording(store),
     getFiberChanges: () => getFiberChanges(store),
     getPaintCommitIndices: () => getPaintCommitIndices(store),
-    getCommitHistoryText: (
-      options: CommitHistoryFormatOptions = {
-        includeRenderDuration: false,
-        includeHookPath: false,
-      },
-    ) => getCommitHistoryText(store, options),
-    getCommitHistoryTextByPaint: (
-      options: CommitHistoryFormatOptions = {
-        includeRenderDuration: false,
-        includeHookPath: false,
-      },
-    ) => getCommitHistoryTextByPaint(store, options),
+    getCommitHistoryText: (options: Partial<CommitHistoryFormatOptions> = {}) =>
+      getCommitHistoryText(store, {
+        includeRenderDuration: options.includeRenderDuration ?? false,
+        includeHookPath: options.includeHookPath ?? false,
+        includeSource: options.includeSource ?? false,
+      }),
+    getCommitHistoryTextByPaint: (options: Partial<CommitHistoryFormatOptions> = {}) =>
+      getCommitHistoryTextByPaint(store, {
+        includeRenderDuration: options.includeRenderDuration ?? false,
+        includeHookPath: options.includeHookPath ?? false,
+        includeSource: options.includeSource ?? false,
+      }),
   };
 }

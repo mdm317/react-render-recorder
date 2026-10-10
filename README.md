@@ -80,6 +80,24 @@ export default function Document() {
 }
 ```
 
+## Browser API
+
+The recorder exposes `window.__REACT_RENDER_RECORDER__` after initialization. Use `start()` and `end()` to record an interaction, then read the output:
+
+```js
+const recorder = window.__REACT_RENDER_RECORDER__;
+recorder.start();
+// Perform the interaction to inspect.
+recorder.end();
+
+const text = recorder.getCommitHistoryText({ includeSource: true });
+const paints = recorder.getCommitHistoryTextByPaint({ includeSource: true });
+```
+
+Both text methods accept `includeSource`, `includeHookPath`, and `includeRenderDuration` (all default to `false`). `getCommitHistoryTextByPaint()` returns one string per paint. These API options are independent of the panel and URL options.
+
+Source maps resolve asynchronously after `end()`, which returns immediately. While resolution is pending, source output shows `Source: Resolving…`; read the text again after resolution completes. If mapping fails, the generated location is marked `(unmapped)`. `getFiberChanges()` returns JSON-safe raw changes with generated `hookSource` locations; it does not include resolved source locations.
+
 ## URL options
 
 Enable **Show source** in the recording panel options to show the original file, line, and column beneath each hook change. Source locations resolve asynchronously; unavailable source maps fall back to the generated location marked `(unmapped)`. Both views and copied text include sources when enabled. Use `?source=true` to enable it by default.
