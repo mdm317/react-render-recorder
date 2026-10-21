@@ -6,6 +6,7 @@ import {
 import type { RecorderStore } from "../store";
 import {
   collectSourceLocations,
+  inspectProjectRoot,
   inspectSymbolicateSource,
 } from "../lib/inspect-symbolicate-source";
 
@@ -26,8 +27,11 @@ export function endRecording(store: RecorderStore) {
   const fiberChanges = endDevtoolsRecording();
   store.endRecording(fiberChanges);
 
-  void inspectSymbolicateSource(collectSourceLocations(fiberChanges)).then((results) => {
-    store.setSourceResults(fiberChanges, results);
+  const locations = collectSourceLocations(fiberChanges);
+
+  void inspectSymbolicateSource(locations).then(async (results) => {
+    const projectRoot = await inspectProjectRoot(locations, results);
+    store.setSourceInfo(fiberChanges, { sourceResults: results, projectRoot });
   });
 
   return fiberChanges;

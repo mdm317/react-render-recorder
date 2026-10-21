@@ -39,11 +39,12 @@ function formatSource(source: HookSourceResolution): string {
       return "Unavailable";
     case "unmapped": {
       const { fileName, lineNumber, columnNumber } = source.location;
-      return `${fileName.replace(/^https?:\/\/[^/?#]+/i, "")}:${lineNumber}:${columnNumber} (unmapped)`;
+      return `${fileName}:${lineNumber}:${columnNumber} (unmapped)`;
     }
     case "resolved": {
-      const [, fileName, lineNumber, columnNumber] = source.location.location;
-      return `${fileName.replace(/^https?:\/\/[^/?#]+/i, "")}:${lineNumber}:${columnNumber}`;
+      const { fileName, lineNumber, columnNumber } = source.location;
+      const librarySuffix = source.ignored ? " (library)" : "";
+      return `${fileName}:${lineNumber}:${columnNumber}${librarySuffix}`;
     }
   }
 }
