@@ -1,6 +1,6 @@
 import {
-  symbolicateSource,
   type CommittedFiberChange,
+  symbolicateSource,
   type HookSource,
   type SourceMappedLocation,
 } from "@react-record/devtools-api";
@@ -27,34 +27,57 @@ function fetchFileWithCaching(url: string): Promise<string> {
 
 export type SourceResults = Record<string, SourceMappedLocation | null>;
 
-export function getKeyFromHookSource(source: HookSource): string {
+export type SourceLocation = { fileName: string; lineNumber: number; columnNumber: number };
+
+export function getKeyFromHookSource(
+  source: Pick<HookSource, "fileName" | "lineNumber" | "columnNumber">,
+): string {
   return `${source.fileName}:${source.lineNumber}:${source.columnNumber}`;
 }
 
+type HookChange = NonNullable<CommittedFiberChange["hooks"]>[number];
+
+export function getHookSourceLocation(hook: HookChange): SourceLocation | null {
+  const source = "hookSource" in hook ? hook.hookSource : null;
+  return isSourceLocation(source) ? source : null;
+}
+
+export function collectSourceLocations(fiberChanges: CommittedFiberChange[][]): SourceLocation[] {
+  return fiberChanges
+    .flat()
+    .flatMap((change) => change.hooks ?? [])
+    .flatMap((hook) => getHookSourceLocation(hook) ?? []);
+}
+
+function isSourceLocation(source: unknown): source is SourceLocation {
+  return (
+    source != null &&
+    typeof source === "object" &&
+    "fileName" in source &&
+    source.fileName != null &&
+    "lineNumber" in source &&
+    source.lineNumber != null &&
+    "columnNumber" in source &&
+    source.columnNumber != null
+  );
+}
+
 export async function inspectSymbolicateSource(
-  fiberChanges: CommittedFiberChange[][],
+  locations: SourceLocation[],
 ): Promise<SourceResults> {
   const requests = new Map<string, Promise<SourceResults[string]>>();
-  for (const commit of fiberChanges) {
-    for (const change of commit) {
-      for (const hook of change.hooks ?? []) {
-        const source = "hookSource" in hook ? hook.hookSource : null;
-        if (source?.fileName == null || source.lineNumber == null || source.columnNumber == null) {
-          continue;
-        }
-        const key = getKeyFromHookSource(source);
-        if (!requests.has(key)) {
-          requests.set(
-            key,
-            symbolicateSource(
-              fetchFileWithCaching,
-              source.fileName,
-              source.lineNumber,
-              source.columnNumber,
-            ).catch(() => null),
-          );
-        }
-      }
+  for (const location of locations) {
+    const key = getKeyFromHookSource(location);
+    if (!requests.has(key)) {
+      requests.set(
+        key,
+        symbolicateSource(
+          fetchFileWithCaching,
+          location.fileName,
+          location.lineNumber,
+          location.columnNumber,
+        ).catch(() => null),
+      );
     }
   }
   return Object.fromEntries(

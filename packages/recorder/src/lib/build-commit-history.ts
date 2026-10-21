@@ -1,5 +1,9 @@
 import type { CommittedFiberChange, SourceMappedLocation } from "@react-record/devtools-api";
-import { getKeyFromHookSource, type SourceResults } from "./inspect-symbolicate-source";
+import {
+  getHookSourceLocation,
+  getKeyFromHookSource,
+  type SourceResults,
+} from "./inspect-symbolicate-source";
 
 type HookChange = NonNullable<CommittedFiberChange["hooks"]>[number];
 
@@ -18,10 +22,8 @@ function prepareSource(
   hook: HookChange,
   sourceResults: SourceResults | null,
 ): HookSourceResolution {
-  const source = "hookSource" in hook ? hook.hookSource : null;
-  if (source?.fileName == null || source.lineNumber == null || source.columnNumber == null) {
-    return { status: "unavailable" };
-  }
+  const source = getHookSourceLocation(hook);
+  if (source == null) return { status: "unavailable" };
   const result = sourceResults?.[getKeyFromHookSource(source)];
   if (result === undefined) return { status: "pending" };
   if (result === null)

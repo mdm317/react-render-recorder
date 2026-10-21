@@ -8,7 +8,8 @@ vi.mock("@react-record/devtools-api", () => ({
   endRecording: vi.fn(),
   startRecording: vi.fn(),
 }));
-vi.mock("../lib/inspect-symbolicate-source", () => ({
+vi.mock("../lib/inspect-symbolicate-source", async (importOriginal) => ({
+  ...(await importOriginal()),
   inspectSymbolicateSource: vi.fn(),
 }));
 
@@ -28,14 +29,12 @@ it("resolves sources when recording ends without waiting for a history request",
   expect(endRecording(store)).toBe(fiberChanges);
   expect(store.getSnapshot().isRecording).toBe(false);
   expect(store.getSnapshot().sourceResults).toBeNull();
-  expect(inspectSymbolicateSource).toHaveBeenCalledExactlyOnceWith(fiberChanges);
+  expect(inspectSymbolicateSource).toHaveBeenCalledExactlyOnceWith([]);
   expect(endRecording(store)).toBeNull();
   expect(inspectSymbolicateSource).toHaveBeenCalledTimes(1);
 
   const sourceResults = {};
   resolveSources(sourceResults);
-  await Promise.resolve();
-
-  expect(store.getSnapshot().sourceResults).toBe(sourceResults);
+  await vi.waitFor(() => expect(store.getSnapshot().sourceResults).toBe(sourceResults));
   store.reset();
 });

@@ -1,7 +1,7 @@
 import { buildCommitHistory } from "../lib/build-commit-history";
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
-import type { CommitHistoryFormatOptions } from "@/types";
+import { type CommitHistoryFormatOptions, DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS } from "@/types";
 import { buildCommitHistoryByPaint } from "../lib/format/build-commit-history-by-paint";
 import { groupCommitsByPaint } from "../lib/group-commits-by-paint";
 import { formatCommitHistoryForLLM } from "../lib/format/format-commit-history-for-llm";
@@ -56,16 +56,8 @@ export function exposeRecorderApi(store: RecorderStore): void {
     getFiberChanges: () => getFiberChanges(store),
     getPaintCommitIndices: () => getPaintCommitIndices(store),
     getCommitHistoryText: (options: Partial<CommitHistoryFormatOptions> = {}) =>
-      getCommitHistoryText(store, {
-        includeRenderDuration: options.includeRenderDuration ?? false,
-        includeHookPath: options.includeHookPath ?? false,
-        includeSource: options.includeSource ?? false,
-      }),
+      getCommitHistoryText(store, { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, ...options }),
     getCommitHistoryTextByPaint: (options: Partial<CommitHistoryFormatOptions> = {}) =>
-      getCommitHistoryTextByPaint(store, {
-        includeRenderDuration: options.includeRenderDuration ?? false,
-        includeHookPath: options.includeHookPath ?? false,
-        includeSource: options.includeSource ?? false,
-      }),
+      getCommitHistoryTextByPaint(store, { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, ...options }),
   };
 }
