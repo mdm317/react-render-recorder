@@ -1,8 +1,8 @@
+import { buildCommitHistoryGroups } from "../lib/build-commit-history";
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
-import type { CommitHistoryFormatOptions } from "@/types";
+import { type CommitHistoryFormatOptions, DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS } from "@/types";
 import { buildCommitHistoryByPaint } from "../lib/format/build-commit-history-by-paint";
-import { groupCommitsByPaint } from "../lib/group-commits-by-paint";
 import { formatCommitHistoryForLLM } from "../lib/format/format-commit-history-for-llm";
 import { endRecording, startRecording } from "../services/recording";
 import type { RecorderStore } from "../store";
@@ -24,11 +24,7 @@ function getPaintCommitIndices(store: RecorderStore): number[] {
 }
 
 function getCommitHistoryText(store: RecorderStore, options: CommitHistoryFormatOptions): string {
-  const { fiberChanges, paintCommitIndices } = store.getSnapshot();
-  const fiberChangeGroupsByPaint = groupCommitsByPaint({
-    fiberChangesByCommit: fiberChanges,
-    paintCommitIndices,
-  });
+  const fiberChangeGroupsByPaint = buildCommitHistoryGroups(store.getSnapshot());
   return formatCommitHistoryForLLM(fiberChangeGroupsByPaint.flat(), options);
 }
 
@@ -36,11 +32,7 @@ function getCommitHistoryTextByPaint(
   store: RecorderStore,
   options: CommitHistoryFormatOptions,
 ): string[] {
-  const { fiberChanges, paintCommitIndices } = store.getSnapshot();
-  const fiberChangeGroupsByPaint = groupCommitsByPaint({
-    fiberChangesByCommit: fiberChanges,
-    paintCommitIndices,
-  });
+  const fiberChangeGroupsByPaint = buildCommitHistoryGroups(store.getSnapshot());
   return buildCommitHistoryByPaint({
     fiberChangesByPaint: fiberChangeGroupsByPaint,
     ...options,
@@ -54,17 +46,9 @@ export function exposeRecorderApi(store: RecorderStore): void {
     end: () => endRecording(store),
     getFiberChanges: () => getFiberChanges(store),
     getPaintCommitIndices: () => getPaintCommitIndices(store),
-    getCommitHistoryText: (
-      options: CommitHistoryFormatOptions = {
-        includeRenderDuration: false,
-        includeHookPath: false,
-      },
-    ) => getCommitHistoryText(store, options),
-    getCommitHistoryTextByPaint: (
-      options: CommitHistoryFormatOptions = {
-        includeRenderDuration: false,
-        includeHookPath: false,
-      },
-    ) => getCommitHistoryTextByPaint(store, options),
+    getCommitHistoryText: (options: Partial<CommitHistoryFormatOptions> = {}) =>
+      getCommitHistoryText(store, { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, ...options }),
+    getCommitHistoryTextByPaint: (options: Partial<CommitHistoryFormatOptions> = {}) =>
+      getCommitHistoryTextByPaint(store, { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, ...options }),
   };
 }

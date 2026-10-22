@@ -1,9 +1,14 @@
 import type { CommittedFiberChange, FiberRoot } from "@react-record/devtools-api";
 
+import type { SourceInfo } from "../lib/build-commit-history";
+import type { SourceResults } from "../lib/inspect-symbolicate-source";
+
 export type RecorderStoreState = {
   fiberRoots: FiberRoot[];
   fiberChanges: CommittedFiberChange[][];
   isRecording: boolean;
+  sourceResults: SourceResults | null;
+  projectRoot: string | null;
   paintCommitIndices: number[];
 };
 
@@ -14,6 +19,7 @@ export type RecorderStore = {
   recordPaint: () => void;
   startRecording: () => void;
   endRecording: (recordedFiberChanges: CommittedFiberChange[][]) => void;
+  setSourceInfo: (fiberChanges: CommittedFiberChange[][], sourceInfo: SourceInfo) => void;
   reset: () => void;
   setFiberRoot: (fiberRoot: FiberRoot) => void;
 };
@@ -23,6 +29,8 @@ function createInitialState(): RecorderStoreState {
     fiberRoots: [],
     fiberChanges: [],
     isRecording: false,
+    sourceResults: null,
+    projectRoot: null,
     paintCommitIndices: [],
   };
 }
@@ -100,6 +108,11 @@ function createRecorderStoreInstance(): RecorderStore {
       }
 
       state.paintCommitIndices.push(paintCommitIndex);
+    },
+
+    setSourceInfo(fiberChanges, sourceInfo) {
+      if (state.fiberChanges !== fiberChanges || state.isRecording) return;
+      setState({ ...state, ...sourceInfo });
     },
 
     startRecording,

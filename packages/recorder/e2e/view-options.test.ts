@@ -86,3 +86,85 @@ test.describe("commit history view options", () => {
     expect(finalText).not.toMatch(/\(in HookCounter\)/);
   });
 });
+
+test("source option resolves locations in both views and copied output", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto("/");
+  await recordCycle(page, async () => {
+    await clickTimes(page, SCENARIO_BUTTON.UPDATE, 1);
+  });
+  const result = recorderByTestId(page, "commit-history-result");
+  await expect(result).not.toContainText("Source:");
+  await recorderByTestId(page, "view-options-button").click();
+  const toggle = recorderByTestId(page, "view-option-includeSource");
+  await toggle.click();
+  await expect(result).toContainText("Source:");
+  await expect(result).toContainText(/Source: .*UpdateButton\.tsx:4:\d+/);
+  await expect(result).not.toContainText("(unmapped)");
+  await toggle.click();
+  await expect(result).not.toContainText("Source:");
+  await toggle.click();
+  await recorderByTestId(page, "view-options-button").click();
+  await recorderByTestId(page, "paint-view-toggle-paint").click();
+  await expect(recorderByTestId(page, "paint-segment-result")).toContainText("Source:");
+  await recorderByTestId(page, "copy-paint-history-button").click();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain("Source:");
+});
+
+test("source URL option enables source display initially", async ({ page }) => {
+  await page.goto("/?source=true");
+  await recordCycle(page, async () => {
+    await clickTimes(page, SCENARIO_BUTTON.UPDATE, 1);
+  });
+  await expect(recorderByTestId(page, "commit-history-result")).toContainText("Source:");
+});
+
+test("browser API includes resolved sources in full and per-paint text independently of UI options", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(recordButton(page, START_BUTTON_TEXT)).toBeVisible();
+  await page.evaluate(() => {
+    const recorder = (window as unknown as { __REACT_RENDER_RECORDER__: { start(): void } })
+      .__REACT_RENDER_RECORDER__;
+    recorder.start();
+  });
+  await clickTimes(page, SCENARIO_BUTTON.UPDATE, 1);
+  await page.evaluate(() => {
+    const recorder = (window as unknown as { __REACT_RENDER_RECORDER__: { end(): unknown } })
+      .__REACT_RENDER_RECORDER__;
+    recorder.end();
+  });
+
+  const readText = () =>
+    page.evaluate(() => {
+      const recorder = (
+        window as unknown as {
+          __REACT_RENDER_RECORDER__: {
+            getCommitHistoryText(options?: { includeSource: boolean }): string;
+            getCommitHistoryTextByPaint(options?: { includeSource: boolean }): string[];
+          };
+        }
+      ).__REACT_RENDER_RECORDER__;
+      return {
+        full: recorder.getCommitHistoryText({ includeSource: true }),
+        paints: recorder.getCommitHistoryTextByPaint({ includeSource: true }).join("\n"),
+        defaultFull: recorder.getCommitHistoryText(),
+        defaultPaints: recorder.getCommitHistoryTextByPaint().join("\n"),
+      };
+    });
+
+  await expect
+    .poll(async () => (await readText()).full)
+    .toMatch(/Source: .*UpdateButton\.tsx:4:\d+/);
+  const text = await readText();
+  expect(text.paints).toMatch(/Source: .*UpdateButton\.tsx:4:\d+/);
+  expect(text.full).not.toContain("(unmapped)");
+  expect(text.paints).not.toContain("(unmapped)");
+  expect(text.defaultFull).not.toContain("Source:");
+  expect(text.defaultPaints).not.toContain("Source:");
+  await expect(recorderByTestId(page, "commit-history-result")).not.toContainText("Source:");
+});

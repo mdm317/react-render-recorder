@@ -1,18 +1,22 @@
-import type { CommittedFiberChange } from "@react-record/devtools-api";
+import type {
+  CommitHistoryFiberChange,
+  CommitHistoryHookChange,
+  HookSourceResolution,
+} from "../../build-commit-history";
 import { formatDurationMsInline } from "../../../utils/format-duration";
 import { isPlainArray, isPlainObject } from "../../../utils/type-guards";
 import { buildObjectDiffLines } from "./build-object-diff";
-import { type HookChange, formatHookLabel } from "./format-hook-label";
+import { formatHookLabel } from "./format-hook-label";
 import { formatHookValue } from "./value-formatting";
-import type { CommitHistoryFormatOptions } from "@/types";
+import { type CommitHistoryFormatOptions, DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS } from "@/types";
 
-type ComponentWithHookChanges = CommittedFiberChange & {
+type ComponentWithHookChanges = CommitHistoryFiberChange & {
   displayName: string;
-  hooks: NonNullable<CommittedFiberChange["hooks"]>;
+  hooks: NonNullable<CommitHistoryFiberChange["hooks"]>;
 };
 
 function isComponentWithHookChanges(
-  component: CommittedFiberChange,
+  component: CommitHistoryFiberChange,
 ): component is ComponentWithHookChanges {
   return component.displayName != null && component.hooks != null && component.hooks.length > 0;
 }
@@ -27,19 +31,41 @@ function formatHookDiffLines(prev: unknown, next: unknown): string[] {
   return buildObjectDiffLines(prev, next);
 }
 
-function formatHookBulletLines(hook: HookChange, includeHookPath: boolean): string[] {
+function formatSource(source: HookSourceResolution): string {
+  switch (source.status) {
+    case "pending":
+      return "Resolving…";
+    case "unavailable":
+      return "Unavailable";
+    case "unmapped": {
+      const { fileName, lineNumber, columnNumber } = source.location;
+      return `${fileName}:${lineNumber}:${columnNumber} (unmapped)`;
+    }
+    case "resolved": {
+      const { fileName, lineNumber, columnNumber } = source.location;
+      const librarySuffix = source.ignored ? " (library)" : "";
+      return `${fileName}:${lineNumber}:${columnNumber}${librarySuffix}`;
+    }
+  }
+}
+
+function formatHookBulletLines(
+  hook: CommitHistoryHookChange,
+  options: CommitHistoryFormatOptions,
+): string[] {
   // hook display name (useState → "State"), or "State (in HookCounter)" when includeHookPath is on
-  const hookLabel = formatHookLabel(hook, includeHookPath);
+  const hookLabel = formatHookLabel(hook, options.includeHookPath);
   const [summary, ...diffLines] = formatHookDiffLines(hook.prev, hook.next);
-  return [`  - hook[${hook.hookIndex}] ${hookLabel}: ${summary}`, ...diffLines];
+  const lines = [`  - hook[${hook.hookIndex}] ${hookLabel}: ${summary}`, ...diffLines];
+  if (options.includeSource) {
+    lines.push(`    Source: ${formatSource(hook.source)}`);
+  }
+  return lines;
 }
 
 export function buildCommitSectionLines(
-  fiberChanges: CommittedFiberChange[],
-  options: CommitHistoryFormatOptions = {
-    includeRenderDuration: false,
-    includeHookPath: false,
-  },
+  fiberChanges: CommitHistoryFiberChange[],
+  options: CommitHistoryFormatOptions = DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS,
 ): string[] {
   const changedComponents = fiberChanges
     .filter(isComponentWithHookChanges)
@@ -51,7 +77,7 @@ export function buildCommitSectionLines(
       : "";
     return [
       `- ${component.displayName}${durationSuffix}:`,
-      ...component.hooks.flatMap((hook) => formatHookBulletLines(hook, options.includeHookPath)),
+      ...component.hooks.flatMap((hook) => formatHookBulletLines(hook, options)),
     ];
   });
 }

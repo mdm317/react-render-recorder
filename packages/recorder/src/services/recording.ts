@@ -4,6 +4,11 @@ import {
 } from "@react-record/devtools-api";
 
 import type { RecorderStore } from "../store";
+import {
+  collectSourceLocations,
+  inspectProjectRoot,
+  inspectSymbolicateSource,
+} from "../lib/inspect-symbolicate-source";
 
 export function startRecording(store: RecorderStore): void {
   const { fiberRoots, isRecording } = store.getSnapshot();
@@ -18,7 +23,16 @@ export function endRecording(store: RecorderStore) {
   if (!store.getSnapshot().isRecording) {
     return null;
   }
-  const res = endDevtoolsRecording();
-  store.endRecording(res);
-  return res;
+
+  const fiberChanges = endDevtoolsRecording();
+  store.endRecording(fiberChanges);
+
+  const locations = collectSourceLocations(fiberChanges);
+
+  void inspectSymbolicateSource(locations).then(async (results) => {
+    const projectRoot = await inspectProjectRoot(locations, results);
+    store.setSourceInfo(fiberChanges, { sourceResults: results, projectRoot });
+  });
+
+  return fiberChanges;
 }
