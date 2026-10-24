@@ -3,7 +3,7 @@ import {
   startRecording as startDevtoolsRecording,
 } from "@react-record/devtools-api";
 
-import type { RecorderStore } from "../store";
+import type { RecorderStore } from "../store/recorder-store";
 import {
   collectSourceLocations,
   inspectProjectRoot,

@@ -6,7 +6,7 @@ import { exposeRecorderApi } from "./recorder-api";
 import { renderRecorderUI } from "./render-recorder-ui";
 import { readRecordingOption } from "../lib/query-parameters";
 import { startRecording } from "../services/recording";
-import { createRecorderStore } from "../store";
+import { createRecorderStore } from "../store/recorder-store";
 
 export function installReactRenderRecorder(): void {
   const recorderStore = createRecorderStore();

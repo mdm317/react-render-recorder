@@ -8,7 +8,7 @@ import { PaintIcon } from "../common/icons/paint-icon";
 import { StatusIndicator } from "../common/icons/status-indicator";
 import { useCommitHistory } from "../../../hooks/use-commit-history";
 import { readRecordingOption } from "../../../lib/query-parameters";
-import { useCommitHistoryViewStore } from "../../../store";
+import { useCommitHistoryViewStore } from "../../../store/use-commit-history-view-store";
 import { CommitHistoryContent } from "./component/history-view";
 import { PaintCommitHistoryContent } from "./component/paint-view";
 import { ViewOptionsPopover } from "./component/view-options-popover";

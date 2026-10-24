@@ -24,7 +24,8 @@ import {
 import { startReactRenderRecordServer } from "./recorder/server";
 import { createComparisonWindow } from "./windows/compare";
 import { createDevtoolsWindow, getDevtoolsWindow } from "./windows/home";
-import { clearTargetWindow, evalOnTarget, getTargetWindow, openTargetUrl } from "./windows/target";
+import { evalOnTarget } from "./windows/target/eval-on-target";
+import { clearTargetWindow, getTargetWindow, openTargetUrl } from "./windows/target/target-window";
 
 function closeTargetUrl() {
   const win = getTargetWindow();

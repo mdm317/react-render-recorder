@@ -1,7 +1,7 @@
 import { endRecording as endDevtoolsRecording } from "@react-record/devtools-api";
 import { expect, it, vi } from "vitest";
 import { inspectSymbolicateSource, type SourceResults } from "../lib/inspect-symbolicate-source";
-import { createRecorderStore } from "../store";
+import { createRecorderStore } from "../store/recorder-store";
 import { endRecording } from "./recording";
 
 vi.mock("@react-record/devtools-api", () => ({

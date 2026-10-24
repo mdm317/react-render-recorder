@@ -1,7 +1,7 @@
 import type { installHook } from "@react-record/devtools-api";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createRecorderStore } from "../store";
+import { createRecorderStore } from "../store/recorder-store";
 import type { ReactCommitCallback } from "./on-react-commit";
 import type { ReactPaintCallback } from "./on-react-paint";
 
