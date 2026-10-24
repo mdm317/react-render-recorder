@@ -1,11 +1,11 @@
 /** @jsxImportSource preact */
 import { useEffect, useState } from "preact/hooks";
 
-import { PopoverButton } from "../../common/components/popover-button";
-import { ToggleSwitch } from "../../../../ui/toggle-switch";
-import { KeyboardShortcutIcon } from "../../common/icons/keyboard-shortcut-icon";
-import { useRecordingControl } from "../../../../hooks/use-recording-control";
-import { readRecordingOption } from "../../../../lib/query-parameters";
+import { PopoverButton } from "@/app/component/common/components/popover-button";
+import { ToggleSwitch } from "@/ui/toggle-switch";
+import { KeyboardShortcutIcon } from "@/app/component/common/icons/keyboard-shortcut-icon";
+import { useRecordingControl } from "@/hooks/use-recording-control";
+import { readRecordingOption } from "@/lib/query-parameters";
 
 export function KeyboardShortcutToggle() {
   const [isEnabled, setIsEnabled] = useState(() => readRecordingOption().shortcut);

@@ -1,10 +1,10 @@
-import { buildCommitHistoryGroups } from "../lib/build-commit-history";
+import { buildCommitHistoryGroups } from "@/lib/build-commit-history";
 import { useMemo } from "preact/hooks";
 
-import { buildCommitHistoryByPaint } from "../lib/format/build-commit-history-by-paint";
-import { formatCommitHistoryForLLM } from "../lib/format/format-commit-history-for-llm";
+import { buildCommitHistoryByPaint } from "@/lib/format/build-commit-history-by-paint";
+import { formatCommitHistoryForLLM } from "@/lib/format/format-commit-history-for-llm";
 import type { CommitHistoryFormatOptions } from "@/types";
-import { useRecorderStore } from "../store/use-recorder-store";
+import { useRecorderStore } from "@/store/use-recorder-store";
 
 type UseCommitHistoryResult = {
   commitCount: number;

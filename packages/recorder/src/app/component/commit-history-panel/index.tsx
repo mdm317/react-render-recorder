@@ -2,13 +2,13 @@
 import { useState } from "preact/hooks";
 
 import type { CommitHistoryFormatOptions } from "@/types";
-import { Tabs } from "../../../ui/tabs";
-import { HistoryIcon } from "../common/icons/history-icon";
-import { PaintIcon } from "../common/icons/paint-icon";
-import { StatusIndicator } from "../common/icons/status-indicator";
-import { useCommitHistory } from "../../../hooks/use-commit-history";
-import { readRecordingOption } from "../../../lib/query-parameters";
-import { useCommitHistoryViewStore } from "../../../store/use-commit-history-view-store";
+import { Tabs } from "@/ui/tabs";
+import { HistoryIcon } from "@/app/component/common/icons/history-icon";
+import { PaintIcon } from "@/app/component/common/icons/paint-icon";
+import { StatusIndicator } from "@/app/component/common/icons/status-indicator";
+import { useCommitHistory } from "@/hooks/use-commit-history";
+import { readRecordingOption } from "@/lib/query-parameters";
+import { useCommitHistoryViewStore } from "@/store/use-commit-history-view-store";
 import { CommitHistoryContent } from "./component/history-view";
 import { PaintCommitHistoryContent } from "./component/paint-view";
 import { ViewOptionsPopover } from "./component/view-options-popover";

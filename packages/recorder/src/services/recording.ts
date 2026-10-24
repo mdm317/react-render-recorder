@@ -3,12 +3,12 @@ import {
   startRecording as startDevtoolsRecording,
 } from "@react-record/devtools-api";
 
-import type { RecorderStore } from "../store/recorder-store";
+import type { RecorderStore } from "@/store/recorder-store";
 import {
   collectSourceLocations,
   inspectProjectRoot,
   inspectSymbolicateSource,
-} from "../lib/inspect-symbolicate-source";
+} from "@/lib/inspect-symbolicate-source";
 
 export function startRecording(store: RecorderStore): void {
   const { fiberRoots, isRecording } = store.getSnapshot();

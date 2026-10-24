@@ -1,4 +1,4 @@
-import { isPlainArray, isPlainObject } from "../../../utils/type-guards";
+import { isPlainArray, isPlainObject } from "@/utils/type-guards";
 import { formatValueForLLM } from "./value-formatting";
 
 type PathDiff = { path: string; prev: unknown; next: unknown };

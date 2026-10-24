@@ -1,11 +1,11 @@
-import { buildCommitHistoryGroups } from "../lib/build-commit-history";
+import { buildCommitHistoryGroups } from "@/lib/build-commit-history";
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
 import { type CommitHistoryFormatOptions, DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS } from "@/types";
-import { buildCommitHistoryByPaint } from "../lib/format/build-commit-history-by-paint";
-import { formatCommitHistoryForLLM } from "../lib/format/format-commit-history-for-llm";
-import { endRecording, startRecording } from "../services/recording";
-import type { RecorderStore } from "../store/recorder-store";
+import { buildCommitHistoryByPaint } from "@/lib/format/build-commit-history-by-paint";
+import { formatCommitHistoryForLLM } from "@/lib/format/format-commit-history-for-llm";
+import { endRecording, startRecording } from "@/services/recording";
+import type { RecorderStore } from "@/store/recorder-store";
 
 const RECORDER_GLOBAL = "__REACT_RENDER_RECORDER__";
 

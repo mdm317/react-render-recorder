@@ -1,7 +1,7 @@
 import type { CommittedFiberChange, FiberRoot } from "@react-record/devtools-api";
 
-import type { SourceInfo } from "../lib/build-commit-history";
-import type { SourceResults } from "../lib/inspect-symbolicate-source";
+import type { SourceInfo } from "@/lib/build-commit-history";
+import type { SourceResults } from "@/lib/inspect-symbolicate-source";
 
 export type RecorderStoreState = {
   fiberRoots: FiberRoot[];

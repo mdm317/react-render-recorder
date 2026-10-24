@@ -1,7 +1,7 @@
 /** @jsxImportSource preact */
 import { useEffect, useRef, useState } from "preact/hooks";
 
-import { copyToClipboard } from "../../../utils/copy-to-clipboard";
+import { copyToClipboard } from "@/utils/copy-to-clipboard";
 
 type CopyTextButtonProps = {
   label?: string;

@@ -1,8 +1,4 @@
-import {
-  createSafeJsonReplacer,
-  formatElementSummary,
-  isElementLike,
-} from "../../../utils/safe-json";
+import { createSafeJsonReplacer, formatElementSummary, isElementLike } from "@/utils/safe-json";
 
 function isFormattedElementSummaryString(value: unknown): value is string {
   return typeof value === "string" && value.startsWith("[HTMLElement ") && value.endsWith("]");

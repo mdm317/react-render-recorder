@@ -2,7 +2,7 @@
 import { useCallback } from "preact/hooks";
 
 import { RecordIndicator } from "./common/icons/record-indicator";
-import { useRecordingControl } from "../../hooks/use-recording-control";
+import { useRecordingControl } from "@/hooks/use-recording-control";
 
 export function RecordButton() {
   const { isRecording, toggleRecording } = useRecordingControl();

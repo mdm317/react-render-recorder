@@ -1,5 +1,5 @@
 /** @jsxImportSource preact */
-import { CopyTextButton } from "../../common/copy-text-button";
+import { CopyTextButton } from "@/app/component/common/copy-text-button";
 import { HistoryTextCard } from "./history-text-card";
 
 type PaintCommitHistoryContentProps = {

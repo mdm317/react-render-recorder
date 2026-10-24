@@ -1,6 +1,6 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
-import { formatDurationMsInline } from "../../../utils/format-duration";
+import { formatDurationMsInline } from "@/utils/format-duration";
 
 export function buildSummaryLines(fiberChangesByCommit: CommittedFiberChange[][]): string[] {
   return [

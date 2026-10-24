@@ -2,9 +2,9 @@ import type {
   CommitHistoryFiberChange,
   CommitHistoryHookChange,
   HookSourceResolution,
-} from "../../build-commit-history";
-import { formatDurationMsInline } from "../../../utils/format-duration";
-import { isPlainArray, isPlainObject } from "../../../utils/type-guards";
+} from "@/lib/build-commit-history";
+import { formatDurationMsInline } from "@/utils/format-duration";
+import { isPlainArray, isPlainObject } from "@/utils/type-guards";
 import { buildObjectDiffLines } from "./build-object-diff";
 import { formatHookLabel } from "./format-hook-label";
 import { formatHookValue } from "./value-formatting";

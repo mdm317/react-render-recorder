@@ -4,8 +4,8 @@ import {
   RENDER_TIME_QUERY_PARAMETER,
   SHORTCUT_QUERY_PARAMETER,
   SOURCE_QUERY_PARAMETER,
-} from "../const/query-parameters";
-import type { RecorderOptions } from "../types";
+} from "@/const/query-parameters";
+import type { RecorderOptions } from "@/types";
 
 export function readQuery(): URLSearchParams | null {
   if (typeof window === "undefined") return null;
