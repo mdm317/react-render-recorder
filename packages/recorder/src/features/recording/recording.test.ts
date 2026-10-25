@@ -1,6 +1,9 @@
 import { endRecording as endDevtoolsRecording } from "@react-record/devtools-api";
 import { expect, it, vi } from "vitest";
-import { inspectSymbolicateSource, type SourceResults } from "@/lib/inspect-symbolicate-source";
+import {
+  inspectSymbolicateSource,
+  type SourceResults,
+} from "@/features/source/inspect-symbolicate-source";
 import { createRecorderStore } from "./recorder-store";
 import { endRecording } from "./recording";
 
@@ -8,7 +11,7 @@ vi.mock("@react-record/devtools-api", () => ({
   endRecording: vi.fn(),
   startRecording: vi.fn(),
 }));
-vi.mock("@/lib/inspect-symbolicate-source", async (importOriginal) => ({
+vi.mock("@/features/source/inspect-symbolicate-source", async (importOriginal) => ({
   ...(await importOriginal()),
   inspectSymbolicateSource: vi.fn(),
 }));

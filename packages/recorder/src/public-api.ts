@@ -1,12 +1,12 @@
-import { buildCommitHistoryGroups } from "./lib/build-commit-history";
+import { buildCommitHistoryGroups } from "./features/commit-history/build-commit-history";
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
 import {
   type CommitHistoryFormatOptions,
   DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS,
 } from "./features/options/recording-option";
-import { buildCommitHistoryByPaint } from "./lib/format/build-commit-history-by-paint";
-import { formatCommitHistoryForLLM } from "./lib/format/format-commit-history-for-llm";
+import { buildCommitHistoryByPaint } from "./features/commit-history/format/build-commit-history-by-paint";
+import { formatCommitHistoryForLLM } from "./features/commit-history/format/format-commit-history-for-llm";
 import { endRecording, startRecording } from "./features/recording/recording";
 import type { RecorderStore } from "./features/recording/recorder-store";
 

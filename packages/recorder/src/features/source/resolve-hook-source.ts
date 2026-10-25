@@ -1,5 +1,4 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
-import { groupCommitsByPaint } from "./group-commits-by-paint";
 import {
   getHookSourceLocation,
   getKeyFromHookSource,
@@ -18,11 +17,6 @@ export type HookSourceResolution =
   | { status: "unavailable" }
   | { status: "unmapped"; location: DisplayLocation }
   | { status: "resolved"; location: DisplayLocation; ignored: boolean };
-
-export type CommitHistoryHookChange = HookChange & { source: HookSourceResolution };
-export type CommitHistoryFiberChange = Omit<CommittedFiberChange, "hooks"> & {
-  hooks: CommitHistoryHookChange[] | null;
-};
 
 const URL_ORIGIN = /^https?:\/\/[^/?#]+/i;
 // `webpack://<name>/./src/App.jsx?1591` and `webpack:///./src/App.jsx`; the query is webpack's module hash
@@ -50,7 +44,10 @@ function stripBundlerPrefix(fileName: string, projectRoot: string | null): strin
   return fileName.replace(URL_ORIGIN, "");
 }
 
-function prepareSource(hook: HookChange, sourceInfo: SourceInfo | null): HookSourceResolution {
+export function resolveHookSource(
+  hook: HookChange,
+  sourceInfo: SourceInfo | null,
+): HookSourceResolution {
   const source = getHookSourceLocation(hook);
   if (source == null) return { status: "unavailable" };
   if (sourceInfo?.sourceResults == null) return { status: "pending" };
@@ -76,33 +73,4 @@ function prepareSource(hook: HookChange, sourceInfo: SourceInfo | null): HookSou
     },
     ignored: result.ignored,
   };
-}
-
-export function buildCommitHistory(
-  fiberChanges: CommittedFiberChange[][],
-  sourceInfo: SourceInfo | null = null,
-): CommitHistoryFiberChange[][] {
-  return fiberChanges.map((commit) =>
-    commit.map((change) => ({
-      ...change,
-      hooks:
-        change.hooks?.map((hook) => ({
-          ...hook,
-          source: prepareSource(hook, sourceInfo),
-        })) ?? null,
-    })),
-  );
-}
-
-export function buildCommitHistoryGroups({
-  fiberChanges,
-  paintCommitIndices,
-  ...sourceInfo
-}: SourceInfo & {
-  fiberChanges: CommittedFiberChange[][];
-  paintCommitIndices: number[];
-}): CommitHistoryFiberChange[][][] {
-  return groupCommitsByPaint({ fiberChangesByCommit: fiberChanges, paintCommitIndices }).map(
-    (commits) => buildCommitHistory(commits, sourceInfo),
-  );
 }

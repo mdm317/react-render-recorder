@@ -1,8 +1,8 @@
 import type {
   CommitHistoryFiberChange,
   CommitHistoryHookChange,
-  HookSourceResolution,
-} from "@/lib/build-commit-history";
+} from "@/features/commit-history/build-commit-history";
+import type { HookSourceResolution } from "@/features/source/resolve-hook-source";
 import { formatDurationMsInline } from "@/utils/format-duration";
 import { isPlainArray, isPlainObject } from "@/utils/type-guards";
 import { buildObjectDiffLines } from "./build-object-diff";

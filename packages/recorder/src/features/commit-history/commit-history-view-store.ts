@@ -1,3 +1,8 @@
+import { useSyncExternalStore } from "preact/compat";
+import { useMemo } from "preact/hooks";
+
+import { useRecorderStore } from "@/features/recording/recorder-store";
+
 export type CommitHistoryViewState = {
   isOpen: boolean;
 };
@@ -39,3 +44,21 @@ export function createCommitHistoryViewStore(): CommitHistoryViewStore {
 }
 
 export const commitHistoryViewStore = createCommitHistoryViewStore();
+
+export function useCommitHistoryViewStore() {
+  const uiState = useSyncExternalStore(
+    commitHistoryViewStore.subscribe,
+    commitHistoryViewStore.getSnapshot,
+  );
+  const { state: recorderState } = useRecorderStore();
+  const hasHistory = useMemo(
+    () => recorderState.fiberChanges.some((commitChanges) => commitChanges.length > 0),
+    [recorderState.fiberChanges],
+  );
+
+  return {
+    ...uiState,
+    hasCommitHistory: hasHistory,
+    toggle: commitHistoryViewStore.toggle,
+  };
+}

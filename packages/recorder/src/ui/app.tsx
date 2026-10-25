@@ -1,8 +1,8 @@
 /** @jsxImportSource preact */
-import { CommitHistoryPanel } from "@/app/component/commit-history-panel";
+import { CommitHistoryPanel } from "@/features/commit-history/components/commit-history-panel";
 import { RecordButton } from "@/features/recording/components/record-button";
 import { RecordingToolbar } from "@/features/recording/components/recording-toolbar";
-import { CommitHistoryPanelToggleButton } from "@/app/component/commit-history-panel-toggle-button";
+import { CommitHistoryPanelToggleButton } from "@/features/commit-history/components/commit-history-panel-toggle-button";
 
 export function App() {
   return (

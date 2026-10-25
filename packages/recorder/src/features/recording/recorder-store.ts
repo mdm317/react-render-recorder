@@ -1,8 +1,8 @@
 import type { CommittedFiberChange, FiberRoot } from "@react-record/devtools-api";
 import { useSyncExternalStore } from "preact/compat";
 
-import type { SourceInfo } from "@/lib/build-commit-history";
-import type { SourceResults } from "@/lib/inspect-symbolicate-source";
+import type { SourceInfo } from "@/features/source/resolve-hook-source";
+import type { SourceResults } from "@/features/source/inspect-symbolicate-source";
 
 export type RecorderStoreState = {
   fiberRoots: FiberRoot[];

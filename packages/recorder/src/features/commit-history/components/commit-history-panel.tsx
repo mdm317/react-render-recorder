@@ -9,11 +9,11 @@ import { Tabs } from "@/ui/primitives/tabs";
 import { HistoryIcon } from "@/ui/icons/history-icon";
 import { PaintIcon } from "@/ui/icons/paint-icon";
 import { StatusIndicator } from "@/ui/icons/status-indicator";
-import { useCommitHistory } from "@/hooks/use-commit-history";
-import { useCommitHistoryViewStore } from "@/store/use-commit-history-view-store";
-import { CommitHistoryContent } from "./component/history-view";
-import { PaintCommitHistoryContent } from "./component/paint-view";
-import { ViewOptionsPopover } from "./component/view-options-popover";
+import { useCommitHistory } from "@/features/commit-history/use-commit-history";
+import { useCommitHistoryViewStore } from "@/features/commit-history/commit-history-view-store";
+import { CommitHistoryContent } from "./history-view";
+import { PaintCommitHistoryContent } from "./paint-view";
+import { ViewOptionsPopover } from "./view-options-popover";
 
 export function CommitHistoryPanel() {
   const { isOpen } = useCommitHistoryViewStore();

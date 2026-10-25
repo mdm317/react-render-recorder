@@ -1,7 +1,10 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 import { describe, expect, it } from "vitest";
 
-import { buildCommitHistory, type CommitHistoryFiberChange } from "@/lib/build-commit-history";
+import {
+  buildCommitHistory,
+  type CommitHistoryFiberChange,
+} from "@/features/commit-history/build-commit-history";
 
 import { buildCommitSectionLines } from "./build-commit-section";
 

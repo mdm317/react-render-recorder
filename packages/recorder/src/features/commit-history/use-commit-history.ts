@@ -1,8 +1,8 @@
-import { buildCommitHistoryGroups } from "@/lib/build-commit-history";
+import { buildCommitHistoryGroups } from "@/features/commit-history/build-commit-history";
 import { useMemo } from "preact/hooks";
 
-import { buildCommitHistoryByPaint } from "@/lib/format/build-commit-history-by-paint";
-import { formatCommitHistoryForLLM } from "@/lib/format/format-commit-history-for-llm";
+import { buildCommitHistoryByPaint } from "@/features/commit-history/format/build-commit-history-by-paint";
+import { formatCommitHistoryForLLM } from "@/features/commit-history/format/format-commit-history-for-llm";
 import type { CommitHistoryFormatOptions } from "@/features/options/recording-option";
 import { useRecorderStore } from "@/features/recording/recorder-store";
 
