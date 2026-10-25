@@ -1,7 +1,7 @@
 /** @jsxImportSource preact */
-import { KeyboardShortcutToggle } from "./component/keyboard-shortcut-toggle";
+import { KeyboardShortcutToggle } from "./keyboard-shortcut-toggle";
 
-export function RecordingOption() {
+export function RecordingToolbar() {
   return (
     <div className="flex items-center gap-2">
       <KeyboardShortcutToggle />

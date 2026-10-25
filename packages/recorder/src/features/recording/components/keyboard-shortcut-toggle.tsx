@@ -4,7 +4,7 @@ import { useEffect, useState } from "preact/hooks";
 import { PopoverButton } from "@/ui/primitives/popover-button";
 import { ToggleSwitch } from "@/ui/primitives/toggle-switch";
 import { KeyboardShortcutIcon } from "@/ui/icons/keyboard-shortcut-icon";
-import { useRecordingControl } from "@/hooks/use-recording-control";
+import { useRecordingControl } from "@/features/recording/use-recording-control";
 import { readRecordingOption } from "@/features/options/recording-option";
 
 export function KeyboardShortcutToggle() {

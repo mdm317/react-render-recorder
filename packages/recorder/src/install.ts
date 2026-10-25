@@ -5,8 +5,8 @@ import { onReactPaint } from "./instrumentation/on-react-paint";
 import { exposeRecorderApi } from "./public-api";
 import { renderRecorderUI } from "./ui/render-recorder-ui";
 import { readRecordingOption } from "./features/options/recording-option";
-import { startRecording } from "./services/recording";
-import { createRecorderStore } from "./store/recorder-store";
+import { startRecording } from "./features/recording/recording";
+import { createRecorderStore } from "./features/recording/recorder-store";
 
 export function installReactRenderRecorder(): void {
   const recorderStore = createRecorderStore();

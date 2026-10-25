@@ -1,8 +1,8 @@
 /** @jsxImportSource preact */
 import { useCallback } from "preact/hooks";
 
-import { endRecording, startRecording } from "@/services/recording";
-import { useRecorderStore } from "@/store/use-recorder-store";
+import { endRecording, startRecording } from "./recording";
+import { useRecorderStore } from "./recorder-store";
 
 type UseRecordingControlResult = {
   isRecording: boolean;

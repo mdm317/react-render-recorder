@@ -1,4 +1,5 @@
 import type { CommittedFiberChange, FiberRoot } from "@react-record/devtools-api";
+import { useSyncExternalStore } from "preact/compat";
 
 import type { SourceInfo } from "@/lib/build-commit-history";
 import type { SourceResults } from "@/lib/inspect-symbolicate-source";
@@ -143,4 +144,22 @@ export function createRecorderStore(): RecorderStore {
   }
 
   return recorderStoreSingleton;
+}
+
+type UseRecorderStoreResult = {
+  state: RecorderStoreState;
+  store: RecorderStore;
+};
+
+export function useRecorderStore(): UseRecorderStoreResult {
+  const recorderStore = createRecorderStore();
+  const state = useSyncExternalStore<RecorderStoreState>(
+    recorderStore.subscribe,
+    recorderStore.getSnapshot,
+  );
+
+  return {
+    state,
+    store: recorderStore,
+  };
 }

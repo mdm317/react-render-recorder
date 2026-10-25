@@ -7,8 +7,8 @@ import {
 } from "./features/options/recording-option";
 import { buildCommitHistoryByPaint } from "./lib/format/build-commit-history-by-paint";
 import { formatCommitHistoryForLLM } from "./lib/format/format-commit-history-for-llm";
-import { endRecording, startRecording } from "./services/recording";
-import type { RecorderStore } from "./store/recorder-store";
+import { endRecording, startRecording } from "./features/recording/recording";
+import type { RecorderStore } from "./features/recording/recorder-store";
 
 const RECORDER_GLOBAL = "__REACT_RENDER_RECORDER__";
 

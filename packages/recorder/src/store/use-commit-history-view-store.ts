@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "preact/compat";
 import { useMemo } from "preact/hooks";
 
-import { useRecorderStore } from "./use-recorder-store";
+import { useRecorderStore } from "@/features/recording/recorder-store";
 import { commitHistoryViewStore } from "./commit-history-view-store";
 
 export function useCommitHistoryViewStore() {
