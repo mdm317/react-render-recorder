@@ -1,6 +1,6 @@
 /** @jsxImportSource preact */
 import { useCommitHistoryViewStore } from "@/store/use-commit-history-view-store";
-import { HistoryIcon } from "./common/icons/history-icon";
+import { HistoryIcon } from "@/ui/icons/history-icon";
 
 export function CommitHistoryPanelToggleButton() {
   const { hasCommitHistory, isOpen, toggle } = useCommitHistoryViewStore();

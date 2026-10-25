@@ -5,10 +5,10 @@ import {
   type CommitHistoryFormatOptions,
   readRecordingOption,
 } from "@/features/options/recording-option";
-import { Tabs } from "@/ui/tabs";
-import { HistoryIcon } from "@/app/component/common/icons/history-icon";
-import { PaintIcon } from "@/app/component/common/icons/paint-icon";
-import { StatusIndicator } from "@/app/component/common/icons/status-indicator";
+import { Tabs } from "@/ui/primitives/tabs";
+import { HistoryIcon } from "@/ui/icons/history-icon";
+import { PaintIcon } from "@/ui/icons/paint-icon";
+import { StatusIndicator } from "@/ui/icons/status-indicator";
 import { useCommitHistory } from "@/hooks/use-commit-history";
 import { useCommitHistoryViewStore } from "@/store/use-commit-history-view-store";
 import { CommitHistoryContent } from "./component/history-view";

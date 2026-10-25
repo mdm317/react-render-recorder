@@ -3,7 +3,7 @@ import { onCommitFiber } from "@react-record/devtools-api";
 import { onReactCommit } from "./on-react-commit";
 import { onReactPaint } from "./on-react-paint";
 import { exposeRecorderApi } from "./recorder-api";
-import { renderRecorderUI } from "./render-recorder-ui";
+import { renderRecorderUI } from "@/ui/render-recorder-ui";
 import { readRecordingOption } from "@/features/options/recording-option";
 import { startRecording } from "@/services/recording";
 import { createRecorderStore } from "@/store/recorder-store";

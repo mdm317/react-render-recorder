@@ -3,9 +3,9 @@ import type { Dispatch, StateUpdater } from "preact/hooks";
 import { useCallback } from "preact/hooks";
 
 import type { CommitHistoryFormatOptions } from "@/features/options/recording-option";
-import { PopoverButton } from "@/app/component/common/components/popover-button";
-import { ToggleSwitch } from "@/ui/toggle-switch";
-import { SettingsIcon } from "@/app/component/common/icons/settings-icon";
+import { PopoverButton } from "@/ui/primitives/popover-button";
+import { ToggleSwitch } from "@/ui/primitives/toggle-switch";
+import { SettingsIcon } from "@/ui/icons/settings-icon";
 
 type RecorderOptionKey = keyof CommitHistoryFormatOptions;
 

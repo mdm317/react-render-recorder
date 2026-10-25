@@ -1,7 +1,7 @@
 /** @jsxImportSource preact */
 import { useCallback } from "preact/hooks";
 
-import { RecordIndicator } from "./common/icons/record-indicator";
+import { RecordIndicator } from "@/ui/icons/record-indicator";
 import { useRecordingControl } from "@/hooks/use-recording-control";
 
 export function RecordButton() {

@@ -1,7 +1,7 @@
 import { h, render } from "preact";
 
-import { App } from "@/app/app";
-import recorderStyles from "@/app/recorder.css?inline";
+import { App } from "./app";
+import recorderStyles from "./recorder.css?inline";
 
 function attachRecorderStyles(shadowRoot: ShadowRoot): () => void {
   let cleanupStyles: () => void;

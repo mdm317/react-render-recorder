@@ -18,7 +18,7 @@ vi.mock("@react-record/devtools-api", () => ({
   endRecording: vi.fn(() => []),
 }));
 
-vi.mock("./render-recorder-ui", () => ({
+vi.mock("@/ui/render-recorder-ui", () => ({
   renderRecorderUI: vi.fn(),
 }));
 
