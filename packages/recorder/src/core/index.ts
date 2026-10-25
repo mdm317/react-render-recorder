@@ -4,7 +4,7 @@ import { onReactCommit } from "./on-react-commit";
 import { onReactPaint } from "./on-react-paint";
 import { exposeRecorderApi } from "./recorder-api";
 import { renderRecorderUI } from "./render-recorder-ui";
-import { readRecordingOption } from "@/lib/query-parameters";
+import { readRecordingOption } from "@/features/options/recording-option";
 import { startRecording } from "@/services/recording";
 import { createRecorderStore } from "@/store/recorder-store";
 

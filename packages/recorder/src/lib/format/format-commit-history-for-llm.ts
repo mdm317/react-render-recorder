@@ -1,5 +1,5 @@
 import type { CommitHistoryFiberChange } from "@/lib/build-commit-history";
-import type { CommitHistoryFormatOptions } from "@/types";
+import type { CommitHistoryFormatOptions } from "@/features/options/recording-option";
 import { buildSummaryLines } from "./util/build-summary-lines";
 import { buildCommitSectionLines } from "./util/build-commit-section";
 

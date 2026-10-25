@@ -8,7 +8,10 @@ import { isPlainArray, isPlainObject } from "@/utils/type-guards";
 import { buildObjectDiffLines } from "./build-object-diff";
 import { formatHookLabel } from "./format-hook-label";
 import { formatHookValue } from "./value-formatting";
-import { type CommitHistoryFormatOptions, DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS } from "@/types";
+import {
+  type CommitHistoryFormatOptions,
+  DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS,
+} from "@/features/options/recording-option";
 
 type ComponentWithHookChanges = CommitHistoryFiberChange & {
   displayName: string;

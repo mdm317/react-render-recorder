@@ -5,7 +5,7 @@ import { PopoverButton } from "@/app/component/common/components/popover-button"
 import { ToggleSwitch } from "@/ui/toggle-switch";
 import { KeyboardShortcutIcon } from "@/app/component/common/icons/keyboard-shortcut-icon";
 import { useRecordingControl } from "@/hooks/use-recording-control";
-import { readRecordingOption } from "@/lib/query-parameters";
+import { readRecordingOption } from "@/features/options/recording-option";
 
 export function KeyboardShortcutToggle() {
   const [isEnabled, setIsEnabled] = useState(() => readRecordingOption().shortcut);
