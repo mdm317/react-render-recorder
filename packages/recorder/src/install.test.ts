@@ -1,9 +1,9 @@
 import type { installHook } from "@react-record/devtools-api";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createRecorderStore } from "@/store/recorder-store";
-import type { ReactCommitCallback } from "./on-react-commit";
-import type { ReactPaintCallback } from "./on-react-paint";
+import { createRecorderStore } from "./store/recorder-store";
+import type { ReactCommitCallback } from "./instrumentation/on-react-commit";
+import type { ReactPaintCallback } from "./instrumentation/on-react-paint";
 
 const mocks = vi.hoisted(() => ({
   commitCallbacks: [] as ReactCommitCallback[],
@@ -18,18 +18,18 @@ vi.mock("@react-record/devtools-api", () => ({
   endRecording: vi.fn(() => []),
 }));
 
-vi.mock("@/ui/render-recorder-ui", () => ({
+vi.mock("./ui/render-recorder-ui", () => ({
   renderRecorderUI: vi.fn(),
 }));
 
-vi.mock("./on-react-commit", () => ({
+vi.mock("./instrumentation/on-react-commit", () => ({
   onReactCommit: vi.fn((callback: ReactCommitCallback) => {
     mocks.commitCallbacks.push(callback);
     return () => {};
   }),
 }));
 
-vi.mock("./on-react-paint", () => ({
+vi.mock("./instrumentation/on-react-paint", () => ({
   onReactPaint: vi.fn((callback: ReactPaintCallback) => {
     mocks.paintCallbacks.push(callback);
     return () => {};
@@ -48,7 +48,7 @@ describe("installReactRenderRecorder", () => {
   });
 
   it("skips commit collection while recording is off", async () => {
-    const { installReactRenderRecorder } = await import("./index");
+    const { installReactRenderRecorder } = await import("./install");
     const recorderStore = createRecorderStore();
     const recordCommit = vi.spyOn(recorderStore, "recordCommit");
 
@@ -61,7 +61,7 @@ describe("installReactRenderRecorder", () => {
 
   it("starts recording on the first mounted commit when record is enabled in the URL", async () => {
     vi.stubGlobal("window", { location: { search: "?record=true" } });
-    const { installReactRenderRecorder } = await import("./index");
+    const { installReactRenderRecorder } = await import("./install");
     const recorderStore = createRecorderStore();
     const recordCommit = vi.spyOn(recorderStore, "recordCommit");
     const root = createMountedRoot();
@@ -79,7 +79,7 @@ describe("installReactRenderRecorder", () => {
   });
 
   it("stores recorded commits when recording stops", async () => {
-    const { installReactRenderRecorder } = await import("./index");
+    const { installReactRenderRecorder } = await import("./install");
     const recorderStore = createRecorderStore();
     const recordCommit = vi.spyOn(recorderStore, "recordCommit");
 
@@ -95,7 +95,7 @@ describe("installReactRenderRecorder", () => {
   });
 
   it("preserves bailout commits in raw fiberChanges when recording stops", async () => {
-    const { installReactRenderRecorder } = await import("./index");
+    const { installReactRenderRecorder } = await import("./install");
     const recorderStore = createRecorderStore();
     const recordCommit = vi.spyOn(recorderStore, "recordCommit");
 
@@ -110,7 +110,7 @@ describe("installReactRenderRecorder", () => {
   });
 
   it("skips commit collection when the root has no mounted child", async () => {
-    const { installReactRenderRecorder } = await import("./index");
+    const { installReactRenderRecorder } = await import("./install");
     const recorderStore = createRecorderStore();
     const recordCommit = vi.spyOn(recorderStore, "recordCommit");
 
@@ -123,7 +123,7 @@ describe("installReactRenderRecorder", () => {
   });
 
   it("skips paint recording while recording is off", async () => {
-    const { installReactRenderRecorder } = await import("./index");
+    const { installReactRenderRecorder } = await import("./install");
     const recorderStore = createRecorderStore();
     const recordPaint = vi.spyOn(recorderStore, "recordPaint");
 
@@ -134,7 +134,7 @@ describe("installReactRenderRecorder", () => {
   });
 
   it("records paints while recording is on", async () => {
-    const { installReactRenderRecorder } = await import("./index");
+    const { installReactRenderRecorder } = await import("./install");
     const recorderStore = createRecorderStore();
     const recordPaint = vi.spyOn(recorderStore, "recordPaint");
 
@@ -152,7 +152,7 @@ describe("installReactRenderRecorder", () => {
     globalAny.window = stubbedWindow;
 
     try {
-      const { installReactRenderRecorder } = await import("./index");
+      const { installReactRenderRecorder } = await import("./install");
       const recorderStore = createRecorderStore();
 
       installReactRenderRecorder();

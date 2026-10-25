@@ -1,12 +1,12 @@
 import { onCommitFiber } from "@react-record/devtools-api";
 
-import { onReactCommit } from "./on-react-commit";
-import { onReactPaint } from "./on-react-paint";
-import { exposeRecorderApi } from "./recorder-api";
-import { renderRecorderUI } from "@/ui/render-recorder-ui";
-import { readRecordingOption } from "@/features/options/recording-option";
-import { startRecording } from "@/services/recording";
-import { createRecorderStore } from "@/store/recorder-store";
+import { onReactCommit } from "./instrumentation/on-react-commit";
+import { onReactPaint } from "./instrumentation/on-react-paint";
+import { exposeRecorderApi } from "./public-api";
+import { renderRecorderUI } from "./ui/render-recorder-ui";
+import { readRecordingOption } from "./features/options/recording-option";
+import { startRecording } from "./services/recording";
+import { createRecorderStore } from "./store/recorder-store";
 
 export function installReactRenderRecorder(): void {
   const recorderStore = createRecorderStore();
