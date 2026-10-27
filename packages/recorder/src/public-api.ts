@@ -1,12 +1,12 @@
-import { buildCommitHistoryGroups } from "./features/commit-history/build-commit-history";
+import { buildCommitHistoryByPaint } from "./features/commit-history/build-commit-history";
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
 import {
   type CommitHistoryFormatOptions,
   DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS,
 } from "./features/options/recording-option";
-import { buildCommitHistoryByPaint } from "./features/commit-history/format/build-commit-history-by-paint";
-import { formatCommitHistoryForLLM } from "./features/commit-history/format/format-commit-history-for-llm";
+import { buildCommitHistoryLines } from "./features/commit-history/lines/build-commit-history-lines";
+import { printCommitHistory } from "./features/commit-history/print/print-commit-history";
 import { endRecording, startRecording } from "./features/recording/recording";
 import type { RecorderStore } from "./features/recording/recorder-store";
 
@@ -26,20 +26,27 @@ function getPaintCommitIndices(store: RecorderStore): number[] {
   return [...store.getSnapshot().paintCommitIndices];
 }
 
+function getCommitHistoryByPaint(store: RecorderStore) {
+  const { fiberChanges, paintCommitIndices, sourceResults, projectRoot } = store.getSnapshot();
+  return buildCommitHistoryByPaint({
+    fiberChanges,
+    paintCommitIndices,
+    sourceResults,
+    projectRoot,
+  });
+}
+
 function getCommitHistoryText(store: RecorderStore, options: CommitHistoryFormatOptions): string {
-  const fiberChangeGroupsByPaint = buildCommitHistoryGroups(store.getSnapshot());
-  return formatCommitHistoryForLLM(fiberChangeGroupsByPaint.flat(), options);
+  const historyLines = buildCommitHistoryLines(getCommitHistoryByPaint(store).flat());
+  return printCommitHistory(historyLines, options);
 }
 
 function getCommitHistoryTextByPaint(
   store: RecorderStore,
   options: CommitHistoryFormatOptions,
 ): string[] {
-  const fiberChangeGroupsByPaint = buildCommitHistoryGroups(store.getSnapshot());
-  return buildCommitHistoryByPaint({
-    fiberChangesByPaint: fiberChangeGroupsByPaint,
-    ...options,
-  });
+  const historyLinesByPaint = getCommitHistoryByPaint(store).map(buildCommitHistoryLines);
+  return historyLinesByPaint.map((historyLines) => printCommitHistory(historyLines, options));
 }
 
 export function exposeRecorderApi(store: RecorderStore): void {

@@ -29,15 +29,16 @@ export function buildCommitHistory(
   );
 }
 
-export function buildCommitHistoryGroups({
+export function buildCommitHistoryByPaint({
   fiberChanges,
   paintCommitIndices,
-  ...sourceInfo
+  sourceResults,
+  projectRoot,
 }: SourceInfo & {
   fiberChanges: CommittedFiberChange[][];
   paintCommitIndices: number[];
 }): CommitHistoryFiberChange[][][] {
   return groupCommitsByPaint({ fiberChangesByCommit: fiberChanges, paintCommitIndices }).map(
-    (commits) => buildCommitHistory(commits, sourceInfo),
+    (commits) => buildCommitHistory(commits, { sourceResults, projectRoot }),
   );
 }

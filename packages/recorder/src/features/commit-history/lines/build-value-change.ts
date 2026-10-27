@@ -1,7 +1,9 @@
 import { isPlainArray, isPlainObject } from "@/utils/type-guards";
-import { formatValueForLLM } from "./value-formatting";
 
-type PathDiff = { path: string; prev: unknown; next: unknown };
+export type FieldDiff = { path: string; prev: unknown; next: unknown };
+// diffs is null unless prev and next are both plain objects or both arrays;
+// empty diffs means prev and next are structurally equal
+export type ValueChange = { prev: unknown; next: unknown; diffs: FieldDiff[] | null };
 
 function joinPath(base: string, segment: string): string {
   if (base === "") return segment;
@@ -9,7 +11,7 @@ function joinPath(base: string, segment: string): string {
   return `${base}.${segment}`;
 }
 
-function collectPathDiffs(prev: unknown, next: unknown, base: string, out: PathDiff[]): void {
+function collectPathDiffs(prev: unknown, next: unknown, base: string, out: FieldDiff[]): void {
   if (Object.is(prev, next)) return;
 
   const prevIsArray = isPlainArray(prev);
@@ -49,21 +51,11 @@ function collectPathDiffs(prev: unknown, next: unknown, base: string, out: PathD
   out.push({ path: base, prev, next });
 }
 
-function formatDiffSide(value: unknown): string {
-  if (value === undefined) return "undefined";
-  return formatValueForLLM(value);
-}
-
-export function buildObjectDiffLines(prev: unknown, next: unknown): string[] {
-  const diffs: PathDiff[] = [];
+export function buildValueChange(prev: unknown, next: unknown): ValueChange {
+  const bothObjects = isPlainObject(prev) && isPlainObject(next);
+  const bothArrays = isPlainArray(prev) && isPlainArray(next);
+  if (!bothObjects && !bothArrays) return { prev, next, diffs: null };
+  const diffs: FieldDiff[] = [];
   collectPathDiffs(prev, next, "", diffs);
-
-  if (diffs.length === 0) return ["(equal)"];
-
-  return [
-    "changed fields:",
-    ...diffs.map(
-      (diff) => `      ${diff.path}: ${formatDiffSide(diff.prev)} → ${formatDiffSide(diff.next)}`,
-    ),
-  ];
+  return { prev, next, diffs };
 }

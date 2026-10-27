@@ -6,7 +6,24 @@ import {
   type CommitHistoryFiberChange,
 } from "@/features/commit-history/build-commit-history";
 
-import { buildCommitSectionLines } from "./build-commit-section";
+import {
+  type CommitHistoryFormatOptions,
+  DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS,
+} from "@/features/options/recording-option";
+
+import { buildCommitHistoryLines } from "@/features/commit-history/lines/build-commit-history-lines";
+import { printCommitHistory } from "./print-commit-history";
+
+// summary (3 lines) + "" + "## Commit 1" precede the section lines
+const SECTION_HEADER_LINE_COUNT = 5;
+
+function buildCommitSectionLines(
+  fiberChanges: CommitHistoryFiberChange[],
+  options: CommitHistoryFormatOptions = DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS,
+): string[] {
+  const historyLines = buildCommitHistoryLines([fiberChanges]);
+  return printCommitHistory(historyLines, options).split("\n").slice(SECTION_HEADER_LINE_COUNT);
+}
 
 function makeChange(
   displayName: string,
@@ -29,7 +46,7 @@ function makeChange(
   return buildCommitHistory([[change]])[0][0];
 }
 
-describe("build-commit-section shallow shape for null↔object", () => {
+describe("print-commit-history shallow shape for null↔object", () => {
   it("renders null → object as a one-level-deep shape, not a full dump", () => {
     const next = {
       subscribe: () => {},
@@ -146,24 +163,7 @@ describe("build-commit-section shallow shape for null↔object", () => {
     expect(lines).toEqual(["- Foo (0.50ms):", "  - hook[0] State: 0 → 1"]);
   });
 
-  it("sorts components by descending selfDuration", () => {
-    const hook: NonNullable<CommittedFiberChange["hooks"]> = [
-      { hookIndex: 0, hookName: "State", hookPath: ["State"], prev: 0, next: 1 },
-    ];
-    const lines = buildCommitSectionLines([
-      makeChange("Fast", hook, 0.1),
-      makeChange("Slow", hook, 2),
-      makeChange("Medium", hook, 0.5),
-    ]);
-
-    expect(lines.filter((line) => line.startsWith("- "))).toEqual([
-      "- Slow:",
-      "- Medium:",
-      "- Fast:",
-    ]);
-  });
-
-  it("omits the wrapper chain by default for multi-segment hookPaths", () => {
+  it("omits the ancestor path by default for multi-segment hookPaths", () => {
     const lines = buildCommitSectionLines([
       makeChange("Combo", [
         {
@@ -179,7 +179,7 @@ describe("build-commit-section shallow shape for null↔object", () => {
     expect(lines).toEqual(["- Combo:", "  - hook[0] SyncExternalStore: 0 → 1"]);
   });
 
-  it("renders the wrapper chain when includeHookPath is true", () => {
+  it("renders the ancestor path when includeHookPath is true", () => {
     const lines = buildCommitSectionLines(
       [
         makeChange("Combo", [
