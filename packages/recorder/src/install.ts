@@ -1,0 +1,43 @@
+import { onCommitFiber } from "@react-record/devtools-api";
+
+import { onReactCommit } from "./instrumentation/on-react-commit";
+import { onReactPaint } from "./instrumentation/on-react-paint";
+import { exposeRecorderApi } from "./public-api";
+import { renderRecorderUI } from "./ui/render-recorder-ui";
+import { readRecordingOption } from "./features/options/recording-option";
+import { startRecording } from "./features/recording/recording";
+import { createRecorderStore } from "./features/recording/recorder-store";
+
+export function installReactRenderRecorder(): void {
+  const recorderStore = createRecorderStore();
+  let autoStartPending = readRecordingOption().record;
+
+  exposeRecorderApi(recorderStore);
+  renderRecorderUI();
+  onReactCommit((hook, rendererID, root, _priorityLevel) => {
+    recorderStore.setFiberRoot(root);
+
+    if (root.current?.child == null) {
+      return;
+    }
+
+    if (autoStartPending) {
+      autoStartPending = false;
+      startRecording(recorderStore);
+    }
+
+    if (!recorderStore.getSnapshot().isRecording) {
+      return;
+    }
+
+    onCommitFiber(root, hook?.renderers.get(rendererID)?.currentDispatcherRef);
+    recorderStore.recordCommit();
+  });
+  onReactPaint(() => {
+    if (!recorderStore.getSnapshot().isRecording) {
+      return;
+    }
+
+    recorderStore.recordPaint();
+  });
+}

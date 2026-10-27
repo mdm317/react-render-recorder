@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pnpm format:check && pnpm lint && pnpm test:e2e || { echo 'Pre-commit checks failed (oxfmt / oxlint / e2e). Fix the errors above before committing.' >&2; exit 2; }",
+            "command": "jq -r '.tool_input.command' | grep -qE '(^|[;&|[:space:]])git commit' || exit 0; cd \"$CLAUDE_PROJECT_DIR\" && { pnpm format:check && pnpm lint && pnpm test:e2e; } 1>&2 || { echo 'Pre-commit checks failed (oxfmt / oxlint / e2e). Fix the errors above before committing.' >&2; exit 2; }",
             "if": "Bash(git commit*)",
             "timeout": 600,
             "statusMessage": "Running oxfmt + oxlint + e2e before commit..."

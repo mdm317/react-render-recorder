@@ -1,3 +1,3 @@
-import { installReactRenderRecorder } from "./core";
+import { installReactRenderRecorder } from "./install";
 
 installReactRenderRecorder();
