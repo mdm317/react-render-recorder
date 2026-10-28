@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/mdm317/react-render-recorder/compare/v0.2.0...v0.2.1) (2026-10-28)
+
+
+### Bug Fixes
+
+* **recorder:** count every render in the summary regardless of view options ([0f57e71](https://github.com/mdm317/react-render-recorder/commit/0f57e710a4242b5c913921c236529564e8128e00))
+
 ## [0.2.0](https://github.com/mdm317/react-render-recorder/compare/v0.1.6...v0.2.0) (2026-10-28)
 
 
