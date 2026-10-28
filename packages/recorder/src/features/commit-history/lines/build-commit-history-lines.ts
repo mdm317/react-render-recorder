@@ -13,10 +13,12 @@ export type FormatOptionKey = keyof CommitHistoryFormatOptions;
 export type OptionGated<K extends FormatOptionKey> = { option: K; value: string };
 
 export type CommitHistoryLines = { summary: HistorySummary; lines: HistoryLine[] };
-// totalDurationText sums every fiber, not just the selected components
+// totalDurationText sums every fiber, not just the hook-changed components
 export type HistorySummary = {
   commitCount: number;
+  // components with a hook change / every component; the printer picks by includeAllRenders
   rerenderedComponentCount: number;
+  allRenderedComponentCount: number;
   totalDurationText: string;
 };
 
@@ -25,10 +27,13 @@ export type HistorySummary = {
 // Components within a commit are sorted by descending selfDuration.
 export type HistoryLine =
   | { kind: "commit"; commitNumber: number }
+  // printed only while includeAllRenders is off
   | { kind: "no-hook-changes" }
   | {
       kind: "component";
       displayName: string;
+      // false: no hook change, so the component is printed only with includeAllRenders
+      hookChanged: boolean;
       durationText: OptionGated<"includeRenderDuration">;
     }
   | {
@@ -39,6 +44,8 @@ export type HistoryLine =
       ancestorPathText: OptionGated<"includeHookPath"> | null;
       changeSummary: HookChangeSummary;
     }
+  // printed under its component in DevTools' "Why did this render?" order, only with includeAllRenders
+  | { kind: "render-reason"; reason: RenderReason }
   // follows a hook line whose changeSummary is "changed-fields"
   | { kind: "field"; path: string; prev: string; next: string }
   | { kind: "source"; sourceText: OptionGated<"includeSource"> };
@@ -48,16 +55,20 @@ export type HookChangeSummary =
   | { kind: "changed-fields" }
   | { kind: "equal" };
 
-type SelectedFiberChange = CommitHistoryFiberChange & {
-  displayName: string;
-  hooks: CommitHistoryHookChange[];
-};
+// mirrors react-devtools-shared Profiler/WhatChanged.js
+export type RenderReason =
+  | { kind: "first-mount" }
+  // keys: null when React only reports that some context changed
+  | { kind: "context-changed"; keys: string[] | null }
+  // hookCount: the hook lines that follow; 0 prints no ":", 1 prints "Hook" singular
+  | { kind: "hooks-changed"; hookCount: number }
+  | { kind: "props-changed"; keys: string[] }
+  | { kind: "state-changed"; keys: string[] }
+  | { kind: "parent-rendered" };
 
 const ANCESTOR_HOOK_PATTERN = /^(.+?)\("(.+)"\)$/;
 
-function isSelectedChange(change: CommitHistoryFiberChange): change is SelectedFiberChange {
-  return change.displayName != null && change.hooks != null && change.hooks.length > 0;
-}
+const ANONYMOUS_DISPLAY_NAME = "Anonymous";
 
 function splitHookPath(hook: CommitHistoryHookChange): {
   hookName: string;
@@ -113,10 +124,13 @@ function buildChangeSummary({ prev, next, diffs }: ValueChange): HookChangeSumma
   return diffs.length === 0 ? { kind: "equal" } : { kind: "changed-fields" };
 }
 
-function buildComponentLine({ displayName, selfDuration }: SelectedFiberChange): HistoryLine {
+// nameless components print as "Anonymous" like DevTools
+function buildComponentLine(component: CommitHistoryFiberChange): HistoryLine {
+  const { displayName, selfDuration } = component;
   return {
     kind: "component",
-    displayName,
+    displayName: displayName ?? ANONYMOUS_DISPLAY_NAME,
+    hookChanged: component.didHooksChange,
     durationText: { option: "includeRenderDuration", value: formatDurationMsInline(selfDuration) },
   };
 }
@@ -147,20 +161,53 @@ function buildSourceLine(source: HookSourceResolution): HistoryLine {
   };
 }
 
+function buildRenderReasonLine(reason: RenderReason): HistoryLine {
+  return { kind: "render-reason", reason };
+}
+
+// the lines under a component line: render reasons in WhatChanged.js order
+// (context → hooks → props → state, falling back to the parent), hook lines under the hooks reason
+function buildComponentChangeLines(component: CommitHistoryFiberChange): HistoryLine[] {
+  if (component.isFirstMount) return [buildRenderReasonLine({ kind: "first-mount" })];
+
+  const lines: HistoryLine[] = [];
+  const { context } = component;
+  if (context === true || (Array.isArray(context) && context.length > 0)) {
+    const keys = context === true ? null : context;
+    lines.push(buildRenderReasonLine({ kind: "context-changed", keys }));
+  }
+  if (component.didHooksChange) {
+    const hooks = component.hooks ?? [];
+    lines.push(buildRenderReasonLine({ kind: "hooks-changed", hookCount: hooks.length }));
+    for (const hook of hooks) {
+      lines.push(...buildHookChangedLines(hook), buildSourceLine(hook.source));
+    }
+  }
+  if (component.props != null && component.props.length > 0) {
+    lines.push(buildRenderReasonLine({ kind: "props-changed", keys: component.props }));
+  }
+  if (component.state != null && component.state.length > 0) {
+    lines.push(buildRenderReasonLine({ kind: "state-changed", keys: component.state }));
+  }
+  if (lines.length === 0) lines.push(buildRenderReasonLine({ kind: "parent-rendered" }));
+  return lines;
+}
+
 function buildHistorySummary(fiberChangesByCommit: CommitHistoryFiberChange[][]): HistorySummary {
   let totalDurationMs: number | null = null;
   let rerenderedComponentCount = 0;
+  let allRenderedComponentCount = 0;
   for (const commit of fiberChangesByCommit) {
+    rerenderedComponentCount += commit.filter((change) => change.didHooksChange).length;
+    allRenderedComponentCount += commit.length;
     for (const change of commit) {
-      if (isSelectedChange(change)) {
-        rerenderedComponentCount++;
-      }
       totalDurationMs = (totalDurationMs ?? 0) + change.selfDuration;
     }
   }
   return {
     commitCount: fiberChangesByCommit.length,
     rerenderedComponentCount,
+    allRenderedComponentCount,
     totalDurationText: formatDurationMsInline(totalDurationMs),
   };
 }
@@ -172,16 +219,13 @@ export function buildCommitHistoryLines(
   const lines: HistoryLine[] = [];
   for (const [index, fiberChanges] of fiberChangesByCommit.entries()) {
     lines.push({ kind: "commit", commitNumber: index + 1 });
-    const components = fiberChanges
-      .filter(isSelectedChange)
-      .sort((a, b) => b.selfDuration - a.selfDuration);
-    if (components.length === 0) lines.push({ kind: "no-hook-changes" });
+    const components = [...fiberChanges].sort((a, b) => b.selfDuration - a.selfDuration);
+    if (!components.some((change) => change.didHooksChange)) {
+      lines.push({ kind: "no-hook-changes" });
+    }
 
     for (const component of components) {
-      lines.push(buildComponentLine(component));
-      for (const hook of component.hooks) {
-        lines.push(...buildHookChangedLines(hook), buildSourceLine(hook.source));
-      }
+      lines.push(buildComponentLine(component), ...buildComponentChangeLines(component));
     }
   }
   return { summary: buildHistorySummary(fiberChangesByCommit), lines };

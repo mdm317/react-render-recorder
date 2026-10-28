@@ -18,6 +18,7 @@ const OPTION_DEFS: readonly OptionDef[] = [
   { key: "includeRenderDuration", label: "Show render time" },
   { key: "includeHookPath", label: "Show hook path" },
   { key: "includeSource", label: "Show source" },
+  { key: "includeAllRenders", label: "Show all renders" },
 ];
 
 type ViewOptionsPopoverProps = {

@@ -85,6 +85,31 @@ test.describe("commit history view options", () => {
     const finalText = (await result.textContent()) ?? "";
     expect(finalText).not.toMatch(/\(in HookCounter\)/);
   });
+
+  test("Show all renders toggle lists parent-rendered components with their reason", async ({
+    page,
+  }) => {
+    await recordCycle(page, async () => {
+      await clickTimes(page, SCENARIO_BUTTON.RENDER_BY_PARENT, 1);
+    });
+
+    const optionsButton = recorderByTestId(page, "view-options-button");
+    const allRendersToggle = recorderByTestId(page, "view-option-includeAllRenders");
+    const result = recorderByTestId(page, "commit-history-result");
+
+    await expect(result).toContainText("1 commits, 1 components rerendered");
+    await expect(result).not.toContainText("StaticLeafA");
+
+    await optionsButton.click();
+    await allRendersToggle.click();
+    await expect(result).toContainText("1 commits, 4 components rerendered");
+    await expect(result).toContainText("- RenderByParentButton: • Hook changed:");
+    await expect(result).toContainText("- StaticLeafA: The parent component rendered.");
+
+    await allRendersToggle.click();
+    await expect(result).toContainText("1 commits, 1 components rerendered");
+    await expect(result).not.toContainText("StaticLeafA");
+  });
 });
 
 test("source option resolves locations in both views and copied output", async ({

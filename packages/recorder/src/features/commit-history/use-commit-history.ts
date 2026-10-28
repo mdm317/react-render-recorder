@@ -17,6 +17,7 @@ export function useCommitHistory({
   includeRenderDuration,
   includeHookPath,
   includeSource,
+  includeAllRenders,
 }: CommitHistoryFormatOptions): UseCommitHistoryResult {
   const {
     state: { fiberChanges, paintCommitIndices, sourceResults, projectRoot },
@@ -34,7 +35,7 @@ export function useCommitHistory({
   }, [fiberChanges, paintCommitIndices, sourceResults, projectRoot]);
 
   return useMemo(() => {
-    const options = { includeRenderDuration, includeHookPath, includeSource };
+    const options = { includeRenderDuration, includeHookPath, includeSource, includeAllRenders };
     return {
       commitCount: historyLines.summary.commitCount,
       commitHistoryText: printCommitHistory(historyLines, options),
@@ -42,5 +43,12 @@ export function useCommitHistory({
         printCommitHistory(paintHistoryLines, options),
       ),
     };
-  }, [historyLines, historyLinesByPaint, includeRenderDuration, includeHookPath, includeSource]);
+  }, [
+    historyLines,
+    historyLinesByPaint,
+    includeRenderDuration,
+    includeHookPath,
+    includeSource,
+    includeAllRenders,
+  ]);
 }

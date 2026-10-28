@@ -12,11 +12,12 @@ function makeChange(
   displayName: string | null,
   hooks: CommittedFiberChange["hooks"],
   selfDuration = 0,
+  overrides: Partial<CommittedFiberChange> = {},
 ): CommitHistoryFiberChange {
   const change: CommittedFiberChange = {
     actualDuration: null,
     context: null,
-    didHooksChange: true,
+    didHooksChange: hooks != null && hooks.length > 0,
     displayName,
     fiber: {} as never,
     hooks,
@@ -25,6 +26,7 @@ function makeChange(
     props: null,
     selfDuration,
     state: null,
+    ...overrides,
   };
   return resolveHookSources([[change]])[0][0];
 }
@@ -37,8 +39,18 @@ function componentNames(lines: HistoryLine[]): string[] {
   return lines.flatMap((line) => (line.kind === "component" ? [line.displayName] : []));
 }
 
+function hookChangedNames(lines: HistoryLine[]): string[] {
+  return lines.flatMap((line) =>
+    line.kind === "component" && line.hookChanged ? [line.displayName] : [],
+  );
+}
+
+function renderReasons(lines: HistoryLine[]): string[] {
+  return lines.flatMap((line) => (line.kind === "render-reason" ? [line.reason.kind] : []));
+}
+
 describe("buildCommitHistoryLines", () => {
-  it("selects only named components with at least one hook change", () => {
+  it("emits every component, flagging those with at least one hook change", () => {
     const historyLines = buildCommitHistoryLines([
       [
         makeChange("Kept", STATE_HOOK),
@@ -48,17 +60,27 @@ describe("buildCommitHistoryLines", () => {
       ],
     ]);
 
-    expect(componentNames(historyLines.lines)).toEqual(["Kept"]);
+    expect(componentNames(historyLines.lines)).toEqual([
+      "Kept",
+      "EmptyHooks",
+      "NullHooks",
+      "Anonymous",
+    ]);
+    expect(hookChangedNames(historyLines.lines)).toEqual(["Kept", "Anonymous"]);
   });
 
-  it("counts rerendered components by the same selection as the listed components", () => {
+  it("counts hook-changed and all components separately", () => {
     const historyLines = buildCommitHistoryLines([
       [makeChange("A", STATE_HOOK), makeChange("EmptyHooks", [])],
       [makeChange(null, STATE_HOOK), makeChange("NullHooks", null)],
       [makeChange("B", STATE_HOOK)],
     ]);
 
-    expect(historyLines.summary).toMatchObject({ commitCount: 3, rerenderedComponentCount: 2 });
+    expect(historyLines.summary).toMatchObject({
+      commitCount: 3,
+      rerenderedComponentCount: 3,
+      allRenderedComponentCount: 5,
+    });
   });
 
   it("sorts components by descending selfDuration", () => {
@@ -84,18 +106,24 @@ describe("buildCommitHistoryLines", () => {
 
   it("returns a placeholder total duration for empty input", () => {
     expect(buildCommitHistoryLines([])).toEqual({
-      summary: { commitCount: 0, rerenderedComponentCount: 0, totalDurationText: "—" },
+      summary: {
+        commitCount: 0,
+        rerenderedComponentCount: 0,
+        allRenderedComponentCount: 0,
+        totalDurationText: "—",
+      },
       lines: [],
     });
   });
 
-  it("emits a no-hook-changes line for commits without selected components", () => {
+  it("emits a no-hook-changes line for commits without hook-changed components", () => {
     const historyLines = buildCommitHistoryLines([[makeChange("NullHooks", null)]]);
 
-    expect(historyLines.lines).toEqual([
+    expect(historyLines.lines.slice(0, 2)).toEqual([
       { kind: "commit", commitNumber: 1 },
       { kind: "no-hook-changes" },
     ]);
+    expect(componentNames(historyLines.lines)).toEqual(["NullHooks"]);
   });
 
   it("numbers commits from 1", () => {
@@ -126,8 +154,10 @@ describe("buildCommitHistoryLines", () => {
       {
         kind: "component",
         displayName: "Foo",
+        hookChanged: true,
         durationText: { option: "includeRenderDuration", value: "0.50ms" },
       },
+      { kind: "render-reason", reason: { kind: "hooks-changed", hookCount: 1 } },
       {
         kind: "hook",
         hookIndex: 0,
@@ -189,5 +219,46 @@ describe("buildCommitHistoryLines", () => {
       { hookName: "State", ancestorPathText: { option: "includeHookPath", value: "A > B" } },
       { hookName: "Ref", ancestorPathText: null },
     ]);
+  });
+
+  it("orders render reasons context → hooks → props → state, with hook lines under hooks", () => {
+    const historyLines = buildCommitHistoryLines([
+      [makeChange("Foo", STATE_HOOK, 0, { context: true, props: ["a"], state: ["b"] })],
+    ]);
+
+    expect(historyLines.lines.slice(2).map((line) => line.kind)).toEqual([
+      "render-reason",
+      "render-reason",
+      "hook",
+      "source",
+      "render-reason",
+      "render-reason",
+    ]);
+    expect(renderReasons(historyLines.lines)).toEqual([
+      "context-changed",
+      "hooks-changed",
+      "props-changed",
+      "state-changed",
+    ]);
+  });
+
+  it.each<[string, Partial<CommittedFiberChange>]>([
+    ["first-mount", { isFirstMount: true, props: ["a"] }],
+    ["parent-rendered", { props: [], context: false }],
+  ])("emits only %s when applicable", (expected, overrides) => {
+    const historyLines = buildCommitHistoryLines([[makeChange("Foo", null, 0, overrides)]]);
+
+    expect(renderReasons(historyLines.lines)).toEqual([expected]);
+  });
+
+  it("marks a hooks reason without resolved hook lines", () => {
+    const historyLines = buildCommitHistoryLines([
+      [makeChange("Foo", [], 0, { didHooksChange: true })],
+    ]);
+
+    expect(historyLines.lines).toContainEqual({
+      kind: "render-reason",
+      reason: { kind: "hooks-changed", hookCount: 0 },
+    });
   });
 });

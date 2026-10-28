@@ -29,11 +29,12 @@ function makeChange(
   displayName: string,
   hooks: NonNullable<CommittedFiberChange["hooks"]>,
   selfDuration = 0,
+  overrides: Partial<CommittedFiberChange> = {},
 ): CommitHistoryFiberChange {
   const change: CommittedFiberChange = {
     actualDuration: null,
     context: null,
-    didHooksChange: true,
+    didHooksChange: hooks.length > 0,
     displayName,
     fiber: {} as never,
     hooks,
@@ -42,6 +43,7 @@ function makeChange(
     props: null,
     selfDuration,
     state: null,
+    ...overrides,
   };
   return resolveHookSources([[change]])[0][0];
 }
@@ -157,7 +159,7 @@ describe("print-commit-history shallow shape for null↔object", () => {
           0.5,
         ),
       ],
-      { includeRenderDuration: true, includeHookPath: false, includeSource: false },
+      { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, includeRenderDuration: true },
     );
 
     expect(lines).toEqual(["- Foo (0.50ms):", "  - hook[0] State: 0 → 1"]);
@@ -192,7 +194,7 @@ describe("print-commit-history shallow shape for null↔object", () => {
           },
         ]),
       ],
-      { includeRenderDuration: false, includeHookPath: true, includeSource: false },
+      { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, includeHookPath: true },
     );
 
     expect(lines).toEqual([
@@ -241,7 +243,7 @@ describe("hook source formatting", () => {
       { hookIndex: 0, hookName: "State", prev: 0, next: 1, hookSource: source },
     ]),
   ];
-  const options = { includeRenderDuration: false, includeHookPath: false, includeSource: true };
+  const options = { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, includeSource: true };
   const key = `${source.fileName}:${source.lineNumber}:${source.columnNumber}`;
 
   it("shows resolved sources beneath hooks only when enabled", () => {
@@ -260,11 +262,7 @@ describe("hook source formatting", () => {
     expect(
       buildCommitSectionLines(
         resolveHookSources([changes], { sourceResults: results, projectRoot: null })[0],
-        {
-          includeRenderDuration: false,
-          includeHookPath: false,
-          includeSource: false,
-        },
+        DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS,
       ),
     ).toHaveLength(2);
   });
@@ -373,5 +371,109 @@ describe("hook source formatting", () => {
         options,
       ),
     ).toContain("    Source: webpack-internal:///./src/Counter.tsx:48:9 (unmapped)");
+  });
+});
+
+describe("print-commit-history with includeAllRenders", () => {
+  const options = { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, includeAllRenders: true };
+
+  it("prints DevTools' Why did this render? reasons for every component", () => {
+    const lines = buildCommitSectionLines(
+      [
+        makeChange("Parent", [{ hookIndex: 0, hookName: "State", prev: 0, next: 1 }], 4, {
+          props: ["value", "onClick"],
+        }),
+        makeChange("Leaf", [], 3),
+        makeChange("Mounted", [], 2, { isFirstMount: true }),
+        makeChange("Consumer", [], 1, { context: true }),
+        makeChange("ClassComp", [], 0, { state: ["count"] }),
+      ],
+      options,
+    );
+
+    expect(lines).toEqual([
+      "- Parent:",
+      "  • Hook changed:",
+      "    - hook[0] State: 0 → 1",
+      "  • Props changed: (value, onClick)",
+      "- Leaf:",
+      "  The parent component rendered.",
+      "- Mounted:",
+      "  This is the first time the component rendered.",
+      "- Consumer:",
+      "  • Context changed",
+      "- ClassComp:",
+      "  • State changed: (count)",
+    ]);
+  });
+
+  it("pluralises the hooks reason and lists context keys like DevTools", () => {
+    const lines = buildCommitSectionLines(
+      [
+        makeChange(
+          "Foo",
+          [
+            { hookIndex: 0, hookName: "State", prev: 0, next: 1 },
+            { hookIndex: 1, hookName: "State", prev: "a", next: "b" },
+          ],
+          0,
+          { context: ["theme", "locale"] },
+        ),
+      ],
+      options,
+    );
+
+    expect(lines.slice(0, 3)).toEqual([
+      "- Foo:",
+      "  • Context changed: (theme, locale)",
+      "  • Hooks changed:",
+    ]);
+  });
+
+  it("hides hook-less components and reasons while off, keeping today's output", () => {
+    const changes = [
+      makeChange("Parent", [{ hookIndex: 0, hookName: "State", prev: 0, next: 1 }], 1, {
+        props: ["value"],
+      }),
+      makeChange("Leaf", [], 0),
+    ];
+
+    expect(buildCommitSectionLines(changes)).toEqual(["- Parent:", "  - hook[0] State: 0 → 1"]);
+    expect(buildCommitSectionLines([makeChange("Leaf", [], 0)])).toEqual(["(no hook changes)"]);
+    expect(buildCommitSectionLines([makeChange("Leaf", [], 0)], options)).toEqual([
+      "- Leaf:",
+      "  The parent component rendered.",
+    ]);
+  });
+
+  it("counts the components it prints in the summary", () => {
+    const historyLines = buildCommitHistoryLines([
+      [
+        makeChange("Parent", [{ hookIndex: 0, hookName: "State", prev: 0, next: 1 }]),
+        makeChange("Leaf", []),
+      ],
+    ]);
+    const countLine = (formatOptions: CommitHistoryFormatOptions) =>
+      printCommitHistory(historyLines, formatOptions).split("\n")[1];
+
+    expect(countLine(DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS)).toBe(
+      "1 commits, 1 components rerendered",
+    );
+    expect(countLine(options)).toBe("1 commits, 2 components rerendered");
+  });
+
+  it("indents field and source lines under the hooks reason", () => {
+    const lines = buildCommitSectionLines(
+      [makeChange("Foo", [{ hookIndex: 0, hookName: "State", prev: { x: 0 }, next: { x: 1 } }])],
+      { ...options, includeSource: true },
+    );
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  • Hook changed:",
+      "    - hook[0] State: changed fields:",
+      "        x: 0 → 1",
+      "      Source: Unavailable",
+    ]);
   });
 });
