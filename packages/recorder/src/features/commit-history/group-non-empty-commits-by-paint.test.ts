@@ -1,15 +1,15 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 import { describe, expect, it } from "vitest";
 
-import { groupCommitsByPaint } from "./group-commits-by-paint";
+import { groupNonEmptyCommitsByPaint } from "./group-non-empty-commits-by-paint";
 
 const changeA = { displayName: "A" } as CommittedFiberChange;
 const changeB = { displayName: "B" } as CommittedFiberChange;
 const changeC = { displayName: "C" } as CommittedFiberChange;
 
-describe("groupCommitsByPaint", () => {
+describe("groupNonEmptyCommitsByPaint", () => {
   it("removes empty commits and groups the remaining commits by paint", () => {
-    const result = groupCommitsByPaint({
+    const result = groupNonEmptyCommitsByPaint({
       fiberChangesByCommit: [[changeA], [], [changeB], [changeC]],
       paintCommitIndices: [0, 2, 3],
     });
@@ -18,7 +18,7 @@ describe("groupCommitsByPaint", () => {
   });
 
   it("keeps a paint boundary that lands on an empty commit", () => {
-    const result = groupCommitsByPaint({
+    const result = groupNonEmptyCommitsByPaint({
       fiberChangesByCommit: [[changeA], [], [changeB]],
       paintCommitIndices: [1],
     });
@@ -27,7 +27,7 @@ describe("groupCommitsByPaint", () => {
   });
 
   it("returns no paint segments when every commit is empty", () => {
-    const result = groupCommitsByPaint({
+    const result = groupNonEmptyCommitsByPaint({
       fiberChangesByCommit: [[], []],
       paintCommitIndices: [0, 1],
     });
@@ -36,7 +36,7 @@ describe("groupCommitsByPaint", () => {
   });
 
   it("returns no paint segments when there are no commits", () => {
-    const result = groupCommitsByPaint({
+    const result = groupNonEmptyCommitsByPaint({
       fiberChangesByCommit: [],
       paintCommitIndices: [],
     });
@@ -45,7 +45,7 @@ describe("groupCommitsByPaint", () => {
   });
 
   it("groups trailing commits after the last paint into a final segment", () => {
-    const result = groupCommitsByPaint({
+    const result = groupNonEmptyCommitsByPaint({
       fiberChangesByCommit: [[changeA], [changeB], [changeC]],
       paintCommitIndices: [0],
     });
@@ -54,7 +54,7 @@ describe("groupCommitsByPaint", () => {
   });
 
   it("puts every commit in one segment when there are no paints", () => {
-    const result = groupCommitsByPaint({
+    const result = groupNonEmptyCommitsByPaint({
       fiberChangesByCommit: [[changeA], [changeB]],
       paintCommitIndices: [],
     });
@@ -65,7 +65,7 @@ describe("groupCommitsByPaint", () => {
   it("absorbs a paint index past the last commit", () => {
     // paintCommitIndices[2] = 5 is out of range (only 4 commits); the extra
     // index over-reaches but slice clamps, so no bogus segment is produced.
-    const result = groupCommitsByPaint({
+    const result = groupNonEmptyCommitsByPaint({
       fiberChangesByCommit: [[changeA], [], [changeB], [changeC]],
       paintCommitIndices: [0, 2, 5],
     });

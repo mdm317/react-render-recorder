@@ -1,5 +1,4 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
-import { groupCommitsByPaint } from "./group-commits-by-paint";
 import {
   type HookSourceResolution,
   resolveHookSource,
@@ -13,7 +12,7 @@ export type CommitHistoryFiberChange = Omit<CommittedFiberChange, "hooks"> & {
   hooks: CommitHistoryHookChange[] | null;
 };
 
-export function buildCommitHistory(
+export function resolveHookSources(
   fiberChanges: CommittedFiberChange[][],
   sourceInfo: SourceInfo | null = null,
 ): CommitHistoryFiberChange[][] {
@@ -26,19 +25,5 @@ export function buildCommitHistory(
           source: resolveHookSource(hook, sourceInfo),
         })) ?? null,
     })),
-  );
-}
-
-export function buildCommitHistoryByPaint({
-  fiberChanges,
-  paintCommitIndices,
-  sourceResults,
-  projectRoot,
-}: SourceInfo & {
-  fiberChanges: CommittedFiberChange[][];
-  paintCommitIndices: number[];
-}): CommitHistoryFiberChange[][][] {
-  return groupCommitsByPaint({ fiberChangesByCommit: fiberChanges, paintCommitIndices }).map(
-    (commits) => buildCommitHistory(commits, { sourceResults, projectRoot }),
   );
 }

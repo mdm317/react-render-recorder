@@ -2,9 +2,9 @@ import type { CommittedFiberChange } from "@react-record/devtools-api";
 import { describe, expect, it } from "vitest";
 
 import {
-  buildCommitHistory,
+  resolveHookSources,
   type CommitHistoryFiberChange,
-} from "@/features/commit-history/build-commit-history";
+} from "@/features/commit-history/resolve-hook-sources";
 
 import { buildCommitHistoryLines, type HistoryLine } from "./build-commit-history-lines";
 
@@ -26,7 +26,7 @@ function makeChange(
     selfDuration,
     state: null,
   };
-  return buildCommitHistory([[change]])[0][0];
+  return resolveHookSources([[change]])[0][0];
 }
 
 const STATE_HOOK: NonNullable<CommittedFiberChange["hooks"]> = [

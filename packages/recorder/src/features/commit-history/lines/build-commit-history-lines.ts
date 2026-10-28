@@ -1,7 +1,7 @@
 import type {
   CommitHistoryFiberChange,
   CommitHistoryHookChange,
-} from "@/features/commit-history/build-commit-history";
+} from "@/features/commit-history/resolve-hook-sources";
 import type { CommitHistoryFormatOptions } from "@/features/options/recording-option";
 import type { HookSourceResolution } from "@/features/source/resolve-hook-source";
 import { formatDurationMsInline } from "@/utils/format-duration";

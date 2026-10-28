@@ -1,14 +1,12 @@
-import type { CommittedFiberChange } from "@react-record/devtools-api";
-
-type GroupCommitsByPaintInput = {
-  fiberChangesByCommit: CommittedFiberChange[][];
+type GroupNonEmptyCommitsByPaintInput<T> = {
+  fiberChangesByCommit: T[][];
   paintCommitIndices: number[];
 };
 
-export function groupCommitsByPaint({
+export function groupNonEmptyCommitsByPaint<T>({
   fiberChangesByCommit,
   paintCommitIndices,
-}: GroupCommitsByPaintInput): CommittedFiberChange[][][] {
+}: GroupNonEmptyCommitsByPaintInput<T>): T[][][] {
   if (fiberChangesByCommit.length === 0) {
     return [];
   }

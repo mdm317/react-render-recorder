@@ -1,4 +1,5 @@
-import { buildCommitHistoryByPaint } from "./features/commit-history/build-commit-history";
+import { resolveHookSources } from "./features/commit-history/resolve-hook-sources";
+import { groupNonEmptyCommitsByPaint } from "./features/commit-history/group-non-empty-commits-by-paint";
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 
 import {
@@ -28,11 +29,9 @@ function getPaintCommitIndices(store: RecorderStore): number[] {
 
 function getCommitHistoryByPaint(store: RecorderStore) {
   const { fiberChanges, paintCommitIndices, sourceResults, projectRoot } = store.getSnapshot();
-  return buildCommitHistoryByPaint({
-    fiberChanges,
+  return groupNonEmptyCommitsByPaint({
+    fiberChangesByCommit: resolveHookSources(fiberChanges, { sourceResults, projectRoot }),
     paintCommitIndices,
-    sourceResults,
-    projectRoot,
   });
 }
 

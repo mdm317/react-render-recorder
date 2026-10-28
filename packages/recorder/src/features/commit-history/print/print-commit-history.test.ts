@@ -2,9 +2,9 @@ import type { CommittedFiberChange } from "@react-record/devtools-api";
 import { describe, expect, it } from "vitest";
 
 import {
-  buildCommitHistory,
+  resolveHookSources,
   type CommitHistoryFiberChange,
-} from "@/features/commit-history/build-commit-history";
+} from "@/features/commit-history/resolve-hook-sources";
 
 import {
   type CommitHistoryFormatOptions,
@@ -43,7 +43,7 @@ function makeChange(
     selfDuration,
     state: null,
   };
-  return buildCommitHistory([[change]])[0][0];
+  return resolveHookSources([[change]])[0][0];
 }
 
 describe("print-commit-history shallow shape for null↔object", () => {
@@ -253,13 +253,13 @@ describe("hook source formatting", () => {
     };
     expect(
       buildCommitSectionLines(
-        buildCommitHistory([changes], { sourceResults: results, projectRoot: null })[0],
+        resolveHookSources([changes], { sourceResults: results, projectRoot: null })[0],
         options,
       ),
     ).toEqual(["- Counter:", "  - hook[0] State: 0 → 1", "    Source: src/Counter.tsx:12:27"]);
     expect(
       buildCommitSectionLines(
-        buildCommitHistory([changes], { sourceResults: results, projectRoot: null })[0],
+        resolveHookSources([changes], { sourceResults: results, projectRoot: null })[0],
         {
           includeRenderDuration: false,
           includeHookPath: false,
@@ -273,7 +273,7 @@ describe("hook source formatting", () => {
     expect(buildCommitSectionLines(changes, options)).toContain("    Source: Resolving…");
     expect(
       buildCommitSectionLines(
-        buildCommitHistory([changes], { sourceResults: { [key]: null }, projectRoot: null })[0],
+        resolveHookSources([changes], { sourceResults: { [key]: null }, projectRoot: null })[0],
         options,
       ),
     ).toContain("    Source: /bundle.js:48:9 (unmapped)");
@@ -299,7 +299,7 @@ describe("hook source formatting", () => {
     };
     expect(
       buildCommitSectionLines(
-        buildCommitHistory([changes], { sourceResults: results, projectRoot: null })[0],
+        resolveHookSources([changes], { sourceResults: results, projectRoot: null })[0],
         options,
       ),
     ).toContain("    Source: /src/Counter.tsx:12:27");
@@ -314,7 +314,7 @@ describe("hook source formatting", () => {
       [key]: { location: ["", fileName, 12, 27] as [string, string, number, number], ignored },
     };
     return buildCommitSectionLines(
-      buildCommitHistory([changes], { sourceResults: results, projectRoot })[0],
+      resolveHookSources([changes], { sourceResults: results, projectRoot })[0],
       options,
     )[2];
   }
@@ -366,7 +366,7 @@ describe("hook source formatting", () => {
     const webpackKey = `${webpackSource.fileName}:${source.lineNumber}:${source.columnNumber}`;
     expect(
       buildCommitSectionLines(
-        buildCommitHistory([webpackChanges], {
+        resolveHookSources([webpackChanges], {
           sourceResults: { [webpackKey]: null },
           projectRoot: null,
         })[0],

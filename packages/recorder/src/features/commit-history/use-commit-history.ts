@@ -1,4 +1,5 @@
-import { buildCommitHistoryByPaint } from "@/features/commit-history/build-commit-history";
+import { resolveHookSources } from "@/features/commit-history/resolve-hook-sources";
+import { groupNonEmptyCommitsByPaint } from "@/features/commit-history/group-non-empty-commits-by-paint";
 import { useMemo } from "preact/hooks";
 
 import { buildCommitHistoryLines } from "@/features/commit-history/lines/build-commit-history-lines";
@@ -22,11 +23,9 @@ export function useCommitHistory({
   } = useRecorderStore();
 
   const { historyLines, historyLinesByPaint } = useMemo(() => {
-    const commitHistoryByPaint = buildCommitHistoryByPaint({
-      fiberChanges,
+    const commitHistoryByPaint = groupNonEmptyCommitsByPaint({
+      fiberChangesByCommit: resolveHookSources(fiberChanges, { sourceResults, projectRoot }),
       paintCommitIndices,
-      sourceResults,
-      projectRoot,
     });
     return {
       historyLines: buildCommitHistoryLines(commitHistoryByPaint.flat()),
