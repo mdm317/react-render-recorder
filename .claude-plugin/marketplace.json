@@ -1,0 +1,13 @@
+{
+  "name": "react-recorder",
+  "owner": {
+    "name": "mdm317"
+  },
+  "plugins": [
+    {
+      "name": "react-recorder",
+      "source": "./.claude/react-recorder",
+      "description": "Measure, fix, and verify React commits and re-renders with react-render-recorder."
+    }
+  ]
+}

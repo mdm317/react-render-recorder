@@ -1,0 +1,8 @@
+{
+  "name": "react-recorder",
+  "version": "0.1.0",
+  "description": "Measure, fix, and verify React commits and re-renders with react-render-recorder.",
+  "author": {
+    "name": "mdm317"
+  }
+}
