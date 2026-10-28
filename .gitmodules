@@ -1,5 +1,5 @@
 [submodule "react"]
 	path = react
 	url = https://github.com/mdm317/react
-	branch = devtools-custom
+	branch = devtools-custom-8.0.0
 	shallow = true

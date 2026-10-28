@@ -1421,8 +1421,8 @@ packages:
     resolution: {integrity: sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==}
     engines: {node: '>=10'}
 
-  react-devtools-core@7.0.1:
-    resolution: {integrity: sha512-C3yNvRHaizlpiASzy7b9vbnBGLrhvdhl1CbdU6EnZgxPNbai60szdLtl+VL76UNOt5bOoVTOz5rNWZxgGt+Gsw==}
+  react-devtools-core@8.0.0:
+    resolution: {integrity: sha512-DGXJX+sCn2zC3ZalHoJhmZJsvP4QTpERlmCQAOgExc4Vp74ywB9ZnO8992cKw5ZcOS5u8GtpchTUPbjTiu5zaw==}
 
   react-devtools-core@file:react/packages/react-devtools-core:
     resolution: {directory: react/packages/react-devtools-core, type: directory}
@@ -2729,7 +2729,7 @@ snapshots:
 
   quick-lru@5.1.1: {}
 
-  react-devtools-core@7.0.1:
+  react-devtools-core@8.0.0:
     dependencies:
       shell-quote: 1.8.3
       ws: 7.5.10
@@ -2747,7 +2747,7 @@ snapshots:
 
   react-devtools-custom@file:react/packages/react-devtools-custom:
     dependencies:
-      react-devtools-core: 7.0.1
+      react-devtools-core: 8.0.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
