@@ -85,12 +85,9 @@ export function printCommitHistory(
   options: CommitHistoryFormatOptions,
 ): string {
   const { summary } = historyLines;
-  const componentCount = options.includeAllRenders
-    ? summary.allRenderedComponentCount
-    : summary.rerenderedComponentCount;
   return [
     "## Summary",
-    `${summary.commitCount} commits, ${componentCount} components rerendered`,
+    `${summary.commitCount} commits, ${summary.renderedComponentCount} components rendered`,
     `${summary.totalDurationText} total render time`,
     // each history line expands to zero or more text lines depending on options
     ...historyLines.lines.flatMap((line) => printLines(line, options)),

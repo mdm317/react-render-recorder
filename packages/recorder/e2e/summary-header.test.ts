@@ -26,7 +26,7 @@ test.describe("summary header", () => {
 
     const result = recorderByTestId(page, "commit-history-result");
     await expect(result).toContainText("## Summary");
-    await expect(result).toContainText("2 commits, 2 components rerendered");
+    await expect(result).toContainText("2 commits, 2 components rendered");
   });
 
   test("history view count line for a single commit", async ({ page }) => {
@@ -36,7 +36,7 @@ test.describe("summary header", () => {
 
     const result = recorderByTestId(page, "commit-history-result");
     await expect(result).toContainText("## Summary");
-    await expect(result).toContainText("1 commits, 1 components rerendered");
+    await expect(result).toContainText("1 commits, 1 components rendered");
   });
 
   test("paint view shows ## Summary with a count line per segment", async ({ page }) => {
@@ -52,7 +52,7 @@ test.describe("summary header", () => {
     for (const i of [0, 1]) {
       const segment = segments.nth(i);
       await expect(segment).toContainText("## Summary");
-      await expect(segment).toContainText("1 commits, 1 components rerendered");
+      await expect(segment).toContainText("1 commits, 1 components rendered");
     }
   });
 
@@ -65,18 +65,14 @@ test.describe("summary header", () => {
     await expect(result).toContainText(new RegExp(`${DURATION_PATTERN} total render time`));
   });
 
-  test("count line counts only hook-changed components, not parent-driven leaves", async ({
-    page,
-  }) => {
+  test("count line includes parent-driven leaves", async ({ page }) => {
     await recordCycle(page, async () => {
       await clickTimes(page, SCENARIO_BUTTON.RENDER_BY_PARENT, 1);
     });
 
     const result = recorderByTestId(page, "commit-history-result");
-    // 1 commit in which 4 components render (RenderByParentButton + 3 static
-    // leaves), but only RenderByParentButton has a hook change, so the count
-    // line counts just the 1 hook-changed component.
-    await expect(result).toContainText("1 commits, 1 components rerendered");
+    // 1 commit in which 4 components render: RenderByParentButton + 3 static leaves
+    await expect(result).toContainText("1 commits, 4 components rendered");
     await expect(result).toContainText(new RegExp(`${DURATION_PATTERN} total render time`));
   });
 
@@ -93,7 +89,7 @@ test.describe("summary header", () => {
     for (const i of [0, 1]) {
       const segment = segments.nth(i);
       await expect(segment).toContainText("## Summary");
-      await expect(segment).toContainText("2 commits, 2 components rerendered");
+      await expect(segment).toContainText("2 commits, 2 components rendered");
     }
   });
 });

@@ -69,7 +69,7 @@ describe("buildCommitHistoryLines", () => {
     expect(hookChangedNames(historyLines.lines)).toEqual(["Kept", "Anonymous"]);
   });
 
-  it("counts hook-changed and all components separately", () => {
+  it("counts every rendered component", () => {
     const historyLines = buildCommitHistoryLines([
       [makeChange("A", STATE_HOOK), makeChange("EmptyHooks", [])],
       [makeChange(null, STATE_HOOK), makeChange("NullHooks", null)],
@@ -78,8 +78,7 @@ describe("buildCommitHistoryLines", () => {
 
     expect(historyLines.summary).toMatchObject({
       commitCount: 3,
-      rerenderedComponentCount: 3,
-      allRenderedComponentCount: 5,
+      renderedComponentCount: 5,
     });
   });
 
@@ -108,8 +107,7 @@ describe("buildCommitHistoryLines", () => {
     expect(buildCommitHistoryLines([])).toEqual({
       summary: {
         commitCount: 0,
-        rerenderedComponentCount: 0,
-        allRenderedComponentCount: 0,
+        renderedComponentCount: 0,
         totalDurationText: "—",
       },
       lines: [],

@@ -446,7 +446,7 @@ describe("print-commit-history with includeAllRenders", () => {
     ]);
   });
 
-  it("counts the components it prints in the summary", () => {
+  it("prints every rendered component in the summary regardless of options", () => {
     const historyLines = buildCommitHistoryLines([
       [
         makeChange("Parent", [{ hookIndex: 0, hookName: "State", prev: 0, next: 1 }]),
@@ -456,10 +456,9 @@ describe("print-commit-history with includeAllRenders", () => {
     const countLine = (formatOptions: CommitHistoryFormatOptions) =>
       printCommitHistory(historyLines, formatOptions).split("\n")[1];
 
-    expect(countLine(DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS)).toBe(
-      "1 commits, 1 components rerendered",
-    );
-    expect(countLine(options)).toBe("1 commits, 2 components rerendered");
+    const expected = "1 commits, 2 components rendered";
+    expect(countLine(DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS)).toBe(expected);
+    expect(countLine(options)).toBe(expected);
   });
 
   it("indents field and source lines under the hooks reason", () => {

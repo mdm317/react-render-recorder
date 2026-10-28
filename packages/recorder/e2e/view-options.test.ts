@@ -97,17 +97,17 @@ test.describe("commit history view options", () => {
     const allRendersToggle = recorderByTestId(page, "view-option-includeAllRenders");
     const result = recorderByTestId(page, "commit-history-result");
 
-    await expect(result).toContainText("1 commits, 1 components rerendered");
+    await expect(result).toContainText("1 commits, 4 components rendered");
     await expect(result).not.toContainText("StaticLeafA");
 
     await optionsButton.click();
     await allRendersToggle.click();
-    await expect(result).toContainText("1 commits, 4 components rerendered");
+    await expect(result).toContainText("1 commits, 4 components rendered");
     await expect(result).toContainText("- RenderByParentButton: • Hook changed:");
     await expect(result).toContainText("- StaticLeafA: The parent component rendered.");
 
     await allRendersToggle.click();
-    await expect(result).toContainText("1 commits, 1 components rerendered");
+    await expect(result).toContainText("1 commits, 4 components rendered");
     await expect(result).not.toContainText("StaticLeafA");
   });
 });

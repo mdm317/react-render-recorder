@@ -16,9 +16,8 @@ export type CommitHistoryLines = { summary: HistorySummary; lines: HistoryLine[]
 // totalDurationText sums every fiber, not just the hook-changed components
 export type HistorySummary = {
   commitCount: number;
-  // components with a hook change / every component; the printer picks by includeAllRenders
-  rerenderedComponentCount: number;
-  allRenderedComponentCount: number;
+  // every rendered component, printed regardless of options
+  renderedComponentCount: number;
   totalDurationText: string;
 };
 
@@ -195,19 +194,16 @@ function buildComponentChangeLines(component: CommitHistoryFiberChange): History
 
 function buildHistorySummary(fiberChangesByCommit: CommitHistoryFiberChange[][]): HistorySummary {
   let totalDurationMs: number | null = null;
-  let rerenderedComponentCount = 0;
-  let allRenderedComponentCount = 0;
-  for (const commit of fiberChangesByCommit) {
-    rerenderedComponentCount += commit.filter((change) => change.didHooksChange).length;
-    allRenderedComponentCount += commit.length;
-    for (const change of commit) {
+  let renderedComponentCount = 0;
+  for (const fiberChanges of fiberChangesByCommit) {
+    renderedComponentCount += fiberChanges.length;
+    for (const change of fiberChanges) {
       totalDurationMs = (totalDurationMs ?? 0) + change.selfDuration;
     }
   }
   return {
     commitCount: fiberChangesByCommit.length,
-    rerenderedComponentCount,
-    allRenderedComponentCount,
+    renderedComponentCount,
     totalDurationText: formatDurationMsInline(totalDurationMs),
   };
 }
