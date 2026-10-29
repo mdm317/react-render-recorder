@@ -89,6 +89,14 @@ function buildAncestorPathText(ancestorPath: string[]): string | null {
   return match == null ? ancestorPath[0] : `${match[1]}, debug="${match[2]}"`;
 }
 
+const SOURCE_PATH_SEGMENT_LIMIT = 3;
+
+// Keeps the last few path segments, like zsh's `truncation_length`: `a/b/c/d` → `b/c/d`.
+// `webpack-internal:///./src/App.tsx` splits into empty segments, so it lands on `./src/App.tsx`
+function truncateSourcePath(fileName: string): string {
+  return fileName.split("/").slice(-SOURCE_PATH_SEGMENT_LIMIT).join("/");
+}
+
 function buildSourceText(source: HookSourceResolution): string {
   switch (source.status) {
     case "pending":
@@ -97,12 +105,12 @@ function buildSourceText(source: HookSourceResolution): string {
       return "Unavailable";
     case "unmapped": {
       const { fileName, lineNumber, columnNumber } = source.location;
-      return `${fileName}:${lineNumber}:${columnNumber} (unmapped)`;
+      return `${truncateSourcePath(fileName)}:${lineNumber}:${columnNumber} (unmapped)`;
     }
     case "resolved": {
       const { fileName, lineNumber, columnNumber } = source.location;
       const librarySuffix = source.ignored ? " (library)" : "";
-      return `${fileName}:${lineNumber}:${columnNumber}${librarySuffix}`;
+      return `${truncateSourcePath(fileName)}:${lineNumber}:${columnNumber}${librarySuffix}`;
     }
   }
 }

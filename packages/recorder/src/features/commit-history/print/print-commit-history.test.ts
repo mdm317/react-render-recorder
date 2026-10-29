@@ -318,14 +318,10 @@ describe("hook source formatting", () => {
   }
 
   it.each([
-    ["file:///Users/me/my%20app/src/Counter.tsx", null, "/Users/me/my app/src/Counter.tsx"],
+    ["file:///Users/me/my%20app/src/Counter.tsx", null, "my app/src/Counter.tsx"],
     ["file:///Users/me/my%20app/src/Counter.tsx", "/Users/me/my app", "src/Counter.tsx"],
-    [
-      "file:///Users/me/other/src/Counter.tsx",
-      "/Users/me/my app",
-      "/Users/me/other/src/Counter.tsx",
-    ],
-    ["file:///Users/me/100%/src/Counter.tsx", "/Users/me/my app", "/Users/me/100%/src/Counter.tsx"],
+    ["file:///Users/me/other/src/Counter.tsx", "/Users/me/my app", "other/src/Counter.tsx"],
+    ["file:///Users/me/100%/src/Counter.tsx", "/Users/me/my app", "100%/src/Counter.tsx"],
   ])("resolves %s against the project root %s", (fileName, projectRoot, expected) => {
     expect(formatResolved(fileName, false, projectRoot)).toBe(`    Source: ${expected}:12:27`);
   });
@@ -334,18 +330,24 @@ describe("hook source formatting", () => {
     ["webpack://my-app/./src/Counter.tsx", "src/Counter.tsx"],
     ["webpack:///./src/Counter.tsx", "src/Counter.tsx"],
     ["webpack://my-app/./src/Counter.tsx?1591", "src/Counter.tsx"],
-    ["file:///Users/me/app/src/Counter.tsx", "/Users/me/app/src/Counter.tsx"],
   ])("strips the bundler prefix from %s", (fileName, expected) => {
     expect(formatResolved(fileName)).toBe(`    Source: ${expected}:12:27`);
   });
 
   it.each([
-    "rsc://React/Server/src/Counter.tsx",
-    "webpack://my-app/src/Counter.tsx",
-    "turbopack:///[next]/entry/page-loader.ts",
-    "src/Counter.tsx",
-  ])("passes the unrecognised location %s through untouched", (fileName) => {
-    expect(formatResolved(fileName)).toBe(`    Source: ${fileName}:12:27`);
+    ["rsc://React/Server/src/Counter.tsx", "Server/src/Counter.tsx"],
+    ["webpack://my-app/src/Counter.tsx", "my-app/src/Counter.tsx"],
+    ["turbopack:///[next]/entry/page-loader.ts", "[next]/entry/page-loader.ts"],
+    ["src/Counter.tsx", "src/Counter.tsx"],
+  ])("strips no prefix from the unrecognised location %s", (fileName, expected) => {
+    expect(formatResolved(fileName)).toBe(`    Source: ${expected}:12:27`);
+  });
+
+  it.each([
+    ["a/b/c/d.tsx", "b/c/d.tsx"],
+    ["file:///Users/me/app/src/Counter.tsx", "app/src/Counter.tsx"],
+  ])("shows only the last three path segments of %s", (fileName, expected) => {
+    expect(formatResolved(fileName)).toBe(`    Source: ${expected}:12:27`);
   });
 
   it("labels locations the source map ignore-lists as library code", () => {
@@ -370,7 +372,7 @@ describe("hook source formatting", () => {
         })[0],
         options,
       ),
-    ).toContain("    Source: webpack-internal:///./src/Counter.tsx:48:9 (unmapped)");
+    ).toContain("    Source: ./src/Counter.tsx:48:9 (unmapped)");
   });
 });
 
