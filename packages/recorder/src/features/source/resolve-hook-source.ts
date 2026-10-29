@@ -10,7 +10,7 @@ type HookChange = NonNullable<CommittedFiberChange["hooks"]>[number];
 export type SourceInfo = { sourceResults: SourceResults | null; projectRoot: string | null };
 
 // `fileName` has its bundler prefix stripped but is otherwise the full path
-export type DisplayLocation = { fileName: string; lineNumber: number; columnNumber: number };
+type DisplayLocation = { fileName: string; lineNumber: number; columnNumber: number };
 
 export type HookSourceResolution =
   | { status: "pending" }

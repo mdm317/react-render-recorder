@@ -3,7 +3,7 @@ import type {
   CommitHistoryHookChange,
 } from "@/features/commit-history/resolve-hook-sources";
 import type { CommitHistoryFormatOptions } from "@/features/options/recording-option";
-import type { DisplayLocation, HookSourceResolution } from "@/features/source/resolve-hook-source";
+import type { HookSourceResolution } from "@/features/source/resolve-hook-source";
 import { formatDurationMsInline } from "@/utils/format-duration";
 import { buildValueChange, type FieldDiff, type ValueChange } from "./build-value-change";
 import { formatHookValue, formatValueForLLM } from "./value-formatting";
@@ -97,21 +97,20 @@ function truncateSourcePath(fileName: string): string {
   return fileName.split("/").slice(-SOURCE_PATH_SEGMENT_LIMIT).join("/");
 }
 
-function buildLocationText({ fileName, lineNumber, columnNumber }: DisplayLocation): string {
-  return `${truncateSourcePath(fileName)}:${lineNumber}:${columnNumber}`;
-}
-
 function buildSourceText(source: HookSourceResolution): string {
   switch (source.status) {
     case "pending":
       return "Resolving…";
     case "unavailable":
       return "Unavailable";
-    case "unmapped":
-      return `${buildLocationText(source.location)} (unmapped)`;
+    case "unmapped": {
+      const { fileName, lineNumber, columnNumber } = source.location;
+      return `${truncateSourcePath(fileName)}:${lineNumber}:${columnNumber} (unmapped)`;
+    }
     case "resolved": {
+      const { fileName, lineNumber, columnNumber } = source.location;
       const librarySuffix = source.ignored ? " (library)" : "";
-      return `${buildLocationText(source.location)}${librarySuffix}`;
+      return `${truncateSourcePath(fileName)}:${lineNumber}:${columnNumber}${librarySuffix}`;
     }
   }
 }
