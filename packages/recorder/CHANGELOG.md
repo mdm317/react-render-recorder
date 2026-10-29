@@ -15,6 +15,8 @@
 ### Bug Fixes
 
 * **recorder:** remove paint browser APIs and test getCommitHistoryText options ([6269dfc](https://github.com/mdm317/react-render-recorder/commit/6269dfc29c72388a40b1d52e5260ac44edde1550))
+* **recorder:** show only the last three segments of hook source paths ([c7245db](https://github.com/mdm317/react-render-recorder/commit/c7245db26403e160b505dfd204e3044dd5d5a11c))
+* **recorder:** show only the last three segments of hook source paths ([c7245db](https://github.com/mdm317/react-render-recorder/commit/c7245db26403e160b505dfd204e3044dd5d5a11c))
 
 ## [0.2.1](https://github.com/mdm317/react-render-recorder/compare/v0.2.0...v0.2.1) (2026-10-28)
 
