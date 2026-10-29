@@ -3,7 +3,8 @@
   "packages": {
     "packages/recorder": {
       "release-type": "node",
-      "package-name": "react-render-recorder"
+      "package-name": "react-render-recorder",
+      "release-as": "0.2.2"
     }
   },
   "include-component-in-tag": false
