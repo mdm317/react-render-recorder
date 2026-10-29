@@ -3,7 +3,7 @@ import type {
   CommitHistoryHookChange,
 } from "@/features/commit-history/resolve-hook-sources";
 import type { CommitHistoryFormatOptions } from "@/features/options/recording-option";
-import type { HookSourceResolution } from "@/features/source/resolve-hook-source";
+import type { DisplayLocation, HookSourceResolution } from "@/features/source/resolve-hook-source";
 import { formatDurationMsInline } from "@/utils/format-duration";
 import { buildValueChange, type FieldDiff, type ValueChange } from "./build-value-change";
 import { formatHookValue, formatValueForLLM } from "./value-formatting";
@@ -89,20 +89,29 @@ function buildAncestorPathText(ancestorPath: string[]): string | null {
   return match == null ? ancestorPath[0] : `${match[1]}, debug="${match[2]}"`;
 }
 
+const SOURCE_PATH_SEGMENT_LIMIT = 3;
+
+// Keeps the last few path segments, like zsh's `truncation_length`: `a/b/c/d` → `b/c/d`.
+// `webpack-internal:///./src/App.tsx` splits into empty segments, so it lands on `./src/App.tsx`
+function truncateSourcePath(fileName: string): string {
+  return fileName.split("/").slice(-SOURCE_PATH_SEGMENT_LIMIT).join("/");
+}
+
+function buildLocationText({ fileName, lineNumber, columnNumber }: DisplayLocation): string {
+  return `${truncateSourcePath(fileName)}:${lineNumber}:${columnNumber}`;
+}
+
 function buildSourceText(source: HookSourceResolution): string {
   switch (source.status) {
     case "pending":
       return "Resolving…";
     case "unavailable":
       return "Unavailable";
-    case "unmapped": {
-      const { fileName, lineNumber, columnNumber } = source.location;
-      return `${fileName}:${lineNumber}:${columnNumber} (unmapped)`;
-    }
+    case "unmapped":
+      return `${buildLocationText(source.location)} (unmapped)`;
     case "resolved": {
-      const { fileName, lineNumber, columnNumber } = source.location;
       const librarySuffix = source.ignored ? " (library)" : "";
-      return `${fileName}:${lineNumber}:${columnNumber}${librarySuffix}`;
+      return `${buildLocationText(source.location)}${librarySuffix}`;
     }
   }
 }
