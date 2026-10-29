@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.2](https://github.com/mdm317/react-render-recorder/compare/v0.2.1...v0.2.2) (2026-10-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* **recorder:** getPaintCommitIndices() and getCommitHistoryTextByPaint() are no longer exposed on the browser API.
+
+### Features
+
+* **recorder:** remove paint browser APIs and test getCommitHistoryText options ([41a059d](https://github.com/mdm317/react-render-recorder/commit/41a059d482d51c29fdce8ed63e9d9a837ae2ee33))
+
+
+### Bug Fixes
+
+* **recorder:** remove paint browser APIs and test getCommitHistoryText options ([6269dfc](https://github.com/mdm317/react-render-recorder/commit/6269dfc29c72388a40b1d52e5260ac44edde1550))
+
 ## [0.2.1](https://github.com/mdm317/react-render-recorder/compare/v0.2.0...v0.2.1) (2026-10-28)
 
 
