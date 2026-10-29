@@ -23,29 +23,13 @@ function getFiberChanges(store: RecorderStore): SerializableFiberChange[][] {
     );
 }
 
-function getPaintCommitIndices(store: RecorderStore): number[] {
-  return [...store.getSnapshot().paintCommitIndices];
-}
-
-function getCommitHistoryByPaint(store: RecorderStore) {
+function getCommitHistoryText(store: RecorderStore, options: CommitHistoryFormatOptions): string {
   const { fiberChanges, paintCommitIndices, sourceResults, projectRoot } = store.getSnapshot();
-  return groupNonEmptyCommitsByPaint({
+  const commitsByPaint = groupNonEmptyCommitsByPaint({
     fiberChangesByCommit: resolveHookSources(fiberChanges, { sourceResults, projectRoot }),
     paintCommitIndices,
   });
-}
-
-function getCommitHistoryText(store: RecorderStore, options: CommitHistoryFormatOptions): string {
-  const historyLines = buildCommitHistoryLines(getCommitHistoryByPaint(store).flat());
-  return printCommitHistory(historyLines, options);
-}
-
-function getCommitHistoryTextByPaint(
-  store: RecorderStore,
-  options: CommitHistoryFormatOptions,
-): string[] {
-  const historyLinesByPaint = getCommitHistoryByPaint(store).map(buildCommitHistoryLines);
-  return historyLinesByPaint.map((historyLines) => printCommitHistory(historyLines, options));
+  return printCommitHistory(buildCommitHistoryLines(commitsByPaint.flat()), options);
 }
 
 export function exposeRecorderApi(store: RecorderStore): void {
@@ -54,10 +38,7 @@ export function exposeRecorderApi(store: RecorderStore): void {
     start: () => startRecording(store),
     end: () => endRecording(store),
     getFiberChanges: () => getFiberChanges(store),
-    getPaintCommitIndices: () => getPaintCommitIndices(store),
     getCommitHistoryText: (options: Partial<CommitHistoryFormatOptions> = {}) =>
       getCommitHistoryText(store, { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, ...options }),
-    getCommitHistoryTextByPaint: (options: Partial<CommitHistoryFormatOptions> = {}) =>
-      getCommitHistoryTextByPaint(store, { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, ...options }),
   };
 }

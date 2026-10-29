@@ -91,10 +91,9 @@ recorder.start();
 recorder.end();
 
 const text = recorder.getCommitHistoryText({ includeSource: true });
-const paints = recorder.getCommitHistoryTextByPaint({ includeSource: true });
 ```
 
-Both text methods accept `includeSource`, `includeHookPath`, and `includeRenderDuration` (all default to `false`). `getCommitHistoryTextByPaint()` returns one string per paint. These API options are independent of the panel and URL options.
+`getCommitHistoryText()` accepts `includeSource`, `includeHookPath`, `includeRenderDuration`, and `includeAllRenders` (all default to `false`). These API options are independent of the panel and URL options.
 
 Source maps resolve asynchronously after `end()`, which returns immediately. While resolution is pending, source output shows `Source: Resolving…`; read the text again after resolution completes. If mapping fails, the generated location is marked `(unmapped)`. `getFiberChanges()` returns JSON-safe raw changes with generated `hookSource` locations; it does not include resolved source locations.
 
