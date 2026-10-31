@@ -13,7 +13,7 @@ Replay the same steps without the change and again with it, then compare the num
 
 Check for `window.__REACT_RENDER_RECORDER__` on the page. If it is missing, invoke the `react-recorder:install` skill.
 
-Before the first recording, read `<this skill's base directory>/../../references/recorder-api.md` and `<this skill's base directory>/../../references/measurement.md`.
+Before the first recording, read `<this skill's base directory>/../../references/measurement.md`.
 
 ## 1. Steps
 

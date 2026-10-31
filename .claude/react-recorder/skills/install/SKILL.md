@@ -8,7 +8,10 @@ description: Add the react-render-recorder script to a React app so `window.__RE
 Add the recorder script so it runs before the React app does, then reload and confirm `window.__REACT_RENDER_RECORDER__` exists. It is a development tool, so tell the user where you added it and keep it out of production paths.
 
 ```html
-<script crossorigin="anonymous" src="http://127.0.0.1:8080/react-render-recorder.js"></script>
+<script
+  crossorigin="anonymous"
+  src="https://unpkg.com/react-render-recorder@0.2.2/dist/react-render-recorder.js"
+></script>
 ```
 
 - Vite or plain HTML — in `index.html` `<head>`, above the app's module script.
