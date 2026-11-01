@@ -42,8 +42,9 @@ function printRenderReason(reason: RenderReason): string {
 }
 
 function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): string[] {
-  // hook lines nest under the "• Hooks changed:" reason when every render is listed
-  const hookIndent = options.includeAllRenders ? "  " : "";
+  // hook lines nest under the "• Hooks changed:" reason when it is shown
+  const underHooksReason = "underHooksReason" in line && line.underHooksReason;
+  const hookIndent = underHooksReason && options.includeAllRenders ? "  " : "";
   switch (line.kind) {
     case "commit":
       return ["", `## Commit ${line.commitNumber}`];

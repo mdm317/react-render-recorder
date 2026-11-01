@@ -463,19 +463,84 @@ describe("print-commit-history with includeAllRenders", () => {
     expect(countLine(options)).toBe(expected);
   });
 
-  it("indents field and source lines under the hooks reason", () => {
-    const lines = buildCommitSectionLines(
-      [makeChange("Foo", [{ hookIndex: 0, hookName: "State", prev: { x: 0 }, next: { x: 1 } }])],
-      { ...options, includeSource: true },
-    );
+  const OBJECT_HOOK = { hookIndex: 0, hookName: "State", prev: { x: 0 }, next: { x: 1 } };
+
+  it("moves hook, field and source lines up when hooks are the only reason", () => {
+    const lines = buildCommitSectionLines([makeChange("Foo", [OBJECT_HOOK])], {
+      ...options,
+      includeSource: true,
+    });
 
     expect(lines).toEqual([
       "- Foo:",
+      "  - hook[0] State: changed fields:",
+      "      x: 0 → 1",
+      "    Source: Unavailable",
+    ]);
+  });
+
+  it("omits the plural label too when hooks are the only reason", () => {
+    const lines = buildCommitSectionLines(
+      [
+        makeChange("Foo", [
+          { hookIndex: 0, hookName: "State", prev: 0, next: 1 },
+          { hookIndex: 1, hookName: "State", prev: "a", next: "b" },
+        ]),
+      ],
+      options,
+    );
+
+    expect(lines).toEqual(["- Foo:", "  - hook[0] State: 0 → 1", '  - hook[1] State: "a" → "b"']);
+  });
+
+  it.each<[string, Partial<CommittedFiberChange>, string[], string[]]>([
+    ["context", { context: ["theme"] }, ["  • Context changed: (theme)"], []],
+    ["props", { props: ["value"] }, [], ["  • Props changed: (value)"]],
+    ["state", { state: ["count"] }, [], ["  • State changed: (count)"]],
+  ])("nests hook, field and source lines beside %s", (_label, overrides, before, after) => {
+    const lines = buildCommitSectionLines([makeChange("Foo", [OBJECT_HOOK], 0, overrides)], {
+      ...options,
+      includeSource: true,
+    });
+
+    expect(lines).toEqual([
+      "- Foo:",
+      ...before,
       "  • Hook changed:",
       "    - hook[0] State: changed fields:",
       "        x: 0 → 1",
       "      Source: Unavailable",
+      ...after,
     ]);
+  });
+
+  it("keeps the bare hooks label when no hook lines resolved", () => {
+    const lines = buildCommitSectionLines(
+      [makeChange("Foo", [], 0, { didHooksChange: true })],
+      options,
+    );
+
+    expect(lines).toEqual(["- Foo:", "  • Hooks changed"]);
+  });
+
+  it("prints the same hook lines whether or not hooks share reasons while off", () => {
+    const offOptions = { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, includeSource: true };
+    const expected = [
+      "- Foo:",
+      "  - hook[0] State: changed fields:",
+      "      x: 0 → 1",
+      "    Source: Unavailable",
+    ];
+
+    expect(buildCommitSectionLines([makeChange("Foo", [OBJECT_HOOK])], offOptions)).toEqual(
+      expected,
+    );
+    expect(
+      buildCommitSectionLines(
+        [makeChange("Foo", [OBJECT_HOOK], 0, { props: ["value"] })],
+        offOptions,
+      ),
+    ).toEqual(expected);
   });
 });
 
