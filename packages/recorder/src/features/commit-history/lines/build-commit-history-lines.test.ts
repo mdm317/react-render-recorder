@@ -35,6 +35,8 @@ const STATE_HOOK: NonNullable<CommittedFiberChange["hooks"]> = [
   { hookIndex: 0, hookName: "State", hookPath: ["State"], prev: 0, next: 1 },
 ];
 
+const TOP_LEVEL = { underHooksReason: false, inPathGroup: false };
+
 function componentNames(lines: HistoryLine[]): (string | null)[] {
   return lines.flatMap((line) => (line.kind === "component" ? [line.displayName] : []));
 }
@@ -157,10 +159,10 @@ describe("buildCommitHistoryLines", () => {
         hookName: "State",
         ancestorPath: [],
         changeSummary: { kind: "changed-fields" },
-        underHooksReason: false,
+        nesting: TOP_LEVEL,
       },
-      { kind: "field", path: "x", prev: 0, next: 1, underHooksReason: false },
-      { kind: "source", source: { status: "unavailable" }, underHooksReason: false },
+      { kind: "field", path: "x", prev: 0, next: 1, nesting: TOP_LEVEL },
+      { kind: "source", source: { status: "unavailable" }, nesting: TOP_LEVEL },
     ]);
   });
 
@@ -282,7 +284,7 @@ describe("buildCommitHistoryLines", () => {
         (line) => line.kind === "hook" || line.kind === "field" || line.kind === "source",
       );
       expect(hookRows.map((line) => line.kind)).toEqual(["hook", "field", "source"]);
-      expect(hookRows.every((line) => line.underHooksReason)).toBe(true);
+      expect(hookRows.every((line) => line.nesting.underHooksReason)).toBe(true);
     },
   );
 
@@ -302,6 +304,199 @@ describe("buildCommitHistoryLines", () => {
     expect(historyLines.lines).toContainEqual({
       kind: "render-reason",
       reason: { kind: "hooks-changed", hookCount: 0 },
+    });
+  });
+
+  describe("hook path cut", () => {
+    function ancestorPathOf(hookPath: string[]): string[] {
+      const historyLines = buildCommitHistoryLines([
+        [makeChange("Foo", [{ hookIndex: 0, hookPath, prev: 0, next: 1 }])],
+      ]);
+      const hookLine = historyLines.lines.find((line) => line.kind === "hook");
+      return hookLine?.kind === "hook" ? hookLine.ancestorPath : [];
+    }
+
+    it("drops the frames below a labeled frame", () => {
+      expect(
+        ancestorPathOf(['State("mounted")', "Store", "StoreFast", "StoreR19", "SyncExternalStore"]),
+      ).toEqual(['State("mounted")']);
+    });
+
+    it("keeps the frames above the label", () => {
+      expect(
+        ancestorPathOf(["MenuItem", "CommonProps", 'State("open")', "Store", "StoreR19", "State"]),
+      ).toEqual(["MenuItem", "CommonProps", 'State("open")']);
+    });
+
+    it("cuts at the last label when several frames carry one", () => {
+      expect(ancestorPathOf(['A("a")', "B", "Toggle(true)", "C", "State"])).toEqual([
+        'A("a")',
+        "B",
+        "Toggle(true)",
+      ]);
+    });
+
+    it("leaves a path without a labeled frame unchanged", () => {
+      expect(ancestorPathOf(["A", "B", "C", "State"])).toEqual(["A", "B", "C"]);
+    });
+
+    it.each([
+      ["a multi-line label", 'State("line one\nline two")'],
+      ["a label ending in a newline", 'State("line one\n")'],
+      ["an object label", "State({a: 1})"],
+      ["nested parentheses", 'State("fn(a)")'],
+      ["an empty string label", 'State("")'],
+    ])("recognises %s as a labeled frame", (_label, frame) => {
+      expect(ancestorPathOf([frame, "Store", "State"])).toEqual([frame]);
+    });
+
+    it("treats a parenthesised wrapper name as a labeled frame", () => {
+      expect(ancestorPathOf(["ForwardRef(Foo)", "Store", "State"])).toEqual(["ForwardRef(Foo)"]);
+    });
+  });
+
+  describe("hook path groups", () => {
+    const hook = (hookIndex: number, hookPath?: string[]) => ({
+      hookIndex,
+      hookName: "State",
+      hookPath,
+      prev: 0,
+      next: 1,
+    });
+
+    function hookRows(
+      hooks: NonNullable<CommittedFiberChange["hooks"]>,
+      overrides: Partial<CommittedFiberChange> = {},
+    ): HistoryLine[] {
+      const historyLines = buildCommitHistoryLines([[makeChange("Foo", hooks, 0, overrides)]]);
+      return historyLines.lines.filter(
+        (line) => line.kind !== "commit" && line.kind !== "component" && line.kind !== "source",
+      );
+    }
+
+    function pathFacts(lines: HistoryLine[]) {
+      return lines.flatMap((line) =>
+        line.kind === "hook" || line.kind === "hook-path-group"
+          ? [[line.kind, line.ancestorPath, line.nesting.inPathGroup]]
+          : [],
+      );
+    }
+
+    it("puts the path on a group line and empties it on the adjacent hooks", () => {
+      expect(
+        pathFacts(hookRows([hook(0, ["A", "B", "State"]), hook(1, ["A", "B", "State"])])),
+      ).toEqual([
+        ["hook-path-group", ["A", "B"], false],
+        ["hook", [], true],
+        ["hook", [], true],
+      ]);
+    });
+
+    it("compares paths after the label cut", () => {
+      expect(
+        pathFacts(
+          hookRows([
+            hook(0, ['State("x")', "Store", "State"]),
+            hook(1, ['State("x")', "Other", "Deep", "State"]),
+          ]),
+        ),
+      ).toEqual([
+        ["hook-path-group", ['State("x")'], false],
+        ["hook", [], true],
+        ["hook", [], true],
+      ]);
+    });
+
+    it("keeps hooks with the same path apart when another path sits between them", () => {
+      expect(
+        pathFacts(
+          hookRows([hook(0, ["A", "State"]), hook(1, ["B", "State"]), hook(2, ["A", "State"])]),
+        ),
+      ).toEqual([
+        ["hook", ["A"], false],
+        ["hook", ["B"], false],
+        ["hook", ["A"], false],
+      ]);
+    });
+
+    it("splits a component into a group and a following lone hook", () => {
+      expect(
+        pathFacts(
+          hookRows([hook(0, ["A", "State"]), hook(1, ["A", "State"]), hook(2, ["B", "State"])]),
+        ),
+      ).toEqual([
+        ["hook-path-group", ["A"], false],
+        ["hook", [], true],
+        ["hook", [], true],
+        ["hook", ["B"], false],
+      ]);
+    });
+
+    it("does not merge frames that only match once joined", () => {
+      expect(
+        pathFacts(hookRows([hook(0, ["A > B", "State"]), hook(1, ["A", "B", "State"])])),
+      ).toEqual([
+        ["hook", ["A > B"], false],
+        ["hook", ["A", "B"], false],
+      ]);
+    });
+
+    it("never groups hooks with an empty path", () => {
+      expect(pathFacts(hookRows([hook(0, ["State"]), hook(1), hook(2, ["State"])]))).toEqual([
+        ["hook", [], false],
+        ["hook", [], false],
+        ["hook", [], false],
+      ]);
+    });
+
+    it("does not group across components", () => {
+      const historyLines = buildCommitHistoryLines([
+        [
+          makeChange("Foo", [hook(0, ["A", "State"])], 1),
+          makeChange("Bar", [hook(0, ["A", "State"])], 0),
+        ],
+      ]);
+
+      expect(pathFacts(historyLines.lines)).toEqual([
+        ["hook", ["A"], false],
+        ["hook", ["A"], false],
+      ]);
+    });
+
+    it("carries the nesting onto field and source lines of grouped hooks", () => {
+      const objectHook = { ...hook(1, ["A", "State"]), prev: { x: 0 }, next: { x: 1 } };
+      const historyLines = buildCommitHistoryLines([
+        [makeChange("Foo", [hook(0, ["A", "State"]), objectHook])],
+      ]);
+
+      const rows = historyLines.lines.slice(2);
+      expect(rows.map((line) => line.kind)).toEqual([
+        "hook-path-group",
+        "hook",
+        "source",
+        "hook",
+        "field",
+        "source",
+      ]);
+      expect(rows[0]).toMatchObject({ nesting: TOP_LEVEL });
+      expect(rows.slice(1).every((line) => "nesting" in line && line.nesting.inPathGroup)).toBe(
+        true,
+      );
+    });
+
+    it("marks the group and its hooks under the hooks reason beside another reason", () => {
+      const rows = hookRows([hook(0, ["A", "State"]), hook(1, ["A", "State"])], { props: ["a"] });
+
+      expect(rows[0]).toEqual({
+        kind: "render-reason",
+        reason: { kind: "hooks-changed", hookCount: 2 },
+      });
+      expect(rows[1]).toEqual({
+        kind: "hook-path-group",
+        ancestorPath: ["A"],
+        nesting: { underHooksReason: true, inPathGroup: false },
+      });
+      expect(rows[2]).toMatchObject({ nesting: { underHooksReason: true, inPathGroup: true } });
     });
   });
 

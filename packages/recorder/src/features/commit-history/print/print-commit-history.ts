@@ -2,6 +2,7 @@ import type { CommitHistoryFormatOptions } from "@/features/options/recording-op
 import type {
   CommitHistoryLines,
   HookChangeSummary,
+  HookNesting,
   HistoryLine,
   MountedGroup,
   RenderReason,
@@ -50,9 +51,14 @@ function printMountedGroup(group: MountedGroup, options: CommitHistoryFormatOpti
   return `${formatDisplayName(group.displayName)}${countText}${durationSuffix}`;
 }
 
-// hook lines nest under the "• Hooks changed:" reason only while that reason is printed
-function printHookIndent(underHooksReason: boolean, options: CommitHistoryFormatOptions): string {
-  return underHooksReason && options.includeAllRenders ? "  " : "";
+// hook lines nest under the "• Hooks changed:" reason and the "in …:" path group only while
+// those lines are printed
+function printHookIndent(nesting: HookNesting, options: CommitHistoryFormatOptions): string {
+  const levels = [
+    nesting.underHooksReason && options.includeAllRenders,
+    nesting.inPathGroup && options.includeHookPath,
+  ];
+  return "  ".repeat(levels.filter(Boolean).length);
 }
 
 function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): string[] {
@@ -78,20 +84,24 @@ function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): str
       const label =
         ancestorPathText == null ? line.hookName : `${line.hookName} (in ${ancestorPathText})`;
       return [
-        `${printHookIndent(line.underHooksReason, options)}  - hook[${line.hookIndex}] ${label}: ${printChangeSummary(line.changeSummary)}`,
+        `${printHookIndent(line.nesting, options)}  - hook[${line.hookIndex}] ${label}: ${printChangeSummary(line.changeSummary)}`,
       ];
     }
+    case "hook-path-group":
+      return options.includeHookPath
+        ? [
+            `${printHookIndent(line.nesting, options)}  - in ${formatAncestorPath(line.ancestorPath)}:`,
+          ]
+        : [];
     case "render-reason":
       return options.includeAllRenders ? [`  ${printRenderReason(line.reason)}`] : [];
     case "field":
       return [
-        `${printHookIndent(line.underHooksReason, options)}      ${line.path}: ${formatValueForLLM(line.prev)} → ${formatValueForLLM(line.next)}`,
+        `${printHookIndent(line.nesting, options)}      ${line.path}: ${formatValueForLLM(line.prev)} → ${formatValueForLLM(line.next)}`,
       ];
     case "source":
       return options.includeSource
-        ? [
-            `${printHookIndent(line.underHooksReason, options)}    Source: ${formatHookSource(line.source)}`,
-          ]
+        ? [`${printHookIndent(line.nesting, options)}    Source: ${formatHookSource(line.source)}`]
         : [];
   }
 }

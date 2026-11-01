@@ -650,14 +650,21 @@ describe("printCommitHistory values", () => {
     expect(text.split("\n")[2]).toBe("— total render time");
   });
 
-  it("parses the debug label of a single ancestor hook", () => {
+  it("prints a debug label verbatim at any depth", () => {
     const lines = buildCommitSectionLines(
       [
         makeChange("Foo", [
           {
             hookIndex: 0,
             hookName: "SyncExternalStore",
-            hookPath: ['Floating("root")', "SyncExternalStore"],
+            hookPath: ['Floating("root")', "Store", "SyncExternalStore"],
+            prev: 0,
+            next: 1,
+          },
+          {
+            hookIndex: 1,
+            hookName: "State",
+            hookPath: ["Menu", 'Toggle("open")', "Store", "State"],
             prev: 0,
             next: 1,
           },
@@ -666,6 +673,189 @@ describe("printCommitHistory values", () => {
       options,
     );
 
-    expect(lines[1]).toBe('  - hook[0] SyncExternalStore (in Floating, debug="root"): 0 → 1');
+    expect(lines.slice(1)).toEqual([
+      '  - hook[0] SyncExternalStore (in Floating("root")): 0 → 1',
+      '  - hook[1] State (in Menu > Toggle("open")): 0 → 1',
+    ]);
+  });
+});
+
+describe("print-commit-history hook path groups", () => {
+  const pathOptions: CommitHistoryFormatOptions = {
+    ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS,
+    includeHookPath: true,
+  };
+  const allRenders = { ...pathOptions, includeAllRenders: true };
+  const hookPath = ["A", "B", "State"];
+  const stringHook = { hookIndex: 19, hookName: "State", hookPath, prev: undefined, next: "go" };
+  const objectHook = { hookIndex: 20, hookName: "State", hookPath, prev: { x: 0 }, next: { x: 1 } };
+
+  it("prints an adjacent path once, above its hooks", () => {
+    const lines = buildCommitSectionLines(
+      [makeChange("Foo", [stringHook, { ...stringHook, hookIndex: 20, prev: false, next: true }])],
+      pathOptions,
+    );
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  - in A > B:",
+      '    - hook[19] State: undefined → "go"',
+      "    - hook[20] State: false → true",
+    ]);
+  });
+
+  it("groups hooks sharing a path after the label cut", () => {
+    const lines = buildCommitSectionLines(
+      [
+        makeChange("Foo", [
+          { ...stringHook, hookPath: ['State("x")', "Store", "State"] },
+          { ...stringHook, hookIndex: 20, hookPath: ['State("x")', "Other", "State"] },
+        ]),
+      ],
+      pathOptions,
+    );
+
+    expect(lines.slice(1, 2)).toEqual(['  - in State("x"):']);
+  });
+
+  it("keeps a lone hook and non-adjacent same paths inline", () => {
+    const lines = buildCommitSectionLines(
+      [
+        makeChange("Foo", [
+          { ...stringHook, hookIndex: 1, hookPath: ["A", "State"], next: 1 },
+          { ...stringHook, hookIndex: 2, hookPath: ["B", "State"], next: 2 },
+          { ...stringHook, hookIndex: 3, hookPath: ["A", "State"], next: 3 },
+        ]),
+      ],
+      pathOptions,
+    );
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  - hook[1] State (in A): undefined → 1",
+      "  - hook[2] State (in B): undefined → 2",
+      "  - hook[3] State (in A): undefined → 3",
+    ]);
+  });
+
+  it("prints no group for hooks without a path", () => {
+    const lines = buildCommitSectionLines(
+      [
+        makeChange("Foo", [
+          { hookIndex: 0, hookName: "State", hookPath: ["State"], prev: 0, next: 1 },
+          { hookIndex: 1, hookName: "State", prev: 0, next: 1 },
+        ]),
+      ],
+      pathOptions,
+    );
+
+    expect(lines).toEqual(["- Foo:", "  - hook[0] State: 0 → 1", "  - hook[1] State: 0 → 1"]);
+  });
+
+  it("moves field and source rows one level deeper with their hook", () => {
+    const lines = buildCommitSectionLines([makeChange("Foo", [stringHook, objectHook])], {
+      ...pathOptions,
+      includeSource: true,
+    });
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  - in A > B:",
+      '    - hook[19] State: undefined → "go"',
+      "      Source: Unavailable",
+      "    - hook[20] State: changed fields:",
+      "        x: 0 → 1",
+      "      Source: Unavailable",
+    ]);
+  });
+
+  it("nests the group under the hooks reason beside another reason", () => {
+    const lines = buildCommitSectionLines(
+      [makeChange("Foo", [stringHook, objectHook], 0, { props: ["label"] })],
+      { ...allRenders, includeSource: true },
+    );
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  • Hooks changed:",
+      "    - in A > B:",
+      '      - hook[19] State: undefined → "go"',
+      "        Source: Unavailable",
+      "      - hook[20] State: changed fields:",
+      "          x: 0 → 1",
+      "        Source: Unavailable",
+      "  • Props changed: (label)",
+    ]);
+  });
+
+  it("keeps the group's relative indent with no reason label", () => {
+    const lines = buildCommitSectionLines(
+      [makeChange("Foo", [stringHook, objectHook])],
+      allRenders,
+    );
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  - in A > B:",
+      '    - hook[19] State: undefined → "go"',
+      "    - hook[20] State: changed fields:",
+      "        x: 0 → 1",
+    ]);
+  });
+
+  it("keeps the group's relative indent with includeAllRenders off", () => {
+    const lines = buildCommitSectionLines(
+      [makeChange("Foo", [stringHook, objectHook], 0, { props: ["label"] })],
+      { ...pathOptions, includeSource: true },
+    );
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  - in A > B:",
+      '    - hook[19] State: undefined → "go"',
+      "      Source: Unavailable",
+      "    - hook[20] State: changed fields:",
+      "        x: 0 → 1",
+      "      Source: Unavailable",
+    ]);
+  });
+
+  it.each([
+    ["under the hooks reason", { props: ["label"] }, true],
+    ["without the hooks reason", {}, true],
+    ["with includeAllRenders off", { props: ["label"] }, false],
+  ] satisfies [string, Partial<CommittedFiberChange>, boolean][])(
+    "prints no trace of the group with includeHookPath off, %s",
+    (_label, overrides, includeAllRenders) => {
+      const off = {
+        ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS,
+        includeAllRenders,
+        includeHookPath: false,
+        includeSource: true,
+      };
+      const withPath = [stringHook, objectHook];
+      const withoutPath = withPath.map((hook) => ({ ...hook, hookPath: undefined }));
+
+      expect(buildCommitSectionLines([makeChange("Foo", withPath, 0, overrides)], off)).toEqual(
+        buildCommitSectionLines([makeChange("Foo", withoutPath, 0, overrides)], off),
+      );
+    },
+  );
+
+  it("keeps a multi-line label whole on the group line", () => {
+    const frame = 'State("line one\nline two")';
+    const text = printCommitHistory(
+      buildCommitHistoryLines([
+        [
+          makeChange("Foo", [
+            { ...stringHook, hookPath: [frame, "Store", "State"] },
+            { ...stringHook, hookIndex: 20, hookPath: [frame, "Store", "State"] },
+          ]),
+        ],
+      ]),
+      pathOptions,
+    );
+
+    expect(text).toContain(`  - in ${frame}:\n    - hook[19] State`);
   });
 });
