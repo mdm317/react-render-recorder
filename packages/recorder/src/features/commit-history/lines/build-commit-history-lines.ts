@@ -10,16 +10,19 @@ export type HistorySummary = {
   commitCount: number;
   // every rendered component, not just the hook-changed ones
   renderedComponentCount: number;
+  mountedComponentCount: number;
   // sums every fiber, not just the hook-changed components; null when no fiber rendered
   totalDurationMs: number | null;
 };
 
 // one entry per logical line, holding facts only; the printer decides how each one is shown.
-// Components within a commit are sorted by descending selfDuration.
+// Within a commit the mounted line comes first, then components by descending selfDuration.
 export type HistoryLine =
   | { kind: "commit"; commitNumber: number }
   // no component in the commit changed a hook
   | { kind: "no-hook-changes" }
+  // the components rendering for the first time in the commit; instanceCount sums the group counts
+  | { kind: "mounted"; instanceCount: number; components: MountedGroup[] }
   | {
       kind: "component";
       displayName: string | null;
@@ -41,6 +44,8 @@ export type HistoryLine =
   | { kind: "field"; path: string; prev: unknown; next: unknown }
   | { kind: "source"; source: HookSourceResolution };
 
+export type MountedGroup = { displayName: string | null; count: number; selfDuration: number };
+
 export type HookChangeSummary =
   | { kind: "replaced"; prev: unknown; next: unknown }
   | { kind: "changed-fields" }
@@ -48,7 +53,6 @@ export type HookChangeSummary =
 
 // mirrors react-devtools-shared Profiler/WhatChanged.js
 export type RenderReason =
-  | { kind: "first-mount" }
   // keys: null when React only reports that some context changed
   | { kind: "context-changed"; keys: string[] | null }
   // hookCount: the hook lines that follow
@@ -85,6 +89,23 @@ function buildComponentLine(component: CommitHistoryFiberChange): HistoryLine {
   };
 }
 
+// one group per exact display name, slowest total first; null when nothing mounted
+function buildMountedLine(mounted: CommitHistoryFiberChange[]): HistoryLine | null {
+  if (mounted.length === 0) return null;
+  const groupsByName = new Map<string | null, MountedGroup>();
+  for (const { displayName, selfDuration } of mounted) {
+    const group = groupsByName.get(displayName);
+    if (group == null) {
+      groupsByName.set(displayName, { displayName, count: 1, selfDuration });
+    } else {
+      group.count += 1;
+      group.selfDuration += selfDuration;
+    }
+  }
+  const components = [...groupsByName.values()].sort((a, b) => b.selfDuration - a.selfDuration);
+  return { kind: "mounted", instanceCount: mounted.length, components };
+}
+
 // the hook line followed by one field line per changed field
 function buildHookChangedLines(hook: CommitHistoryHookChange): HistoryLine[] {
   const { hookName, ancestorPath } = splitHookPath(hook);
@@ -109,8 +130,6 @@ function buildRenderReasonLine(reason: RenderReason): HistoryLine {
 // the lines under a component line: render reasons in WhatChanged.js order
 // (context → hooks → props → state, falling back to the parent), hook lines under the hooks reason
 function buildComponentChangeLines(component: CommitHistoryFiberChange): HistoryLine[] {
-  if (component.isFirstMount) return [buildRenderReasonLine({ kind: "first-mount" })];
-
   const lines: HistoryLine[] = [];
   const { context } = component;
   if (context === true || (Array.isArray(context) && context.length > 0)) {
@@ -137,15 +156,18 @@ function buildComponentChangeLines(component: CommitHistoryFiberChange): History
 function buildHistorySummary(fiberChangesByCommit: CommitHistoryFiberChange[][]): HistorySummary {
   let totalDurationMs: number | null = null;
   let renderedComponentCount = 0;
+  let mountedComponentCount = 0;
   for (const fiberChanges of fiberChangesByCommit) {
     renderedComponentCount += fiberChanges.length;
     for (const change of fiberChanges) {
       totalDurationMs = (totalDurationMs ?? 0) + change.selfDuration;
+      if (change.isFirstMount) mountedComponentCount += 1;
     }
   }
   return {
     commitCount: fiberChangesByCommit.length,
     renderedComponentCount,
+    mountedComponentCount,
     totalDurationMs,
   };
 }
@@ -162,7 +184,10 @@ export function buildCommitHistoryLines(
       lines.push({ kind: "no-hook-changes" });
     }
 
-    for (const component of components) {
+    const mountedLine = buildMountedLine(components.filter((change) => change.isFirstMount));
+    if (mountedLine != null) lines.push(mountedLine);
+
+    for (const component of components.filter((change) => !change.isFirstMount)) {
       lines.push(buildComponentLine(component), ...buildComponentChangeLines(component));
     }
   }

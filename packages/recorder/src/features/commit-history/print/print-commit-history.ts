@@ -3,6 +3,7 @@ import type {
   CommitHistoryLines,
   HookChangeSummary,
   HistoryLine,
+  MountedGroup,
   RenderReason,
 } from "@/features/commit-history/lines/build-commit-history-lines";
 import { formatDurationMsInline } from "@/utils/format-duration";
@@ -23,8 +24,6 @@ function printChangeSummary(changeSummary: HookChangeSummary): string {
 // same wording as react-devtools-shared Profiler/WhatChanged.js; keys follow its " (a, b)" style
 function printRenderReason(reason: RenderReason): string {
   switch (reason.kind) {
-    case "first-mount":
-      return "This is the first time the component rendered.";
     case "context-changed":
       return reason.keys == null
         ? "• Context changed"
@@ -41,6 +40,16 @@ function printRenderReason(reason: RenderReason): string {
   }
 }
 
+function printDurationSuffix(selfDuration: number, options: CommitHistoryFormatOptions): string {
+  return options.includeRenderDuration ? ` (${formatDurationMsInline(selfDuration)})` : "";
+}
+
+function printMountedGroup(group: MountedGroup, options: CommitHistoryFormatOptions): string {
+  const countText = group.count >= 2 ? `×${group.count}` : "";
+  const durationSuffix = printDurationSuffix(group.selfDuration, options);
+  return `${formatDisplayName(group.displayName)}${countText}${durationSuffix}`;
+}
+
 function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): string[] {
   // hook lines nest under the "• Hooks changed:" reason when every render is listed
   const hookIndent = options.includeAllRenders ? "  " : "";
@@ -49,11 +58,14 @@ function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): str
       return ["", `## Commit ${line.commitNumber}`];
     case "no-hook-changes":
       return options.includeAllRenders ? [] : ["(no hook changes)"];
+    case "mounted": {
+      if (!options.includeAllRenders) return [];
+      const groups = line.components.map((group) => printMountedGroup(group, options));
+      return [`- Mounted (${line.instanceCount}): ${groups.join(", ")}`];
+    }
     case "component": {
       if (!line.hookChanged && !options.includeAllRenders) return [];
-      const durationSuffix = options.includeRenderDuration
-        ? ` (${formatDurationMsInline(line.selfDuration)})`
-        : "";
+      const durationSuffix = printDurationSuffix(line.selfDuration, options);
       return [`- ${formatDisplayName(line.displayName)}${durationSuffix}:`];
     }
     case "hook": {
@@ -86,7 +98,7 @@ export function printCommitHistory(
   const { summary } = historyLines;
   return [
     "## Summary",
-    `${summary.commitCount} commits, ${summary.renderedComponentCount} components rendered`,
+    `${summary.commitCount} commits, ${summary.renderedComponentCount} components rendered (${summary.mountedComponentCount} mounted)`,
     `${formatDurationMsInline(summary.totalDurationMs)} total render time`,
     // each history line expands to zero or more text lines depending on options
     ...historyLines.lines.flatMap((line) => printLines(line, options)),

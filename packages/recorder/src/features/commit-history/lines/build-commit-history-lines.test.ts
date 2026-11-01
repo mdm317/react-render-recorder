@@ -103,6 +103,7 @@ describe("buildCommitHistoryLines", () => {
       summary: {
         commitCount: 0,
         renderedComponentCount: 0,
+        mountedComponentCount: 0,
         totalDurationMs: null,
       },
       lines: [],
@@ -230,13 +231,12 @@ describe("buildCommitHistoryLines", () => {
     ]);
   });
 
-  it.each<[string, Partial<CommittedFiberChange>]>([
-    ["first-mount", { isFirstMount: true, props: ["a"] }],
-    ["parent-rendered", { props: [], context: false }],
-  ])("emits only %s when applicable", (expected, overrides) => {
-    const historyLines = buildCommitHistoryLines([[makeChange("Foo", null, 0, overrides)]]);
+  it("emits only parent-rendered when no other reason applies", () => {
+    const historyLines = buildCommitHistoryLines([
+      [makeChange("Foo", null, 0, { props: [], context: false })],
+    ]);
 
-    expect(renderReasons(historyLines.lines)).toEqual([expected]);
+    expect(renderReasons(historyLines.lines)).toEqual(["parent-rendered"]);
   });
 
   it("marks a hooks reason without resolved hook lines", () => {
@@ -247,6 +247,103 @@ describe("buildCommitHistoryLines", () => {
     expect(historyLines.lines).toContainEqual({
       kind: "render-reason",
       reason: { kind: "hooks-changed", hookCount: 0 },
+    });
+  });
+
+  describe("mounted line", () => {
+    const mount = (displayName: string | null, selfDuration = 0) =>
+      makeChange(displayName, null, selfDuration, { isFirstMount: true });
+
+    function mountedLines(lines: HistoryLine[]): HistoryLine[] {
+      return lines.filter((line) => line.kind === "mounted");
+    }
+
+    it("groups by exact display name, summing count and selfDuration", () => {
+      const historyLines = buildCommitHistoryLines([
+        [mount("ForwardRef(Guard)", 0.5), mount("Guard", 1), mount("ForwardRef(Guard)", 0.25)],
+      ]);
+
+      expect(mountedLines(historyLines.lines)).toEqual([
+        {
+          kind: "mounted",
+          instanceCount: 3,
+          components: [
+            { displayName: "Guard", count: 1, selfDuration: 1 },
+            { displayName: "ForwardRef(Guard)", count: 2, selfDuration: 0.75 },
+          ],
+        },
+      ]);
+    });
+
+    it("sorts groups by summed selfDuration, not by their slowest instance", () => {
+      const historyLines = buildCommitHistoryLines([
+        [mount("Single", 3), mount("Pair", 2), mount("Pair", 2)],
+      ]);
+
+      expect(mountedLines(historyLines.lines)).toMatchObject([
+        { components: [{ displayName: "Pair" }, { displayName: "Single" }] },
+      ]);
+    });
+
+    it("keeps a null display name raw and groups nameless components together", () => {
+      const historyLines = buildCommitHistoryLines([[mount(null), mount(null)]]);
+
+      expect(mountedLines(historyLines.lines)).toMatchObject([
+        { components: [{ displayName: null, count: 2 }] },
+      ]);
+    });
+
+    it("sits right below the commit header, before re-rendered components", () => {
+      const historyLines = buildCommitHistoryLines([
+        [makeChange("Slow", STATE_HOOK, 5), mount("Fast", 1)],
+      ]);
+
+      expect(historyLines.lines.slice(0, 3).map((line) => line.kind)).toEqual([
+        "commit",
+        "mounted",
+        "component",
+      ]);
+      expect(componentNames(historyLines.lines)).toEqual(["Slow"]);
+    });
+
+    it("is omitted when nothing mounted in the commit", () => {
+      const historyLines = buildCommitHistoryLines([
+        [mount("A")],
+        [makeChange("B", STATE_HOOK), makeChange("C", null)],
+      ]);
+
+      expect(mountedLines(historyLines.lines)).toHaveLength(1);
+    });
+
+    it("emits neither a component line nor reasons for a mounted component", () => {
+      const historyLines = buildCommitHistoryLines([
+        [makeChange("Foo", null, 0, { isFirstMount: true, props: ["a"] })],
+      ]);
+
+      expect(componentNames(historyLines.lines)).toEqual([]);
+      expect(renderReasons(historyLines.lines)).toEqual([]);
+    });
+
+    it("decides no-hook-changes from the full component list", () => {
+      const onlyMounts = buildCommitHistoryLines([[mount("A")]]);
+      const mountAndHookChange = buildCommitHistoryLines([
+        [mount("A"), makeChange("B", STATE_HOOK)],
+      ]);
+
+      expect(onlyMounts.lines[1]).toEqual({ kind: "no-hook-changes" });
+      expect(mountAndHookChange.lines).not.toContainEqual({ kind: "no-hook-changes" });
+    });
+
+    it("counts mounted instances across commits in the summary", () => {
+      const historyLines = buildCommitHistoryLines([
+        [mount("A"), mount("A"), makeChange("B", STATE_HOOK)],
+        [mount("C")],
+      ]);
+
+      expect(historyLines.summary).toMatchObject({
+        renderedComponentCount: 4,
+        mountedComponentCount: 3,
+      });
     });
   });
 });

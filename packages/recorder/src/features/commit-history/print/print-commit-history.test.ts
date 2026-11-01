@@ -394,14 +394,13 @@ describe("print-commit-history with includeAllRenders", () => {
     );
 
     expect(lines).toEqual([
+      "- Mounted (1): Mounted",
       "- Parent:",
       "  • Hook changed:",
       "    - hook[0] State: 0 → 1",
       "  • Props changed: (value, onClick)",
       "- Leaf:",
       "  The parent component rendered.",
-      "- Mounted:",
-      "  This is the first time the component rendered.",
       "- Consumer:",
       "  • Context changed",
       "- ClassComp:",
@@ -458,7 +457,7 @@ describe("print-commit-history with includeAllRenders", () => {
     const countLine = (formatOptions: CommitHistoryFormatOptions) =>
       printCommitHistory(historyLines, formatOptions).split("\n")[1];
 
-    const expected = "1 commits, 2 components rendered";
+    const expected = "1 commits, 2 components rendered (0 mounted)";
     expect(countLine(DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS)).toBe(expected);
     expect(countLine(options)).toBe(expected);
   });
@@ -476,6 +475,82 @@ describe("print-commit-history with includeAllRenders", () => {
       "        x: 0 → 1",
       "      Source: Unavailable",
     ]);
+  });
+});
+
+describe("print-commit-history mounted line", () => {
+  const options = { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, includeAllRenders: true };
+  const mount = (displayName: string, selfDuration = 0) =>
+    makeChange(displayName, [], selfDuration, { isFirstMount: true });
+
+  it("collapses repeated names and keeps wrappers, slowest group first", () => {
+    const lines = buildCommitSectionLines(
+      [
+        mount("MenuItem", 0.1),
+        mount("ForwardRef(FocusGuard)", 0.1),
+        mount("ForwardRef(FocusGuard)", 0.1),
+      ],
+      options,
+    );
+
+    expect(lines).toEqual(["- Mounted (3): ForwardRef(FocusGuard)×2, MenuItem"]);
+  });
+
+  it("prints above re-rendered components even when they are slower", () => {
+    const lines = buildCommitSectionLines([makeChange("Leaf", [], 5), mount("Fast", 1)], options);
+
+    expect(lines).toEqual(["- Mounted (1): Fast", "- Leaf:", "  The parent component rendered."]);
+  });
+
+  it("omits the line when nothing mounted", () => {
+    const lines = buildCommitSectionLines([makeChange("Leaf", [], 0)], options);
+
+    expect(lines.some((line) => line.includes("Mounted"))).toBe(false);
+  });
+
+  it("shows each group's summed time with includeRenderDuration", () => {
+    const lines = buildCommitSectionLines(
+      [
+        mount("ForwardRef(FocusGuard)", 0.1),
+        mount("ForwardRef(FocusGuard)", 0.1),
+        mount("Menu", 0.15),
+      ],
+      { ...options, includeRenderDuration: true },
+    );
+
+    expect(lines).toEqual(["- Mounted (3): ForwardRef(FocusGuard)×2 (0.20ms), Menu (0.15ms)"]);
+  });
+
+  it("prints nameless components as Anonymous", () => {
+    const anonymous = { ...mount("Foo"), displayName: null };
+
+    expect(buildCommitSectionLines([anonymous, anonymous], options)).toEqual([
+      "- Mounted (2): Anonymous×2",
+    ]);
+  });
+
+  it("prints nothing with includeAllRenders off, leaving the hook output unchanged", () => {
+    const hookChange = makeChange("Parent", [
+      { hookIndex: 0, hookName: "State", prev: 0, next: 1 },
+    ]);
+
+    expect(buildCommitSectionLines([mount("A"), mount("A")])).toEqual(["(no hook changes)"]);
+    expect(buildCommitSectionLines([mount("A", 1), hookChange])).toEqual([
+      "- Parent:",
+      "  - hook[0] State: 0 → 1",
+    ]);
+  });
+
+  it("reports the mounted count in the summary regardless of options", () => {
+    const historyLines = buildCommitHistoryLines([
+      [mount("A"), mount("A"), makeChange("Leaf", [])],
+    ]);
+    const countLine = (formatOptions: CommitHistoryFormatOptions) =>
+      printCommitHistory(historyLines, formatOptions).split("\n")[1];
+
+    const expected = "1 commits, 3 components rendered (2 mounted)";
+    expect(countLine(DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS)).toBe(expected);
+    expect(countLine(options)).toBe(expected);
   });
 });
 
