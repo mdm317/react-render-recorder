@@ -15,4 +15,7 @@ test-results
 playwright-report
 .claude/*
 !.claude/settings.local.json
+!.claude/react-recorder/
+!.claude/agents/
+!.claude/commands/
 .vscode
