@@ -49,6 +49,14 @@ function renderReasons(lines: HistoryLine[]): string[] {
   return lines.flatMap((line) => (line.kind === "render-reason" ? [line.reason.kind] : []));
 }
 
+function hookFacts(lines: HistoryLine[]): boolean[] {
+  return lines.flatMap((line) =>
+    line.kind === "hook" || line.kind === "field" || line.kind === "source"
+      ? [line.underHooksReason]
+      : [],
+  );
+}
+
 describe("buildCommitHistoryLines", () => {
   it("emits every component, flagging those with at least one hook change", () => {
     const historyLines = buildCommitHistoryLines([
@@ -150,16 +158,16 @@ describe("buildCommitHistoryLines", () => {
         hookChanged: true,
         selfDuration: 0.5,
       },
-      { kind: "render-reason", reason: { kind: "hooks-changed", hookCount: 1 } },
       {
         kind: "hook",
+        underHooksReason: false,
         hookIndex: 0,
         hookName: "State",
         ancestorPath: [],
         changeSummary: { kind: "changed-fields" },
       },
-      { kind: "field", path: "x", prev: 0, next: 1 },
-      { kind: "source", source: { status: "unavailable" } },
+      { kind: "field", path: "x", prev: 0, next: 1, underHooksReason: false },
+      { kind: "source", source: { status: "unavailable" }, underHooksReason: false },
     ]);
   });
 
@@ -248,5 +256,54 @@ describe("buildCommitHistoryLines", () => {
       kind: "render-reason",
       reason: { kind: "hooks-changed", hookCount: 0 },
     });
+  });
+
+  it("marks hookCount 0 beside another reason", () => {
+    const historyLines = buildCommitHistoryLines([
+      [makeChange("Foo", [], 0, { didHooksChange: true, props: ["a"] })],
+    ]);
+
+    expect(renderReasons(historyLines.lines)).toEqual(["hooks-changed", "props-changed"]);
+  });
+
+  it("omits the hooks reason when hook lines are the only reason", () => {
+    const historyLines = buildCommitHistoryLines([
+      [makeChange("Foo", [{ hookIndex: 0, hookName: "State", prev: { x: 0 }, next: { x: 1 } }])],
+    ]);
+
+    expect(renderReasons(historyLines.lines)).toEqual([]);
+    expect(hookFacts(historyLines.lines)).toEqual([false, false, false]);
+  });
+
+  it.each<[string, Partial<CommittedFiberChange>, string[]]>([
+    ["context", { context: true }, ["context-changed", "hooks-changed"]],
+    ["context keys", { context: ["theme"] }, ["context-changed", "hooks-changed"]],
+    ["props", { props: ["a"] }, ["hooks-changed", "props-changed"]],
+    ["state", { state: ["b"] }, ["hooks-changed", "state-changed"]],
+  ])("keeps the hooks reason beside %s", (_label, overrides, expected) => {
+    const historyLines = buildCommitHistoryLines([
+      [
+        makeChange(
+          "Foo",
+          [{ hookIndex: 0, hookName: "State", prev: { x: 0 }, next: { x: 1 } }],
+          0,
+          overrides,
+        ),
+      ],
+    ]);
+
+    expect(renderReasons(historyLines.lines)).toEqual(expected);
+    expect(hookFacts(historyLines.lines)).toEqual([true, true, true]);
+  });
+
+  it.each<[string, Partial<CommittedFiberChange>]>([
+    ["false context", { context: false }],
+    ["empty context keys", { context: [] }],
+    ["empty props", { props: [] }],
+    ["empty state", { state: [] }],
+  ])("treats %s as no other reason", (_label, overrides) => {
+    const historyLines = buildCommitHistoryLines([[makeChange("Foo", STATE_HOOK, 0, overrides)]]);
+
+    expect(renderReasons(historyLines.lines)).toEqual([]);
   });
 });
