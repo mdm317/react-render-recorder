@@ -151,16 +151,16 @@ describe("buildCommitHistoryLines", () => {
         hookChanged: true,
         selfDuration: 0.5,
       },
-      { kind: "render-reason", reason: { kind: "hooks-changed", hookCount: 1 } },
       {
         kind: "hook",
         hookIndex: 0,
         hookName: "State",
         ancestorPath: [],
         changeSummary: { kind: "changed-fields" },
+        underHooksReason: false,
       },
-      { kind: "field", path: "x", prev: 0, next: 1 },
-      { kind: "source", source: { status: "unavailable" } },
+      { kind: "field", path: "x", prev: 0, next: 1, underHooksReason: false },
+      { kind: "source", source: { status: "unavailable" }, underHooksReason: false },
     ]);
   });
 
@@ -237,6 +237,61 @@ describe("buildCommitHistoryLines", () => {
     ]);
 
     expect(renderReasons(historyLines.lines)).toEqual(["parent-rendered"]);
+  });
+
+  it("omits the hooks reason when hook lines are the only reason", () => {
+    const hooks = [...STATE_HOOK, { hookIndex: 1, hookName: "State", prev: "a", next: "b" }];
+    const historyLines = buildCommitHistoryLines([[makeChange("Foo", hooks)]]);
+
+    expect(renderReasons(historyLines.lines)).toEqual([]);
+    expect(historyLines.lines.slice(2).map((line) => line.kind)).toEqual([
+      "hook",
+      "source",
+      "hook",
+      "source",
+    ]);
+  });
+
+  it.each([
+    ["context", { context: true }, "context-changed"],
+    ["context keys", { context: ["theme"] }, "context-changed"],
+    ["props", { props: ["a"] }, "props-changed"],
+    ["state", { state: ["b"] }, "state-changed"],
+  ] satisfies [string, Partial<CommittedFiberChange>, string][])(
+    "keeps the hooks reason and marks hook lines under it beside %s",
+    (_, overrides, otherReason) => {
+      const historyLines = buildCommitHistoryLines([
+        [
+          makeChange(
+            "Foo",
+            [{ hookIndex: 0, hookName: "State", prev: { x: 0 }, next: { x: 1 } }],
+            0,
+            overrides,
+          ),
+        ],
+      ]);
+
+      expect(renderReasons(historyLines.lines).sort()).toEqual(
+        ["hooks-changed", otherReason].sort(),
+      );
+      expect(historyLines.lines).toContainEqual({
+        kind: "render-reason",
+        reason: { kind: "hooks-changed", hookCount: 1 },
+      });
+      const hookRows = historyLines.lines.filter(
+        (line) => line.kind === "hook" || line.kind === "field" || line.kind === "source",
+      );
+      expect(hookRows.map((line) => line.kind)).toEqual(["hook", "field", "source"]);
+      expect(hookRows.every((line) => line.underHooksReason)).toBe(true);
+    },
+  );
+
+  it("treats empty context, props and state as no other reason", () => {
+    const historyLines = buildCommitHistoryLines([
+      [makeChange("Foo", STATE_HOOK, 0, { context: [], props: [], state: [] })],
+    ]);
+
+    expect(renderReasons(historyLines.lines)).toEqual([]);
   });
 
   it("marks a hooks reason without resolved hook lines", () => {

@@ -37,12 +37,14 @@ export type HistoryLine =
       // empty when the hook has no ancestor hooks
       ancestorPath: string[];
       changeSummary: HookChangeSummary;
+      // true: the hooks-changed reason line heads this hook
+      underHooksReason: boolean;
     }
   // follows its component in DevTools' "Why did this render?" order
   | { kind: "render-reason"; reason: RenderReason }
   // follows a hook line whose changeSummary is "changed-fields"
-  | { kind: "field"; path: string; prev: unknown; next: unknown }
-  | { kind: "source"; source: HookSourceResolution };
+  | { kind: "field"; path: string; prev: unknown; next: unknown; underHooksReason: boolean }
+  | { kind: "source"; source: HookSourceResolution; underHooksReason: boolean };
 
 export type MountedGroup = { displayName: string | null; count: number; selfDuration: number };
 
@@ -107,7 +109,10 @@ function buildMountedLine(mounted: CommitHistoryFiberChange[]): HistoryLine | nu
 }
 
 // the hook line followed by one field line per changed field
-function buildHookChangedLines(hook: CommitHistoryHookChange): HistoryLine[] {
+function buildHookChangedLines(
+  hook: CommitHistoryHookChange,
+  underHooksReason: boolean,
+): HistoryLine[] {
   const { hookName, ancestorPath } = splitHookPath(hook);
   const valueChange = buildValueChange(hook.prev, hook.next);
   const lines: HistoryLine[] = [
@@ -117,9 +122,12 @@ function buildHookChangedLines(hook: CommitHistoryHookChange): HistoryLine[] {
       hookName,
       ancestorPath,
       changeSummary: buildChangeSummary(valueChange),
+      underHooksReason,
     },
   ];
-  for (const diff of valueChange.diffs ?? []) lines.push({ kind: "field", ...diff });
+  for (const diff of valueChange.diffs ?? []) {
+    lines.push({ kind: "field", ...diff, underHooksReason });
+  }
   return lines;
 }
 
@@ -128,26 +136,40 @@ function buildRenderReasonLine(reason: RenderReason): HistoryLine {
 }
 
 // the lines under a component line: render reasons in WhatChanged.js order
-// (context → hooks → props → state, falling back to the parent), hook lines under the hooks reason
+// (context → hooks → props → state, falling back to the parent); hook lines follow the hooks
+// reason, or stand alone when it is the only reason
 function buildComponentChangeLines(component: CommitHistoryFiberChange): HistoryLine[] {
+  const { context, props, state } = component;
+  const contextChanged = context === true || (Array.isArray(context) && context.length > 0);
+  const propsChanged = props != null && props.length > 0;
+  const stateChanged = state != null && state.length > 0;
+
   const lines: HistoryLine[] = [];
-  const { context } = component;
-  if (context === true || (Array.isArray(context) && context.length > 0)) {
+  if (contextChanged) {
     const keys = context === true ? null : context;
     lines.push(buildRenderReasonLine({ kind: "context-changed", keys }));
   }
   if (component.didHooksChange) {
     const hooks = component.hooks ?? [];
-    lines.push(buildRenderReasonLine({ kind: "hooks-changed", hookCount: hooks.length }));
+    // hook lines already say why it rendered: the reason only separates them from other reasons,
+    // or stands in for them when none resolved
+    const underHooksReason = hooks.length === 0 || contextChanged || propsChanged || stateChanged;
+    if (underHooksReason) {
+      lines.push(buildRenderReasonLine({ kind: "hooks-changed", hookCount: hooks.length }));
+    }
     for (const hook of hooks) {
-      lines.push(...buildHookChangedLines(hook), { kind: "source", source: hook.source });
+      lines.push(...buildHookChangedLines(hook, underHooksReason), {
+        kind: "source",
+        source: hook.source,
+        underHooksReason,
+      });
     }
   }
-  if (component.props != null && component.props.length > 0) {
-    lines.push(buildRenderReasonLine({ kind: "props-changed", keys: component.props }));
+  if (propsChanged) {
+    lines.push(buildRenderReasonLine({ kind: "props-changed", keys: props }));
   }
-  if (component.state != null && component.state.length > 0) {
-    lines.push(buildRenderReasonLine({ kind: "state-changed", keys: component.state }));
+  if (stateChanged) {
+    lines.push(buildRenderReasonLine({ kind: "state-changed", keys: state }));
   }
   if (lines.length === 0) lines.push(buildRenderReasonLine({ kind: "parent-rendered" }));
   return lines;

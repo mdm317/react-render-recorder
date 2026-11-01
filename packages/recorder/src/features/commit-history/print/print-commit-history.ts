@@ -50,9 +50,12 @@ function printMountedGroup(group: MountedGroup, options: CommitHistoryFormatOpti
   return `${formatDisplayName(group.displayName)}${countText}${durationSuffix}`;
 }
 
+// hook lines nest under the "• Hooks changed:" reason only while that reason is printed
+function printHookIndent(underHooksReason: boolean, options: CommitHistoryFormatOptions): string {
+  return underHooksReason && options.includeAllRenders ? "  " : "";
+}
+
 function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): string[] {
-  // hook lines nest under the "• Hooks changed:" reason when every render is listed
-  const hookIndent = options.includeAllRenders ? "  " : "";
   switch (line.kind) {
     case "commit":
       return ["", `## Commit ${line.commitNumber}`];
@@ -75,18 +78,20 @@ function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): str
       const label =
         ancestorPathText == null ? line.hookName : `${line.hookName} (in ${ancestorPathText})`;
       return [
-        `${hookIndent}  - hook[${line.hookIndex}] ${label}: ${printChangeSummary(line.changeSummary)}`,
+        `${printHookIndent(line.underHooksReason, options)}  - hook[${line.hookIndex}] ${label}: ${printChangeSummary(line.changeSummary)}`,
       ];
     }
     case "render-reason":
       return options.includeAllRenders ? [`  ${printRenderReason(line.reason)}`] : [];
     case "field":
       return [
-        `${hookIndent}      ${line.path}: ${formatValueForLLM(line.prev)} → ${formatValueForLLM(line.next)}`,
+        `${printHookIndent(line.underHooksReason, options)}      ${line.path}: ${formatValueForLLM(line.prev)} → ${formatValueForLLM(line.next)}`,
       ];
     case "source":
       return options.includeSource
-        ? [`${hookIndent}    Source: ${formatHookSource(line.source)}`]
+        ? [
+            `${printHookIndent(line.underHooksReason, options)}    Source: ${formatHookSource(line.source)}`,
+          ]
         : [];
   }
 }

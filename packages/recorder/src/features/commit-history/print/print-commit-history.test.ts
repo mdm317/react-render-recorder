@@ -462,19 +462,94 @@ describe("print-commit-history with includeAllRenders", () => {
     expect(countLine(options)).toBe(expected);
   });
 
-  it("indents field and source lines under the hooks reason", () => {
-    const lines = buildCommitSectionLines(
-      [makeChange("Foo", [{ hookIndex: 0, hookName: "State", prev: { x: 0 }, next: { x: 1 } }])],
-      { ...options, includeSource: true },
-    );
+  describe("hooks reason", () => {
+    const objectHook = { hookIndex: 0, hookName: "State", prev: { x: 0 }, next: { x: 1 } };
+    const stringHook = { hookIndex: 1, hookName: "State", prev: "a", next: "b" };
+    const sourceOptions = { ...options, includeSource: true };
 
-    expect(lines).toEqual([
-      "- Foo:",
-      "  • Hook changed:",
-      "    - hook[0] State: changed fields:",
-      "        x: 0 → 1",
-      "      Source: Unavailable",
-    ]);
+    it("drops the label when a hook change is the only reason", () => {
+      const lines = buildCommitSectionLines(
+        [makeChange("Foo", [{ hookIndex: 0, hookName: "State", prev: 0, next: 1 }])],
+        options,
+      );
+
+      expect(lines).toEqual(["- Foo:", "  - hook[0] State: 0 → 1"]);
+    });
+
+    it("drops the plural label and keeps field and source lines beside their hook", () => {
+      const lines = buildCommitSectionLines(
+        [makeChange("Foo", [objectHook, stringHook])],
+        sourceOptions,
+      );
+
+      expect(lines).toEqual([
+        "- Foo:",
+        "  - hook[0] State: changed fields:",
+        "      x: 0 → 1",
+        "    Source: Unavailable",
+        '  - hook[1] State: "a" → "b"',
+        "    Source: Unavailable",
+      ]);
+    });
+
+    it("keeps the label and indents hook, field and source lines beside props", () => {
+      const lines = buildCommitSectionLines(
+        [makeChange("Foo", [objectHook], 0, { props: ["label"] })],
+        sourceOptions,
+      );
+
+      expect(lines).toEqual([
+        "- Foo:",
+        "  • Hook changed:",
+        "    - hook[0] State: changed fields:",
+        "        x: 0 → 1",
+        "      Source: Unavailable",
+        "  • Props changed: (label)",
+      ]);
+    });
+
+    it("keeps the plural label beside context and state", () => {
+      const lines = buildCommitSectionLines(
+        [makeChange("Foo", [objectHook, stringHook], 0, { context: true, state: ["count"] })],
+        options,
+      );
+
+      expect(lines).toEqual([
+        "- Foo:",
+        "  • Context changed",
+        "  • Hooks changed:",
+        "    - hook[0] State: changed fields:",
+        "        x: 0 → 1",
+        '    - hook[1] State: "a" → "b"',
+        "  • State changed: (count)",
+      ]);
+    });
+
+    it("keeps the colonless label when no hook lines resolved", () => {
+      const lines = buildCommitSectionLines(
+        [makeChange("Foo", [], 0, { didHooksChange: true })],
+        options,
+      );
+
+      expect(lines).toEqual(["- Foo:", "  • Hooks changed"]);
+    });
+
+    it("prints hook lines at the same indent with includeAllRenders off", () => {
+      const lines = (overrides: Partial<CommittedFiberChange>) =>
+        buildCommitSectionLines([makeChange("Foo", [objectHook], 0, overrides)], {
+          ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS,
+          includeSource: true,
+        });
+      const expected = [
+        "- Foo:",
+        "  - hook[0] State: changed fields:",
+        "      x: 0 → 1",
+        "    Source: Unavailable",
+      ];
+
+      expect(lines({})).toEqual(expected);
+      expect(lines({ props: ["label"] })).toEqual(expected);
+    });
   });
 });
 
