@@ -35,11 +35,11 @@ const STATE_HOOK: NonNullable<CommittedFiberChange["hooks"]> = [
   { hookIndex: 0, hookName: "State", hookPath: ["State"], prev: 0, next: 1 },
 ];
 
-function componentNames(lines: HistoryLine[]): string[] {
+function componentNames(lines: HistoryLine[]): (string | null)[] {
   return lines.flatMap((line) => (line.kind === "component" ? [line.displayName] : []));
 }
 
-function hookChangedNames(lines: HistoryLine[]): string[] {
+function hookChangedNames(lines: HistoryLine[]): (string | null)[] {
   return lines.flatMap((line) =>
     line.kind === "component" && line.hookChanged ? [line.displayName] : [],
   );
@@ -60,13 +60,8 @@ describe("buildCommitHistoryLines", () => {
       ],
     ]);
 
-    expect(componentNames(historyLines.lines)).toEqual([
-      "Kept",
-      "EmptyHooks",
-      "NullHooks",
-      "Anonymous",
-    ]);
-    expect(hookChangedNames(historyLines.lines)).toEqual(["Kept", "Anonymous"]);
+    expect(componentNames(historyLines.lines)).toEqual(["Kept", "EmptyHooks", "NullHooks", null]);
+    expect(hookChangedNames(historyLines.lines)).toEqual(["Kept", null]);
   });
 
   it("counts every rendered component", () => {
@@ -100,15 +95,15 @@ describe("buildCommitHistoryLines", () => {
       [makeChange("B", STATE_HOOK, 2)],
     ]);
 
-    expect(historyLines.summary.totalDurationText).toBe("3.50ms");
+    expect(historyLines.summary.totalDurationMs).toBe(3.5);
   });
 
-  it("returns a placeholder total duration for empty input", () => {
+  it("returns a null total duration for empty input", () => {
     expect(buildCommitHistoryLines([])).toEqual({
       summary: {
         commitCount: 0,
         renderedComponentCount: 0,
-        totalDurationText: "—",
+        totalDurationMs: null,
       },
       lines: [],
     });
@@ -136,7 +131,7 @@ describe("buildCommitHistoryLines", () => {
     expect(commitNumbers).toEqual([1, 2]);
   });
 
-  it("emits component, hook, field and source lines gated by their options", () => {
+  it("emits component, hook, field and source lines", () => {
     const historyLines = buildCommitHistoryLines([
       [
         makeChange(
@@ -153,25 +148,25 @@ describe("buildCommitHistoryLines", () => {
         kind: "component",
         displayName: "Foo",
         hookChanged: true,
-        durationText: { option: "includeRenderDuration", value: "0.50ms" },
+        selfDuration: 0.5,
       },
       { kind: "render-reason", reason: { kind: "hooks-changed", hookCount: 1 } },
       {
         kind: "hook",
         hookIndex: 0,
         hookName: "State",
-        ancestorPathText: null,
+        ancestorPath: [],
         changeSummary: { kind: "changed-fields" },
       },
-      { kind: "field", path: "x", prev: "0", next: "1" },
-      { kind: "source", sourceText: { option: "includeSource", value: "Unavailable" } },
+      { kind: "field", path: "x", prev: 0, next: 1 },
+      { kind: "source", source: { status: "unavailable" } },
     ]);
   });
 
   it.each([
     ["equal objects", { a: 1 }, { a: 1 }, { kind: "equal" }],
-    ["primitives", 0, 1, { kind: "replaced", prev: "0", next: "1" }],
-    ["null → object", null, { a: 1 }, { kind: "replaced", prev: "null", next: "{a: 1}" }],
+    ["primitives", 0, 1, { kind: "replaced", prev: 0, next: 1 }],
+    ["null → object", null, { a: 1 }, { kind: "replaced", prev: null, next: { a: 1 } }],
   ])("builds the change summary for %s", (_label, prev, next, expected) => {
     const historyLines = buildCommitHistoryLines([
       [makeChange("Foo", [{ hookIndex: 0, hookName: "State", prev, next }])],
@@ -181,7 +176,7 @@ describe("buildCommitHistoryLines", () => {
     expect(hookLine).toMatchObject({ changeSummary: expected });
   });
 
-  it("splits hookPath into the leaf hook name and an ancestor path text", () => {
+  it("splits hookPath into the leaf hook name and its ancestor path", () => {
     const historyLines = buildCommitHistoryLines([
       [
         makeChange("Combo", [
@@ -205,17 +200,12 @@ describe("buildCommitHistoryLines", () => {
     ]);
 
     const hooks = historyLines.lines.flatMap((line) =>
-      line.kind === "hook"
-        ? [{ hookName: line.hookName, ancestorPathText: line.ancestorPathText }]
-        : [],
+      line.kind === "hook" ? [{ hookName: line.hookName, ancestorPath: line.ancestorPath }] : [],
     );
     expect(hooks).toEqual([
-      {
-        hookName: "SyncExternalStore",
-        ancestorPathText: { option: "includeHookPath", value: 'Floating, debug="root"' },
-      },
-      { hookName: "State", ancestorPathText: { option: "includeHookPath", value: "A > B" } },
-      { hookName: "Ref", ancestorPathText: null },
+      { hookName: "SyncExternalStore", ancestorPath: ['Floating("root")'] },
+      { hookName: "State", ancestorPath: ["A", "B"] },
+      { hookName: "Ref", ancestorPath: [] },
     ]);
   });
 

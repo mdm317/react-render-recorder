@@ -478,3 +478,44 @@ describe("print-commit-history with includeAllRenders", () => {
     ]);
   });
 });
+
+describe("printCommitHistory values", () => {
+  const options: CommitHistoryFormatOptions = {
+    ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS,
+    includeHookPath: true,
+    includeRenderDuration: false,
+  };
+
+  it("prints nameless components as Anonymous", () => {
+    const change = makeChange("Foo", [{ hookIndex: 0, hookName: "State", prev: 0, next: 1 }]);
+
+    expect(buildCommitSectionLines([{ ...change, displayName: null }], options)[0]).toBe(
+      "- Anonymous:",
+    );
+  });
+
+  it("prints a placeholder total duration for an empty history", () => {
+    const text = printCommitHistory(buildCommitHistoryLines([]), options);
+
+    expect(text.split("\n")[2]).toBe("— total render time");
+  });
+
+  it("parses the debug label of a single ancestor hook", () => {
+    const lines = buildCommitSectionLines(
+      [
+        makeChange("Foo", [
+          {
+            hookIndex: 0,
+            hookName: "SyncExternalStore",
+            hookPath: ['Floating("root")', "SyncExternalStore"],
+            prev: 0,
+            next: 1,
+          },
+        ]),
+      ],
+      options,
+    );
+
+    expect(lines[1]).toBe('  - hook[0] SyncExternalStore (in Floating, debug="root"): 0 → 1');
+  });
+});

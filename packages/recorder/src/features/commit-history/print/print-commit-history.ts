@@ -1,25 +1,18 @@
 import type { CommitHistoryFormatOptions } from "@/features/options/recording-option";
 import type {
   CommitHistoryLines,
-  FormatOptionKey,
   HookChangeSummary,
-  OptionGated,
   HistoryLine,
   RenderReason,
 } from "@/features/commit-history/lines/build-commit-history-lines";
-
-function valueIfEnabled(
-  gated: OptionGated<FormatOptionKey> | null,
-  options: CommitHistoryFormatOptions,
-): string | null {
-  if (gated == null || !options[gated.option]) return null;
-  return gated.value;
-}
+import { formatDurationMsInline } from "@/utils/format-duration";
+import { formatAncestorPath, formatDisplayName, formatHookSource } from "./format-label";
+import { formatHookValue, formatValueForLLM } from "./format-value";
 
 function printChangeSummary(changeSummary: HookChangeSummary): string {
   switch (changeSummary.kind) {
     case "replaced":
-      return `${changeSummary.prev} → ${changeSummary.next}`;
+      return `${formatHookValue(changeSummary.prev)} → ${formatHookValue(changeSummary.next)}`;
     case "changed-fields":
       return "changed fields:";
     case "equal":
@@ -58,11 +51,15 @@ function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): str
       return options.includeAllRenders ? [] : ["(no hook changes)"];
     case "component": {
       if (!line.hookChanged && !options.includeAllRenders) return [];
-      const durationText = valueIfEnabled(line.durationText, options);
-      return [`- ${line.displayName}${durationText == null ? "" : ` (${durationText})`}:`];
+      const durationSuffix = options.includeRenderDuration
+        ? ` (${formatDurationMsInline(line.selfDuration)})`
+        : "";
+      return [`- ${formatDisplayName(line.displayName)}${durationSuffix}:`];
     }
     case "hook": {
-      const ancestorPathText = valueIfEnabled(line.ancestorPathText, options);
+      const ancestorPathText = options.includeHookPath
+        ? formatAncestorPath(line.ancestorPath)
+        : null;
       const label =
         ancestorPathText == null ? line.hookName : `${line.hookName} (in ${ancestorPathText})`;
       return [
@@ -72,11 +69,13 @@ function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): str
     case "render-reason":
       return options.includeAllRenders ? [`  ${printRenderReason(line.reason)}`] : [];
     case "field":
-      return [`${hookIndent}      ${line.path}: ${line.prev} → ${line.next}`];
-    case "source": {
-      const sourceText = valueIfEnabled(line.sourceText, options);
-      return sourceText == null ? [] : [`${hookIndent}    Source: ${sourceText}`];
-    }
+      return [
+        `${hookIndent}      ${line.path}: ${formatValueForLLM(line.prev)} → ${formatValueForLLM(line.next)}`,
+      ];
+    case "source":
+      return options.includeSource
+        ? [`${hookIndent}    Source: ${formatHookSource(line.source)}`]
+        : [];
   }
 }
 
@@ -88,7 +87,7 @@ export function printCommitHistory(
   return [
     "## Summary",
     `${summary.commitCount} commits, ${summary.renderedComponentCount} components rendered`,
-    `${summary.totalDurationText} total render time`,
+    `${formatDurationMsInline(summary.totalDurationMs)} total render time`,
     // each history line expands to zero or more text lines depending on options
     ...historyLines.lines.flatMap((line) => printLines(line, options)),
   ].join("\n");
