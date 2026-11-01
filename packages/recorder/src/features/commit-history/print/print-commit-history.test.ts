@@ -394,19 +394,105 @@ describe("print-commit-history with includeAllRenders", () => {
     );
 
     expect(lines).toEqual([
+      "Mounted (1): Mounted",
       "- Parent:",
       "  • Hook changed:",
       "    - hook[0] State: 0 → 1",
       "  • Props changed: (value, onClick)",
       "- Leaf:",
       "  The parent component rendered.",
-      "- Mounted:",
-      "  This is the first time the component rendered.",
       "- Consumer:",
       "  • Context changed",
       "- ClassComp:",
       "  • State changed: (count)",
     ]);
+  });
+
+  it("prints hook lines without the reason label when hooks are the only reason", () => {
+    const lines = buildCommitSectionLines(
+      [
+        makeChange("Foo", [
+          { hookIndex: 0, hookName: "State", prev: 0, next: 1 },
+          { hookIndex: 1, hookName: "State", prev: { x: 0 }, next: { x: 1 } },
+        ]),
+        makeChange("Unresolved", [], 0, { didHooksChange: true }),
+      ],
+      { ...options, includeSource: true },
+    );
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  - hook[0] State: 0 → 1",
+      "    Source: Unavailable",
+      "  - hook[1] State: changed fields:",
+      "      x: 0 → 1",
+      "    Source: Unavailable",
+      "- Unresolved:",
+      "  • Hooks changed",
+    ]);
+  });
+
+  it("omits mounted components while off but keeps their count in the summary", () => {
+    const changes = [
+      makeChange("Kept", [{ hookIndex: 0, hookName: "State", prev: 0, next: 1 }]),
+      makeChange("Mounted", [], 0, { isFirstMount: true }),
+    ];
+    const historyLines = buildCommitHistoryLines([changes]);
+
+    expect(buildCommitSectionLines(changes)).toEqual(["- Kept:", "  - hook[0] State: 0 → 1"]);
+    expect(
+      printCommitHistory(historyLines, DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS).split("\n")[1],
+    ).toBe("1 commits, 2 components rendered (1 mounted)");
+  });
+
+  it("counts instances and appends total durations on the mounted line", () => {
+    const changes = [
+      makeChange("Guard", [], 0.1, { isFirstMount: true }),
+      makeChange("Guard", [], 0.1, { isFirstMount: true }),
+      makeChange("Item", [], 0.05, { isFirstMount: true }),
+    ];
+
+    expect(buildCommitSectionLines(changes, options)).toEqual(["Mounted (3): Guard×2, Item"]);
+    expect(buildCommitSectionLines(changes, { ...options, includeRenderDuration: true })).toEqual([
+      "Mounted (3): Guard×2 (0.20ms), Item (50μs)",
+    ]);
+  });
+
+  describe("hook path groups", () => {
+    const hookPath = ["Outer", "Inner", "State"];
+    const changes = [
+      makeChange(
+        "Foo",
+        [
+          { hookIndex: 0, hookPath, prev: { x: 0 }, next: { x: 1 } },
+          { hookIndex: 1, hookPath, prev: 0, next: 1 },
+          { hookIndex: 2, hookPath: ["Other", "State"], prev: 0, next: 1 },
+        ],
+        0,
+        { props: ["a"] },
+      ),
+    ];
+
+    it("prints a shared path once and nests its hooks", () => {
+      expect(buildCommitSectionLines(changes, { ...options, includeHookPath: true })).toEqual([
+        "- Foo:",
+        "  • Hooks changed:",
+        "    - in Outer > Inner:",
+        "      - hook[0] State: changed fields:",
+        "          x: 0 → 1",
+        "      - hook[1] State: 0 → 1",
+        "    - hook[2] State (in Other): 0 → 1",
+        "  • Props changed: (a)",
+      ]);
+    });
+
+    it("leaves hooks flat while includeHookPath is off", () => {
+      expect(buildCommitSectionLines(changes, options).slice(2, 5)).toEqual([
+        "    - hook[0] State: changed fields:",
+        "        x: 0 → 1",
+        "    - hook[1] State: 0 → 1",
+      ]);
+    });
   });
 
   it("pluralises the hooks reason and lists context keys like DevTools", () => {
@@ -458,19 +544,29 @@ describe("print-commit-history with includeAllRenders", () => {
     const countLine = (formatOptions: CommitHistoryFormatOptions) =>
       printCommitHistory(historyLines, formatOptions).split("\n")[1];
 
-    const expected = "1 commits, 2 components rendered";
+    const expected = "1 commits, 2 components rendered (0 mounted)";
     expect(countLine(DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS)).toBe(expected);
     expect(countLine(options)).toBe(expected);
   });
 
   it("indents field and source lines under the hooks reason", () => {
     const lines = buildCommitSectionLines(
-      [makeChange("Foo", [{ hookIndex: 0, hookName: "State", prev: { x: 0 }, next: { x: 1 } }])],
+      [
+        makeChange(
+          "Foo",
+          [{ hookIndex: 0, hookName: "State", prev: { x: 0 }, next: { x: 1 } }],
+          0,
+          {
+            context: true,
+          },
+        ),
+      ],
       { ...options, includeSource: true },
     );
 
     expect(lines).toEqual([
       "- Foo:",
+      "  • Context changed",
       "  • Hook changed:",
       "    - hook[0] State: changed fields:",
       "        x: 0 → 1",
@@ -494,13 +590,24 @@ describe("printCommitHistory values", () => {
     );
   });
 
+  it("prints nameless mounted components as Anonymous", () => {
+    const change = makeChange("Foo", [], 0, { isFirstMount: true });
+
+    expect(
+      buildCommitSectionLines([{ ...change, displayName: null }], {
+        ...options,
+        includeAllRenders: true,
+      })[0],
+    ).toBe("Mounted (1): Anonymous");
+  });
+
   it("prints a placeholder total duration for an empty history", () => {
     const text = printCommitHistory(buildCommitHistoryLines([]), options);
 
     expect(text.split("\n")[2]).toBe("— total render time");
   });
 
-  it("parses the debug label of a single ancestor hook", () => {
+  it("prints a debug label verbatim", () => {
     const lines = buildCommitSectionLines(
       [
         makeChange("Foo", [
@@ -516,6 +623,6 @@ describe("printCommitHistory values", () => {
       options,
     );
 
-    expect(lines[1]).toBe('  - hook[0] SyncExternalStore (in Floating, debug="root"): 0 → 1');
+    expect(lines[1]).toBe('  - hook[0] SyncExternalStore (in Floating("root")): 0 → 1');
   });
 });

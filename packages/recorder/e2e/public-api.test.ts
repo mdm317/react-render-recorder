@@ -108,7 +108,7 @@ test.describe("browser API getCommitHistoryText options", () => {
 
     const allRendersText = await readText(page, { includeAllRenders: true });
     expect(allRendersText).toContain("1 commits, 4 components rendered");
-    expect(allRendersText).toContain("- RenderByParentButton:\n  • Hook changed:");
+    expect(allRendersText).toContain("- RenderByParentButton:\n  - hook[");
     expect(allRendersText).toContain("- StaticLeafA:\n  The parent component rendered.");
   });
 });

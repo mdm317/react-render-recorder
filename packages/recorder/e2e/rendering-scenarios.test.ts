@@ -109,7 +109,7 @@ test.describe("rendering scenarios", () => {
       await recorderByTestId(page, "view-option-includeHookPath").click();
       const result = recorderByTestId(page, "commit-history-result");
       await expectHookChange(result, "DebugValueButton", "hook[0] State");
-      await expect(result).toContainText('in DebugCounter, debug="count = 1"');
+      await expect(result).toContainText('in DebugCounter("count = 1")');
       await expect(result).toContainText("## Commit 1");
       await expect(result).toContainText("0 → 1");
     });

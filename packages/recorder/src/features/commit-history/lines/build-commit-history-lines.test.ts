@@ -45,6 +45,8 @@ function hookChangedNames(lines: HistoryLine[]): (string | null)[] {
   );
 }
 
+const TOP_LEVEL_NESTING = { underHooksReason: false, inPathGroup: false };
+
 function renderReasons(lines: HistoryLine[]): string[] {
   return lines.flatMap((line) => (line.kind === "render-reason" ? [line.reason.kind] : []));
 }
@@ -103,6 +105,7 @@ describe("buildCommitHistoryLines", () => {
       summary: {
         commitCount: 0,
         renderedComponentCount: 0,
+        mountedComponentCount: 0,
         totalDurationMs: null,
       },
       lines: [],
@@ -150,16 +153,16 @@ describe("buildCommitHistoryLines", () => {
         hookChanged: true,
         selfDuration: 0.5,
       },
-      { kind: "render-reason", reason: { kind: "hooks-changed", hookCount: 1 } },
       {
         kind: "hook",
         hookIndex: 0,
         hookName: "State",
         ancestorPath: [],
         changeSummary: { kind: "changed-fields" },
+        nesting: TOP_LEVEL_NESTING,
       },
-      { kind: "field", path: "x", prev: 0, next: 1 },
-      { kind: "source", source: { status: "unavailable" } },
+      { kind: "field", path: "x", prev: 0, next: 1, nesting: TOP_LEVEL_NESTING },
+      { kind: "source", source: { status: "unavailable" }, nesting: TOP_LEVEL_NESTING },
     ]);
   });
 
@@ -209,6 +212,66 @@ describe("buildCommitHistoryLines", () => {
     ]);
   });
 
+  it.each([
+    ["no label", ["A", "B", "State"], ["A", "B"]],
+    ["a label", ['State("open")', "Store", "StoreR19", "SyncExternalStore"], ['State("open")']],
+    [
+      "frames above a label",
+      ["MenuItem", 'State("open")', "Store", "SyncExternalStore"],
+      ["MenuItem", 'State("open")'],
+    ],
+    ["a non-string label", ["Toggle(true)", "Store", "State"], ["Toggle(true)"]],
+    ["an empty label", ['Foo("")', "Store", "State"], ['Foo("")']],
+    ["several labels", ['A("x")', "B", 'C("y")', "D", "State"], ['A("x")', "B", 'C("y")']],
+  ])("keeps the ancestor path up to the last label with %s", (_label, hookPath, expected) => {
+    const historyLines = buildCommitHistoryLines([
+      [makeChange("Foo", [{ hookIndex: 0, hookPath, prev: 0, next: 1 }])],
+    ]);
+
+    expect(historyLines.lines.find((line) => line.kind === "hook")).toMatchObject({
+      ancestorPath: expected,
+    });
+  });
+
+  it("groups adjacent hooks sharing an ancestor path after shortening", () => {
+    const hookOn = (hookIndex: number, hookPath: string[]) => ({
+      hookIndex,
+      hookPath,
+      prev: 0,
+      next: 1,
+    });
+    const historyLines = buildCommitHistoryLines([
+      [
+        makeChange("Foo", [
+          hookOn(0, ["A", "State"]),
+          hookOn(1, ['B("x")', "Store", "State"]),
+          hookOn(2, ['B("x")', "Effect", "Ref"]),
+          hookOn(3, ["A", "State"]),
+          hookOn(4, ["State"]),
+          hookOn(5, ["Ref"]),
+        ]),
+      ],
+    ]);
+
+    const summaries = historyLines.lines.flatMap((line) => {
+      if (line.kind === "hook-path-group") return [["group", ...line.ancestorPath]];
+      return line.kind === "hook" ? [[line.hookIndex, ...line.ancestorPath]] : [];
+    });
+    expect(summaries).toEqual([[0, "A"], ["group", 'B("x")'], [1], [2], [3, "A"], [4], [5]]);
+  });
+
+  it.each<[string, Partial<CommittedFiberChange>]>([
+    ["context", { context: ["theme"] }],
+    ["props", { props: ["a"] }],
+    ["state", { state: ["b"] }],
+  ])("keeps the hooks reason only beside a %s reason", (_label, overrides) => {
+    const reasonKinds = (change: CommitHistoryFiberChange) =>
+      renderReasons(buildCommitHistoryLines([[change]]).lines);
+
+    expect(reasonKinds(makeChange("Foo", STATE_HOOK))).toEqual([]);
+    expect(reasonKinds(makeChange("Foo", STATE_HOOK, 0, overrides))).toContain("hooks-changed");
+  });
+
   it("orders render reasons context → hooks → props → state, with hook lines under hooks", () => {
     const historyLines = buildCommitHistoryLines([
       [makeChange("Foo", STATE_HOOK, 0, { context: true, props: ["a"], state: ["b"] })],
@@ -230,13 +293,37 @@ describe("buildCommitHistoryLines", () => {
     ]);
   });
 
-  it.each<[string, Partial<CommittedFiberChange>]>([
-    ["first-mount", { isFirstMount: true, props: ["a"] }],
-    ["parent-rendered", { props: [], context: false }],
-  ])("emits only %s when applicable", (expected, overrides) => {
-    const historyLines = buildCommitHistoryLines([[makeChange("Foo", null, 0, overrides)]]);
+  it("emits only parent-rendered when nothing else changed", () => {
+    const historyLines = buildCommitHistoryLines([
+      [makeChange("Foo", null, 0, { props: [], context: false })],
+    ]);
 
-    expect(renderReasons(historyLines.lines)).toEqual([expected]);
+    expect(renderReasons(historyLines.lines)).toEqual(["parent-rendered"]);
+  });
+
+  it("merges mounted components into one line grouped by name, slowest total first", () => {
+    const mount = (displayName: string | null, selfDuration: number) =>
+      makeChange(displayName, null, selfDuration, { isFirstMount: true });
+    const historyLines = buildCommitHistoryLines([
+      [mount("Item", 0.5), makeChange("Kept", STATE_HOOK, 5), mount("Slow", 1), mount("Item", 2)],
+      [makeChange("Kept", STATE_HOOK)],
+    ]);
+
+    expect(historyLines.lines.filter((line) => line.kind === "mounted")).toEqual([
+      {
+        kind: "mounted",
+        instanceCount: 3,
+        components: [
+          { displayName: "Item", count: 2, selfDuration: 2.5 },
+          { displayName: "Slow", count: 1, selfDuration: 1 },
+        ],
+      },
+    ]);
+    expect(componentNames(historyLines.lines)).toEqual(["Kept", "Kept"]);
+    expect(historyLines.summary).toMatchObject({
+      renderedComponentCount: 5,
+      mountedComponentCount: 3,
+    });
   });
 
   it("marks a hooks reason without resolved hook lines", () => {

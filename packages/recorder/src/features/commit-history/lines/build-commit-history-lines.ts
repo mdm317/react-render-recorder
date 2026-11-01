@@ -10,16 +10,19 @@ export type HistorySummary = {
   commitCount: number;
   // every rendered component, not just the hook-changed ones
   renderedComponentCount: number;
+  mountedComponentCount: number;
   // sums every fiber, not just the hook-changed components; null when no fiber rendered
   totalDurationMs: number | null;
 };
 
 // one entry per logical line, holding facts only; the printer decides how each one is shown.
-// Components within a commit are sorted by descending selfDuration.
+// Within a commit the mounted line comes first, then components by descending selfDuration.
 export type HistoryLine =
   | { kind: "commit"; commitNumber: number }
   // no component in the commit changed a hook
   | { kind: "no-hook-changes" }
+  // the components rendering for the first time in the commit
+  | { kind: "mounted"; instanceCount: number; components: MountedGroup[] }
   | {
       kind: "component";
       displayName: string | null;
@@ -31,15 +34,24 @@ export type HistoryLine =
       kind: "hook";
       hookIndex: number;
       hookName: string;
-      // empty when the hook has no ancestor hooks
+      // ends at the last debug-labeled frame; empty when the hook has no ancestor hooks or
+      // sits in a hook-path-group, which holds the path instead
       ancestorPath: string[];
       changeSummary: HookChangeSummary;
+      nesting: HookNesting;
     }
+  // heads adjacent hooks sharing an ancestor path
+  | { kind: "hook-path-group"; ancestorPath: string[]; nesting: HookNesting }
   // follows its component in DevTools' "Why did this render?" order
   | { kind: "render-reason"; reason: RenderReason }
   // follows a hook line whose changeSummary is "changed-fields"
-  | { kind: "field"; path: string; prev: unknown; next: unknown }
-  | { kind: "source"; source: HookSourceResolution };
+  | { kind: "field"; path: string; prev: unknown; next: unknown; nesting: HookNesting }
+  | { kind: "source"; source: HookSourceResolution; nesting: HookNesting };
+
+// the lines a hook line and its field and source lines sit under
+export type HookNesting = { underHooksReason: boolean; inPathGroup: boolean };
+
+export type MountedGroup = { displayName: string | null; count: number; selfDuration: number };
 
 export type HookChangeSummary =
   | { kind: "replaced"; prev: unknown; next: unknown }
@@ -48,7 +60,6 @@ export type HookChangeSummary =
 
 // mirrors react-devtools-shared Profiler/WhatChanged.js
 export type RenderReason =
-  | { kind: "first-mount" }
   // keys: null when React only reports that some context changed
   | { kind: "context-changed"; keys: string[] | null }
   // hookCount: the hook lines that follow
@@ -56,6 +67,18 @@ export type RenderReason =
   | { kind: "props-changed"; keys: string[] }
   | { kind: "state-changed"; keys: string[] }
   | { kind: "parent-rendered" };
+
+// a frame carrying a useDebugValue label: State("mounted"), Toggle(true)
+const LABELED_HOOK_FRAME_PATTERN = /\(.*\)$/s;
+
+// A label already names the hook, so the frames below the last one are its internals:
+// [State("open"), "Store", "StoreR19"] → [State("open")]
+function dropFramesBelowLastLabel(ancestorPath: string[]): string[] {
+  const lastLabeledIndex = ancestorPath
+    .map((frame) => LABELED_HOOK_FRAME_PATTERN.test(frame))
+    .lastIndexOf(true);
+  return lastLabeledIndex === -1 ? ancestorPath : ancestorPath.slice(0, lastLabeledIndex + 1);
+}
 
 function splitHookPath(hook: CommitHistoryHookChange): {
   hookName: string;
@@ -65,7 +88,10 @@ function splitHookPath(hook: CommitHistoryHookChange): {
   const hookName = "hookName" in hook ? hook.hookName : null;
   if (hookPath == null || hookPath.length === 0)
     return { hookName: hookName ?? "", ancestorPath: [] };
-  return { hookName: hookPath[hookPath.length - 1], ancestorPath: hookPath.slice(0, -1) };
+  return {
+    hookName: hookPath[hookPath.length - 1],
+    ancestorPath: dropFramesBelowLastLabel(hookPath.slice(0, -1)),
+  };
 }
 
 function buildChangeSummary({ prev, next, diffs }: ValueChange): HookChangeSummary {
@@ -85,20 +111,40 @@ function buildComponentLine(component: CommitHistoryFiberChange): HistoryLine {
   };
 }
 
+// one group per display name, slowest total first; null when nothing mounted
+function buildMountedLine(mounted: CommitHistoryFiberChange[]): HistoryLine | null {
+  if (mounted.length === 0) return null;
+  const groupsByName = new Map<string | null, MountedGroup>();
+  for (const { displayName, selfDuration } of mounted) {
+    const group = groupsByName.get(displayName) ?? { displayName, count: 0, selfDuration: 0 };
+    groupsByName.set(displayName, {
+      displayName,
+      count: group.count + 1,
+      selfDuration: group.selfDuration + selfDuration,
+    });
+  }
+  const components = [...groupsByName.values()].sort((a, b) => b.selfDuration - a.selfDuration);
+  return { kind: "mounted", instanceCount: mounted.length, components };
+}
+
 // the hook line followed by one field line per changed field
-function buildHookChangedLines(hook: CommitHistoryHookChange): HistoryLine[] {
-  const { hookName, ancestorPath } = splitHookPath(hook);
+function buildHookChangedLines(
+  hook: CommitHistoryHookChange,
+  ancestorPath: string[],
+  nesting: HookNesting,
+): HistoryLine[] {
   const valueChange = buildValueChange(hook.prev, hook.next);
   const lines: HistoryLine[] = [
     {
       kind: "hook",
       hookIndex: hook.hookIndex,
-      hookName,
+      hookName: splitHookPath(hook).hookName,
       ancestorPath,
       changeSummary: buildChangeSummary(valueChange),
+      nesting,
     },
   ];
-  for (const diff of valueChange.diffs ?? []) lines.push({ kind: "field", ...diff });
+  for (const diff of valueChange.diffs ?? []) lines.push({ kind: "field", ...diff, nesting });
   return lines;
 }
 
@@ -106,29 +152,88 @@ function buildRenderReasonLine(reason: RenderReason): HistoryLine {
   return { kind: "render-reason", reason };
 }
 
+type HookPathRun = { ancestorPath: string[]; hooks: CommitHistoryHookChange[] };
+
+function isSamePath(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((frame, index) => frame === b[index]);
+}
+
+// only adjacent hooks are merged, so hooks keep their index order
+function buildHookPathRuns(hooks: CommitHistoryHookChange[]): HookPathRun[] {
+  const runs: HookPathRun[] = [];
+  for (const hook of hooks) {
+    const { ancestorPath } = splitHookPath(hook);
+    const lastRun = runs.at(-1);
+    if (lastRun != null && isSamePath(lastRun.ancestorPath, ancestorPath)) {
+      lastRun.hooks.push(hook);
+    } else {
+      runs.push({ ancestorPath, hooks: [hook] });
+    }
+  }
+  return runs;
+}
+
+function buildHookLines(
+  hook: CommitHistoryHookChange,
+  ancestorPath: string[],
+  nesting: HookNesting,
+): HistoryLine[] {
+  return [
+    ...buildHookChangedLines(hook, ancestorPath, nesting),
+    { kind: "source", source: hook.source, nesting },
+  ];
+}
+
+function buildHookPathRunLines(
+  { ancestorPath, hooks }: HookPathRun,
+  underHooksReason: boolean,
+): HistoryLine[] {
+  if (ancestorPath.length === 0 || hooks.length === 1) {
+    const nesting = { underHooksReason, inPathGroup: false };
+    return hooks.flatMap((hook) => buildHookLines(hook, ancestorPath, nesting));
+  }
+  const groupedNesting = { underHooksReason, inPathGroup: true };
+  return [
+    {
+      kind: "hook-path-group",
+      ancestorPath,
+      nesting: { underHooksReason, inPathGroup: false },
+    },
+    ...hooks.flatMap((hook) => buildHookLines(hook, [], groupedNesting)),
+  ];
+}
+
 // the lines under a component line: render reasons in WhatChanged.js order
-// (context → hooks → props → state, falling back to the parent), hook lines under the hooks reason
+// (context → hooks → props → state, falling back to the parent); hook lines follow the hooks
+// reason, or stand alone when it is the only reason
 function buildComponentChangeLines(component: CommitHistoryFiberChange): HistoryLine[] {
-  if (component.isFirstMount) return [buildRenderReasonLine({ kind: "first-mount" })];
+  const { context, props, state } = component;
+  const contextChanged = context === true || (Array.isArray(context) && context.length > 0);
+  const propsChanged = props != null && props.length > 0;
+  const stateChanged = state != null && state.length > 0;
 
   const lines: HistoryLine[] = [];
-  const { context } = component;
-  if (context === true || (Array.isArray(context) && context.length > 0)) {
+  if (contextChanged) {
     const keys = context === true ? null : context;
     lines.push(buildRenderReasonLine({ kind: "context-changed", keys }));
   }
   if (component.didHooksChange) {
     const hooks = component.hooks ?? [];
-    lines.push(buildRenderReasonLine({ kind: "hooks-changed", hookCount: hooks.length }));
-    for (const hook of hooks) {
-      lines.push(...buildHookChangedLines(hook), { kind: "source", source: hook.source });
+    // hook lines already say why it rendered: the reason only separates them from other reasons,
+    // or stands in for them when none resolved
+    const hasHooksReason = hooks.length === 0 || contextChanged || propsChanged || stateChanged;
+    if (hasHooksReason) {
+      lines.push(buildRenderReasonLine({ kind: "hooks-changed", hookCount: hooks.length }));
+    }
+    for (const run of buildHookPathRuns(hooks)) {
+      lines.push(...buildHookPathRunLines(run, hasHooksReason));
     }
   }
-  if (component.props != null && component.props.length > 0) {
-    lines.push(buildRenderReasonLine({ kind: "props-changed", keys: component.props }));
+  if (propsChanged) {
+    lines.push(buildRenderReasonLine({ kind: "props-changed", keys: props }));
   }
-  if (component.state != null && component.state.length > 0) {
-    lines.push(buildRenderReasonLine({ kind: "state-changed", keys: component.state }));
+  if (stateChanged) {
+    lines.push(buildRenderReasonLine({ kind: "state-changed", keys: state }));
   }
   if (lines.length === 0) lines.push(buildRenderReasonLine({ kind: "parent-rendered" }));
   return lines;
@@ -137,15 +242,18 @@ function buildComponentChangeLines(component: CommitHistoryFiberChange): History
 function buildHistorySummary(fiberChangesByCommit: CommitHistoryFiberChange[][]): HistorySummary {
   let totalDurationMs: number | null = null;
   let renderedComponentCount = 0;
+  let mountedComponentCount = 0;
   for (const fiberChanges of fiberChangesByCommit) {
     renderedComponentCount += fiberChanges.length;
     for (const change of fiberChanges) {
       totalDurationMs = (totalDurationMs ?? 0) + change.selfDuration;
+      if (change.isFirstMount) mountedComponentCount += 1;
     }
   }
   return {
     commitCount: fiberChangesByCommit.length,
     renderedComponentCount,
+    mountedComponentCount,
     totalDurationMs,
   };
 }
@@ -162,7 +270,10 @@ export function buildCommitHistoryLines(
       lines.push({ kind: "no-hook-changes" });
     }
 
-    for (const component of components) {
+    const mountedLine = buildMountedLine(components.filter((change) => change.isFirstMount));
+    if (mountedLine != null) lines.push(mountedLine);
+
+    for (const component of components.filter((change) => !change.isFirstMount)) {
       lines.push(buildComponentLine(component), ...buildComponentChangeLines(component));
     }
   }
