@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "react-recorder",
-      "source": "./.claude/react-recorder",
+      "source": "./.claude-plugin/react-recorder",
       "description": "Measure, fix, and verify React commits and re-renders with react-render-recorder."
     }
   ]
