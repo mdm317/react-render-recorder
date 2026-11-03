@@ -20,13 +20,11 @@ export type HistoryLine =
   | { kind: "commit"; commitNumber: number }
   // no component in the commit changed a hook
   | { kind: "no-hook-changes" }
-  | {
-      kind: "component";
-      displayName: string | null;
-      // false: the component rendered without a hook change
-      hookChanged: boolean;
-      selfDuration: number;
-    }
+  // a component that changed a hook; its reason, hook and source lines follow
+  | { kind: "component"; displayName: string | null; selfDuration: number }
+  // components that rendered without a hook change, grouped by identical reasons;
+  // follows the commit's hook-changed components
+  | { kind: "render-group"; reasons: RenderReason[]; components: RenderGroupMember[] }
   | {
       kind: "hook";
       hookIndex: number;
@@ -40,6 +38,9 @@ export type HistoryLine =
   // follows a hook line whose changeSummary is "changed-fields"
   | { kind: "field"; path: string; prev: unknown; next: unknown }
   | { kind: "source"; source: HookSourceResolution };
+
+// members keep first-seen order; same-named components are counted and their selfDuration summed
+export type RenderGroupMember = { displayName: string | null; count: number; selfDuration: number };
 
 export type HookChangeSummary =
   | { kind: "replaced"; prev: unknown; next: unknown }
@@ -77,12 +78,7 @@ function buildChangeSummary({ prev, next, diffs }: ValueChange): HookChangeSumma
 
 function buildComponentLine(component: CommitHistoryFiberChange): HistoryLine {
   const { displayName, selfDuration } = component;
-  return {
-    kind: "component",
-    displayName,
-    hookChanged: component.didHooksChange,
-    selfDuration,
-  };
+  return { kind: "component", displayName, selfDuration };
 }
 
 // the hook line followed by one field line per changed field
@@ -102,36 +98,72 @@ function buildHookChangedLines(hook: CommitHistoryHookChange): HistoryLine[] {
   return lines;
 }
 
-function buildRenderReasonLine(reason: RenderReason): HistoryLine {
-  return { kind: "render-reason", reason };
-}
+// render reasons other than hooks in WhatChanged.js order (context → props → state), falling back to
+// the parent when nothing else, hooks included, changed; a first mount is its only reason
+function buildRenderReasons(component: CommitHistoryFiberChange): RenderReason[] {
+  if (component.isFirstMount) return [{ kind: "first-mount" }];
 
-// the lines under a component line: render reasons in WhatChanged.js order
-// (context → hooks → props → state, falling back to the parent), hook lines under the hooks reason
-function buildComponentChangeLines(component: CommitHistoryFiberChange): HistoryLine[] {
-  if (component.isFirstMount) return [buildRenderReasonLine({ kind: "first-mount" })];
-
-  const lines: HistoryLine[] = [];
+  const reasons: RenderReason[] = [];
   const { context } = component;
   if (context === true || (Array.isArray(context) && context.length > 0)) {
-    const keys = context === true ? null : context;
-    lines.push(buildRenderReasonLine({ kind: "context-changed", keys }));
-  }
-  if (component.didHooksChange) {
-    const hooks = component.hooks ?? [];
-    lines.push(buildRenderReasonLine({ kind: "hooks-changed", hookCount: hooks.length }));
-    for (const hook of hooks) {
-      lines.push(...buildHookChangedLines(hook), { kind: "source", source: hook.source });
-    }
+    reasons.push({ kind: "context-changed", keys: context === true ? null : context });
   }
   if (component.props != null && component.props.length > 0) {
-    lines.push(buildRenderReasonLine({ kind: "props-changed", keys: component.props }));
+    reasons.push({ kind: "props-changed", keys: component.props });
   }
   if (component.state != null && component.state.length > 0) {
-    lines.push(buildRenderReasonLine({ kind: "state-changed", keys: component.state }));
+    reasons.push({ kind: "state-changed", keys: component.state });
   }
-  if (lines.length === 0) lines.push(buildRenderReasonLine({ kind: "parent-rendered" }));
-  return lines;
+  if (reasons.length === 0 && !component.didHooksChange) reasons.push({ kind: "parent-rendered" });
+  return reasons;
+}
+
+// the lines under a hook-changed component line: the hooks reason with its hook lines goes
+// after the context reason, matching WhatChanged.js (context → hooks → props → state)
+function buildComponentChangeLines(component: CommitHistoryFiberChange): HistoryLine[] {
+  const reasons = buildRenderReasons(component);
+  const hooks = component.hooks ?? [];
+  const hooksAt = reasons[0]?.kind === "context-changed" ? 1 : 0;
+  const toLine = (reason: RenderReason): HistoryLine => ({ kind: "render-reason", reason });
+  return [
+    ...reasons.slice(0, hooksAt).map(toLine),
+    toLine({ kind: "hooks-changed", hookCount: hooks.length }),
+    ...hooks.flatMap((hook): HistoryLine[] => [
+      ...buildHookChangedLines(hook),
+      { kind: "source", source: hook.source },
+    ]),
+    ...reasons.slice(hooksAt).map(toLine),
+  ];
+}
+
+// one render-group line per distinct reason combination, in first-seen order
+function buildRenderGroupLines(components: CommitHistoryFiberChange[]): HistoryLine[] {
+  const groups = new Map<
+    string,
+    { reasons: RenderReason[]; members: Map<string | null, RenderGroupMember> }
+  >();
+  for (const component of components) {
+    const reasons = buildRenderReasons(component);
+    const key = JSON.stringify(reasons);
+    let group = groups.get(key);
+    if (group == null) {
+      group = { reasons, members: new Map() };
+      groups.set(key, group);
+    }
+    const { displayName, selfDuration } = component;
+    const member = group.members.get(displayName);
+    if (member == null) {
+      group.members.set(displayName, { displayName, count: 1, selfDuration });
+    } else {
+      member.count += 1;
+      member.selfDuration += selfDuration;
+    }
+  }
+  return [...groups.values()].map(({ reasons, members }) => ({
+    kind: "render-group",
+    reasons,
+    components: [...members.values()],
+  }));
 }
 
 function buildHistorySummary(fiberChangesByCommit: CommitHistoryFiberChange[][]): HistorySummary {
@@ -158,13 +190,13 @@ export function buildCommitHistoryLines(
   for (const [index, fiberChanges] of fiberChangesByCommit.entries()) {
     lines.push({ kind: "commit", commitNumber: index + 1 });
     const components = [...fiberChanges].sort((a, b) => b.selfDuration - a.selfDuration);
-    if (!components.some((change) => change.didHooksChange)) {
-      lines.push({ kind: "no-hook-changes" });
-    }
+    const hookChangedComponents = components.filter((change) => change.didHooksChange);
+    if (hookChangedComponents.length === 0) lines.push({ kind: "no-hook-changes" });
 
-    for (const component of components) {
+    for (const component of hookChangedComponents) {
       lines.push(buildComponentLine(component), ...buildComponentChangeLines(component));
     }
+    lines.push(...buildRenderGroupLines(components.filter((change) => !change.didHooksChange)));
   }
   return { summary: buildHistorySummary(fiberChangesByCommit), lines };
 }

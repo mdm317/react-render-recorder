@@ -104,7 +104,7 @@ test.describe("commit history view options", () => {
     await allRendersToggle.click();
     await expect(result).toContainText("1 commits, 4 components rendered");
     await expect(result).toContainText("- RenderByParentButton: • Hook changed:");
-    await expect(result).toContainText("- StaticLeafA: The parent component rendered.");
+    await expect(result).toContainText(/Parent rendered: .*StaticLeafA/);
 
     await allRendersToggle.click();
     await expect(result).toContainText("1 commits, 4 components rendered");

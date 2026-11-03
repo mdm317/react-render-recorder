@@ -20,11 +20,29 @@ function printChangeSummary(changeSummary: HookChangeSummary): string {
   }
 }
 
+// a reason as a group-line label; keys follow a " (a, b)" style
+function printGroupReason(reason: RenderReason): string {
+  switch (reason.kind) {
+    case "first-mount":
+      return "Mounted";
+    case "context-changed":
+      return reason.keys == null
+        ? "Context changed"
+        : `Context changed (${reason.keys.join(", ")})`;
+    case "hooks-changed":
+      return "Hooks changed";
+    case "props-changed":
+      return `Props changed (${reason.keys.join(", ")})`;
+    case "state-changed":
+      return `State changed (${reason.keys.join(", ")})`;
+    case "parent-rendered":
+      return "Parent rendered";
+  }
+}
+
 // same wording as react-devtools-shared Profiler/WhatChanged.js; keys follow its " (a, b)" style
 function printRenderReason(reason: RenderReason): string {
   switch (reason.kind) {
-    case "first-mount":
-      return "This is the first time the component rendered.";
     case "context-changed":
       return reason.keys == null
         ? "• Context changed"
@@ -36,9 +54,28 @@ function printRenderReason(reason: RenderReason): string {
       return `• Props changed: (${reason.keys.join(", ")})`;
     case "state-changed":
       return `• State changed: (${reason.keys.join(", ")})`;
+    case "first-mount":
     case "parent-rendered":
-      return "The parent component rendered.";
+      return `• ${printGroupReason(reason)}`;
   }
+}
+
+function printDurationSuffix(selfDuration: number, options: CommitHistoryFormatOptions): string {
+  return options.includeRenderDuration ? ` (${formatDurationMsInline(selfDuration)})` : "";
+}
+
+// "Props changed (onFocus): FocusGuard×2 (0.12ms), Row"; hidden unless every render is listed
+function printRenderGroup(
+  line: Extract<HistoryLine, { kind: "render-group" }>,
+  options: CommitHistoryFormatOptions,
+): string[] {
+  if (!options.includeAllRenders) return [];
+  const label = line.reasons.map(printGroupReason).join(" + ");
+  const members = line.components.map(({ displayName, count, selfDuration }) => {
+    const countSuffix = count > 1 ? `×${count}` : "";
+    return `${formatDisplayName(displayName)}${countSuffix}${printDurationSuffix(selfDuration, options)}`;
+  });
+  return [`${label}: ${members.join(", ")}`];
 }
 
 function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): string[] {
@@ -49,13 +86,12 @@ function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): str
       return ["", `## Commit ${line.commitNumber}`];
     case "no-hook-changes":
       return options.includeAllRenders ? [] : ["(no hook changes)"];
-    case "component": {
-      if (!line.hookChanged && !options.includeAllRenders) return [];
-      const durationSuffix = options.includeRenderDuration
-        ? ` (${formatDurationMsInline(line.selfDuration)})`
-        : "";
-      return [`- ${formatDisplayName(line.displayName)}${durationSuffix}:`];
-    }
+    case "component":
+      return [
+        `- ${formatDisplayName(line.displayName)}${printDurationSuffix(line.selfDuration, options)}:`,
+      ];
+    case "render-group":
+      return printRenderGroup(line, options);
     case "hook": {
       const ancestorPathText = options.includeHookPath
         ? formatAncestorPath(line.ancestorPath)

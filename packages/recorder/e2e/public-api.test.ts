@@ -99,7 +99,9 @@ test.describe("browser API getCommitHistoryText options", () => {
     await expect(recorderByTestId(page, "commit-history-result")).not.toContainText("Source:");
   });
 
-  test("includeAllRenders lists parent-rendered components with their reason", async ({ page }) => {
+  test("includeAllRenders groups parent-rendered components under their reason", async ({
+    page,
+  }) => {
     await recordWithApi(page, SCENARIO_BUTTON.RENDER_BY_PARENT, 1);
 
     const defaultText = await readText(page);
@@ -109,6 +111,7 @@ test.describe("browser API getCommitHistoryText options", () => {
     const allRendersText = await readText(page, { includeAllRenders: true });
     expect(allRendersText).toContain("1 commits, 4 components rendered");
     expect(allRendersText).toContain("- RenderByParentButton:\n  • Hook changed:");
-    expect(allRendersText).toContain("- StaticLeafA:\n  The parent component rendered.");
+    // the three leaves share one line, ordered by their nondeterministic selfDuration
+    expect(allRendersText).toMatch(/\nParent rendered: .*StaticLeafA/);
   });
 });
