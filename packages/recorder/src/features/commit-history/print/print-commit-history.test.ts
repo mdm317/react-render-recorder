@@ -398,14 +398,36 @@ describe("print-commit-history with includeAllRenders", () => {
       "  • Hook changed:",
       "    - hook[0] State: 0 → 1",
       "  • Props changed: (value, onClick)",
-      "- Leaf:",
-      "  The parent component rendered.",
-      "- Mounted:",
-      "  This is the first time the component rendered.",
-      "- Consumer:",
-      "  • Context changed",
-      "- ClassComp:",
-      "  • State changed: (count)",
+      "Parent rendered: Leaf",
+      "Mounted: Mounted",
+      "Context changed: Consumer",
+      "State changed (count): ClassComp",
+    ]);
+  });
+
+  it("groups same-reason components into one line with ×n and summed durations", () => {
+    const lines = buildCommitSectionLines(
+      [
+        makeChange("FocusGuard", [], 0.08, { props: ["onFocus"] }),
+        makeChange("Row", [], 0.06, { context: ["theme", "locale"], props: ["style"] }),
+        makeChange("FocusGuard", [], 0.04, { props: ["onFocus"] }),
+        makeChange("Row", [], 0.02, { context: ["theme", "locale"], props: ["style"] }),
+        makeChange("Item", [], 0.01, { props: ["onFocus"] }),
+      ],
+      { ...options, includeRenderDuration: true },
+    );
+
+    expect(lines).toEqual([
+      "Props changed (onFocus): FocusGuard×2 (0.12ms), Item (10μs)",
+      "Context changed (theme, locale) + Props changed (style): Row×2 (80μs)",
+    ]);
+  });
+
+  it("prints nameless grouped components as Anonymous", () => {
+    const change = makeChange("Leaf", [], 0);
+
+    expect(buildCommitSectionLines([{ ...change, displayName: null }], options)).toEqual([
+      "Parent rendered: Anonymous",
     ]);
   });
 
@@ -443,8 +465,7 @@ describe("print-commit-history with includeAllRenders", () => {
     expect(buildCommitSectionLines(changes)).toEqual(["- Parent:", "  - hook[0] State: 0 → 1"]);
     expect(buildCommitSectionLines([makeChange("Leaf", [], 0)])).toEqual(["(no hook changes)"]);
     expect(buildCommitSectionLines([makeChange("Leaf", [], 0)], options)).toEqual([
-      "- Leaf:",
-      "  The parent component rendered.",
+      "Parent rendered: Leaf",
     ]);
   });
 
