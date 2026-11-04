@@ -46,7 +46,10 @@ function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): str
   const hookIndent = options.includeAllRenders ? "  " : "";
   switch (line.kind) {
     case "commit":
-      return ["", `## Commit ${line.commitNumber}`];
+      return [
+        "",
+        `## Commit ${line.commitNumber} (${line.mountedComponentCount} mounted, ${line.rerenderedComponentCount} rerendered)`,
+      ];
     case "no-hook-changes":
       return options.includeAllRenders ? [] : ["(no hook changes)"];
     case "component": {
