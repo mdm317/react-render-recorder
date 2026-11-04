@@ -20,9 +20,9 @@ export type HistoryLine =
   | {
       kind: "commit";
       commitNumber: number;
-      // every component rendered in the commit, first mounts included
-      renderedComponentCount: number;
+      // disjoint: first mounts vs re-renders of already-mounted components
       mountedComponentCount: number;
+      rerenderedComponentCount: number;
     }
   // no component in the commit changed a hook
   | { kind: "no-hook-changes" }
@@ -162,11 +162,12 @@ export function buildCommitHistoryLines(
 ): CommitHistoryLines {
   const lines: HistoryLine[] = [];
   for (const [index, fiberChanges] of fiberChangesByCommit.entries()) {
+    const mountedComponentCount = fiberChanges.filter((change) => change.isFirstMount).length;
     lines.push({
       kind: "commit",
       commitNumber: index + 1,
-      renderedComponentCount: fiberChanges.length,
-      mountedComponentCount: fiberChanges.filter((change) => change.isFirstMount).length,
+      mountedComponentCount,
+      rerenderedComponentCount: fiberChanges.length - mountedComponentCount,
     });
     const components = [...fiberChanges].sort((a, b) => b.selfDuration - a.selfDuration);
     if (!components.some((change) => change.didHooksChange)) {

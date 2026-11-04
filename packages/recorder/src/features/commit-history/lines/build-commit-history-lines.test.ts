@@ -113,13 +113,13 @@ describe("buildCommitHistoryLines", () => {
     const historyLines = buildCommitHistoryLines([[makeChange("NullHooks", null)]]);
 
     expect(historyLines.lines.slice(0, 2)).toEqual([
-      { kind: "commit", commitNumber: 1, renderedComponentCount: 1, mountedComponentCount: 0 },
+      { kind: "commit", commitNumber: 1, mountedComponentCount: 0, rerenderedComponentCount: 1 },
       { kind: "no-hook-changes" },
     ]);
     expect(componentNames(historyLines.lines)).toEqual(["NullHooks"]);
   });
 
-  it("counts rendered and first-mounted components per commit", () => {
+  it("counts first-mounted and re-rendered components per commit separately", () => {
     const historyLines = buildCommitHistoryLines([
       [
         makeChange("A", STATE_HOOK),
@@ -131,8 +131,8 @@ describe("buildCommitHistoryLines", () => {
     expect(historyLines.lines[0]).toEqual({
       kind: "commit",
       commitNumber: 1,
-      renderedComponentCount: 3,
       mountedComponentCount: 2,
+      rerenderedComponentCount: 1,
     });
   });
 
@@ -160,7 +160,7 @@ describe("buildCommitHistoryLines", () => {
     ]);
 
     expect(historyLines.lines).toEqual([
-      { kind: "commit", commitNumber: 1, renderedComponentCount: 1, mountedComponentCount: 0 },
+      { kind: "commit", commitNumber: 1, mountedComponentCount: 0, rerenderedComponentCount: 1 },
       {
         kind: "component",
         displayName: "Foo",

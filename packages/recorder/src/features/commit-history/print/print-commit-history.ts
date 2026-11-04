@@ -48,7 +48,7 @@ function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): str
     case "commit":
       return [
         "",
-        `## Commit ${line.commitNumber} (${line.renderedComponentCount} rendered, ${line.mountedComponentCount} mounted)`,
+        `## Commit ${line.commitNumber} (${line.mountedComponentCount} mounted, ${line.rerenderedComponentCount} rerendered)`,
       ];
     case "no-hook-changes":
       return options.includeAllRenders ? [] : ["(no hook changes)"];

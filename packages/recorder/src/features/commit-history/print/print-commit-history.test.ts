@@ -494,7 +494,7 @@ describe("printCommitHistory values", () => {
     );
   });
 
-  it("appends rendered and mounted counts to the commit header", () => {
+  it("appends mounted and rerendered counts to the commit header", () => {
     const historyLines = buildCommitHistoryLines([
       [
         makeChange("Foo", [{ hookIndex: 0, hookName: "State", prev: 0, next: 1 }]),
@@ -503,7 +503,7 @@ describe("printCommitHistory values", () => {
     ]);
 
     expect(printCommitHistory(historyLines, options).split("\n")[4]).toBe(
-      "## Commit 1 (2 rendered, 1 mounted)",
+      "## Commit 1 (1 mounted, 1 rerendered)",
     );
   });
 
