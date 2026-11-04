@@ -17,7 +17,13 @@ export type HistorySummary = {
 // one entry per logical line, holding facts only; the printer decides how each one is shown.
 // Components within a commit are sorted by descending selfDuration.
 export type HistoryLine =
-  | { kind: "commit"; commitNumber: number }
+  | {
+      kind: "commit";
+      commitNumber: number;
+      // every component rendered in the commit, first mounts included
+      renderedComponentCount: number;
+      mountedComponentCount: number;
+    }
   // no component in the commit changed a hook
   | { kind: "no-hook-changes" }
   | {
@@ -156,7 +162,12 @@ export function buildCommitHistoryLines(
 ): CommitHistoryLines {
   const lines: HistoryLine[] = [];
   for (const [index, fiberChanges] of fiberChangesByCommit.entries()) {
-    lines.push({ kind: "commit", commitNumber: index + 1 });
+    lines.push({
+      kind: "commit",
+      commitNumber: index + 1,
+      renderedComponentCount: fiberChanges.length,
+      mountedComponentCount: fiberChanges.filter((change) => change.isFirstMount).length,
+    });
     const components = [...fiberChanges].sort((a, b) => b.selfDuration - a.selfDuration);
     if (!components.some((change) => change.didHooksChange)) {
       lines.push({ kind: "no-hook-changes" });

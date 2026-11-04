@@ -14,7 +14,7 @@ import {
 import { buildCommitHistoryLines } from "@/features/commit-history/lines/build-commit-history-lines";
 import { printCommitHistory } from "./print-commit-history";
 
-// summary (3 lines) + "" + "## Commit 1" precede the section lines
+// summary (3 lines) + "" + "## Commit 1 (…)" precede the section lines
 const SECTION_HEADER_LINE_COUNT = 5;
 
 function buildCommitSectionLines(
@@ -491,6 +491,19 @@ describe("printCommitHistory values", () => {
 
     expect(buildCommitSectionLines([{ ...change, displayName: null }], options)[0]).toBe(
       "- Anonymous:",
+    );
+  });
+
+  it("appends rendered and mounted counts to the commit header", () => {
+    const historyLines = buildCommitHistoryLines([
+      [
+        makeChange("Foo", [{ hookIndex: 0, hookName: "State", prev: 0, next: 1 }]),
+        makeChange("Mounted", [], 0, { isFirstMount: true }),
+      ],
+    ]);
+
+    expect(printCommitHistory(historyLines, options).split("\n")[4]).toBe(
+      "## Commit 1 (2 rendered, 1 mounted)",
     );
   });
 
