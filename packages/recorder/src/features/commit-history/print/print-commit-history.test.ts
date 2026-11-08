@@ -150,6 +150,63 @@ describe("print-commit-history shallow shape for null↔object", () => {
     expect(lines).toEqual(["- Foo:", "  - hook[0] State: changed fields:", "      x: 0 → 1"]);
   });
 
+  it("prints function → function fields as one references changed line after value lines", () => {
+    const lines = buildCommitSectionLines([
+      makeChange("Foo", [
+        {
+          hookIndex: 0,
+          hookName: "State",
+          hookPath: ["State"],
+          prev: { onA: () => 1, open: false, onB: () => 1 },
+          next: { onA: () => 2, open: true, onB: () => 2 },
+        },
+      ]),
+    ]);
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  - hook[0] State: changed fields:",
+      "      open: false → true",
+      "      onA, onB: references changed",
+    ]);
+  });
+
+  it("prints references changed for a function hook value and a structurally equal object", () => {
+    const lines = buildCommitSectionLines([
+      makeChange("Foo", [
+        { hookIndex: 0, hookName: "State", hookPath: ["State"], prev: () => 1, next: () => 2 },
+        { hookIndex: 3, hookName: "State", hookPath: ["State"], prev: { a: 1 }, next: { a: 1 } },
+      ]),
+    ]);
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  - hook[0] State: references changed",
+      "  - hook[3] State: references changed",
+    ]);
+  });
+
+  it("prints a function appearing or disappearing as [Function]", () => {
+    const lines = buildCommitSectionLines([
+      makeChange("Foo", [
+        {
+          hookIndex: 0,
+          hookName: "State",
+          hookPath: ["State"],
+          prev: { onClick: () => 1, onFocus: null },
+          next: { onClick: null, onFocus: () => 1 },
+        },
+      ]),
+    ]);
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  - hook[0] State: changed fields:",
+      "      onClick: [Function] → null",
+      "      onFocus: null → [Function]",
+    ]);
+  });
+
   it("appends selfDuration to the component header when includeRenderDuration is true", () => {
     const lines = buildCommitSectionLines(
       [
@@ -475,6 +532,24 @@ describe("print-commit-history with includeAllRenders", () => {
       "    - hook[0] State: changed fields:",
       "        x: 0 → 1",
       "      Source: Unavailable",
+    ]);
+  });
+
+  it("indents the references changed line like field lines under the hooks reason", () => {
+    const lines = buildCommitSectionLines(
+      [
+        makeChange("Foo", [
+          { hookIndex: 0, hookName: "State", prev: { onA: () => 1 }, next: { onA: () => 2 } },
+        ]),
+      ],
+      options,
+    );
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  • Hook changed:",
+      "    - hook[0] State: changed fields:",
+      "        onA: references changed",
     ]);
   });
 });

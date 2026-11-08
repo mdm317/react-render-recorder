@@ -29,22 +29,24 @@ test.describe("object-state scenarios", () => {
     await expect(result).not.toContainText('"y":0');
   });
 
-  test("same-value setState is flagged as (equal)", async ({ page }) => {
+  test("same-value setState is flagged as references changed", async ({ page }) => {
     await recordCycle(page, async () => {
       await clickTimes(page, SCENARIO_BUTTON.OBJECT_SAME_VALUE, 1);
     });
 
     const result = recorderByTestId(page, "commit-history-result");
-    await expectHookChange(result, "ObjectSameValueButton", "hook[0] State: (equal)");
+    await expectHookChange(result, "ObjectSameValueButton", "hook[0] State: references changed");
   });
 
-  test("function-ref change is shown as a changed field", async ({ page }) => {
+  test("function-ref change is shown as references changed under changed fields", async ({
+    page,
+  }) => {
     await recordCycle(page, async () => {
       await clickTimes(page, SCENARIO_BUTTON.OBJECT_FUNCTION_REF, 1);
     });
 
     const result = recorderByTestId(page, "commit-history-result");
     await expectHookChange(result, "ObjectFunctionRefButton", "hook[0] State: changed fields:");
-    await expect(result).toContainText("handler:");
+    await expect(result).toContainText("handler: references changed");
   });
 });

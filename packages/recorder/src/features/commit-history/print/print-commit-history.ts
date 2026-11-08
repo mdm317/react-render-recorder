@@ -15,8 +15,8 @@ function printChangeSummary(changeSummary: HookChangeSummary): string {
       return `${formatHookValue(changeSummary.prev)} → ${formatHookValue(changeSummary.next)}`;
     case "changed-fields":
       return "changed fields:";
-    case "equal":
-      return "(equal)";
+    case "references-changed":
+      return "references changed";
   }
 }
 
@@ -75,6 +75,8 @@ function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): str
       return [
         `${hookIndent}      ${line.path}: ${formatValueForLLM(line.prev)} → ${formatValueForLLM(line.next)}`,
       ];
+    case "function-references":
+      return [`${hookIndent}      ${line.paths.join(", ")}: references changed`];
     case "source":
       return options.includeSource
         ? [`${hookIndent}    Source: ${formatHookSource(line.source)}`]
