@@ -43,14 +43,18 @@ export type HistoryLine =
     }
   // follows its component in DevTools' "Why did this render?" order
   | { kind: "render-reason"; reason: RenderReason }
-  // follows a hook line whose changeSummary is "changed-fields"
+  // follows a hook line whose changeSummary is "changed-fields"; may be absent when only
+  // function references changed
   | { kind: "field"; path: string; prev: unknown; next: unknown }
+  // last line under a "changed-fields" hook: paths whose function value was replaced by another function
+  | { kind: "function-references"; paths: string[] }
   | { kind: "source"; source: HookSourceResolution };
 
 export type HookChangeSummary =
   | { kind: "replaced"; prev: unknown; next: unknown }
   | { kind: "changed-fields" }
-  | { kind: "equal" };
+  // no comparable content changed: function → function, or a structurally equal object
+  | { kind: "references-changed" };
 
 // mirrors react-devtools-shared Profiler/WhatChanged.js
 export type RenderReason =
@@ -74,11 +78,16 @@ function splitHookPath(hook: CommitHistoryHookChange): {
   return { hookName: hookPath[hookPath.length - 1], ancestorPath: hookPath.slice(0, -1) };
 }
 
+function isFunctionReferenceChange(prev: unknown, next: unknown): boolean {
+  return typeof prev === "function" && typeof next === "function";
+}
+
 function buildChangeSummary({ prev, next, diffs }: ValueChange): HookChangeSummary {
   if (diffs == null) {
+    if (isFunctionReferenceChange(prev, next)) return { kind: "references-changed" };
     return { kind: "replaced", prev, next };
   }
-  return diffs.length === 0 ? { kind: "equal" } : { kind: "changed-fields" };
+  return diffs.length === 0 ? { kind: "references-changed" } : { kind: "changed-fields" };
 }
 
 function buildComponentLine(component: CommitHistoryFiberChange): HistoryLine {
@@ -91,7 +100,7 @@ function buildComponentLine(component: CommitHistoryFiberChange): HistoryLine {
   };
 }
 
-// the hook line followed by one field line per changed field
+// the hook line, one field line per value change, then one line gathering function → function paths
 function buildHookChangedLines(hook: CommitHistoryHookChange): HistoryLine[] {
   const { hookName, ancestorPath } = splitHookPath(hook);
   const valueChange = buildValueChange(hook.prev, hook.next);
@@ -104,7 +113,14 @@ function buildHookChangedLines(hook: CommitHistoryHookChange): HistoryLine[] {
       changeSummary: buildChangeSummary(valueChange),
     },
   ];
-  for (const diff of valueChange.diffs ?? []) lines.push({ kind: "field", ...diff });
+  const functionReferencePaths: string[] = [];
+  for (const diff of valueChange.diffs ?? []) {
+    if (isFunctionReferenceChange(diff.prev, diff.next)) functionReferencePaths.push(diff.path);
+    else lines.push({ kind: "field", ...diff });
+  }
+  if (functionReferencePaths.length > 0) {
+    lines.push({ kind: "function-references", paths: functionReferencePaths });
+  }
   return lines;
 }
 

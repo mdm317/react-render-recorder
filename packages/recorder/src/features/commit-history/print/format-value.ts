@@ -10,6 +10,7 @@ function elementSummaryToShortForm(formatted: string): string {
 
 export function formatValueForLLM(value: unknown): string {
   if (value === undefined) return "undefined";
+  if (typeof value === "function") return "[Function]";
   if (isFormattedElementSummaryString(value)) return elementSummaryToShortForm(value);
   if (
     typeof value === "string" ||

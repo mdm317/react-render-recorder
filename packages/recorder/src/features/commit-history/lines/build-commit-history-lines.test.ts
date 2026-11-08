@@ -6,7 +6,11 @@ import {
   type CommitHistoryFiberChange,
 } from "@/features/commit-history/resolve-hook-sources";
 
-import { buildCommitHistoryLines, type HistoryLine } from "./build-commit-history-lines";
+import {
+  buildCommitHistoryLines,
+  type HistoryLine,
+  type HookChangeSummary,
+} from "./build-commit-history-lines";
 
 function makeChange(
   displayName: string | null,
@@ -180,10 +184,23 @@ describe("buildCommitHistoryLines", () => {
     ]);
   });
 
-  it.each([
-    ["equal objects", { a: 1 }, { a: 1 }, { kind: "equal" }],
+  it.each<[string, unknown, unknown, HookChangeSummary]>([
+    ["equal objects", { a: 1 }, { a: 1 }, { kind: "references-changed" }],
     ["primitives", 0, 1, { kind: "replaced", prev: 0, next: 1 }],
     ["null → object", null, { a: 1 }, { kind: "replaced", prev: null, next: { a: 1 } }],
+    ["function → function", () => 1, () => 2, { kind: "references-changed" }],
+    [
+      "objects differing only in function fields (still changed-fields)",
+      { onClick: () => 1, label: "a" },
+      { onClick: () => 1, label: "a" },
+      { kind: "changed-fields" },
+    ],
+    [
+      "objects mixing value and function field changes",
+      { onClick: () => 1, open: false },
+      { onClick: () => 1, open: true },
+      { kind: "changed-fields" },
+    ],
   ])("builds the change summary for %s", (_label, prev, next, expected) => {
     const historyLines = buildCommitHistoryLines([
       [makeChange("Foo", [{ hookIndex: 0, hookName: "State", prev, next }])],
@@ -191,6 +208,51 @@ describe("buildCommitHistoryLines", () => {
 
     const hookLine = historyLines.lines.find((line) => line.kind === "hook");
     expect(hookLine).toMatchObject({ changeSummary: expected });
+  });
+
+  function buildHookDetailLines(prev: unknown, next: unknown): HistoryLine[] {
+    const historyLines = buildCommitHistoryLines([
+      [makeChange("Foo", [{ hookIndex: 0, hookName: "State", prev, next }])],
+    ]);
+    return historyLines.lines.filter(
+      (line) => line.kind === "field" || line.kind === "function-references",
+    );
+  }
+
+  it("gathers function → function paths into one line after the value field lines", () => {
+    const added = () => 1;
+    const removed = () => 1;
+    const lines = buildHookDetailLines(
+      { onClick: () => 1, onBlur: () => 1, onFocus: removed, onHover: undefined, open: false },
+      { onClick: () => 2, onBlur: () => 2, onFocus: undefined, onHover: added, open: true },
+    );
+
+    expect(lines).toEqual([
+      { kind: "field", path: "onFocus", prev: removed, next: undefined },
+      { kind: "field", path: "onHover", prev: undefined, next: added },
+      { kind: "field", path: "open", prev: false, next: true },
+      { kind: "function-references", paths: ["onClick", "onBlur"] },
+    ]);
+  });
+
+  it("keeps nested diff paths in the function-references line", () => {
+    const lines = buildHookDetailLines(
+      { actions: { increment: () => 1, reset: () => 1 } },
+      { actions: { increment: () => 2, reset: () => 2 } },
+    );
+
+    expect(lines).toEqual([
+      { kind: "function-references", paths: ["actions.increment", "actions.reset"] },
+    ]);
+    expect(buildHookDetailLines([{ onSelect: () => 1 }], [{ onSelect: () => 2 }])).toEqual([
+      { kind: "function-references", paths: ["[0].onSelect"] },
+    ]);
+  });
+
+  it("emits no function-references line when no function was replaced", () => {
+    expect(buildHookDetailLines({ x: 0 }, { x: 1 })).toEqual([
+      { kind: "field", path: "x", prev: 0, next: 1 },
+    ]);
   });
 
   it("splits hookPath into the leaf hook name and its ancestor path", () => {
