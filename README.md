@@ -97,12 +97,12 @@ const text = recorder.getCommitHistoryText({ includeSource: true });
 
 Source maps resolve asynchronously after `end()`, which returns immediately. While resolution is pending, source output shows `Source: Resolving…` (and `Called at: Resolving…`); read the text again after resolution completes. If mapping fails, the generated location is marked `(unmapped)`. `getFiberChanges()` returns JSON-safe raw changes with generated `hookSource` and `hookCallerSource` locations; it does not include resolved source locations.
 
-Sources resolve when the generated file can be fetched and ends with a `sourceMappingURL` comment. webpack's `eval` devtool family (including the development default `eval-source-map`) is not supported; its `webpack-internal:///` locations stay `(unmapped)`. Bundler prefixes such as `webpack://<name>/./` and `file://` are stripped from resolved paths, and Turbopack's absolute paths are shown relative to its project root (the workspace root in a monorepo). A resolved location carries one of two labels when it is not a place to edit in your repo:
+Sources resolve when the generated file can be fetched and ends with a `sourceMappingURL` comment. webpack's `eval` devtool family (including the development default `eval-source-map`) is not supported; its `webpack-internal:///` locations stay `(unmapped)`. Bundler prefixes such as `webpack://<name>/./` and `file://` are stripped from resolved paths, and Turbopack's absolute paths are shown relative to its project root (the workspace root in a monorepo). Two kinds of location are not a place to edit in your repo:
 
-| Label        | Meaning                                                                                 |
-| ------------ | --------------------------------------------------------------------------------------- |
-| `(library)`  | The source map ignore-lists the file (typically `node_modules`), or it is React itself  |
-| `(unmapped)` | No source map was found; the location is the generated, bundler-space file and position |
+| Output            | Meaning                                                                                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `library (<pkg>)` | The source map ignore-lists the file (typically `node_modules`); the path is replaced by its package name, or just `library` when the path has none |
+| `(unmapped)`      | No source map was found; the location is the generated, bundler-space file and position                                                             |
 
 ## URL options
 

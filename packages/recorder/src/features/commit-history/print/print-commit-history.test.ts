@@ -407,9 +407,23 @@ describe("hook source formatting", () => {
     expect(formatResolved(fileName)).toBe(`    Source: ${expected}:12:27`);
   });
 
-  it("labels locations the source map ignore-lists as library code", () => {
-    expect(formatResolved("webpack://my-app/./node_modules/lib/index.js", true)).toBe(
-      "    Source: node_modules/lib/index.js:12:27 (library)",
+  it.each([
+    ["webpack://my-app/./node_modules/lib/index.js", "library (lib)"],
+    ["file:///app/node_modules/@base-ui/utils/esm/store/useStore.js", "library (@base-ui/utils)"],
+    [
+      "file:///app/node_modules/.pnpm/@base-ui+react@1.0.0/node_modules/@base-ui/react/esm/menu.js",
+      "library (@base-ui/react)",
+    ],
+    // ignore-listed outside node_modules, or with no package after it: still library code
+    ["webpack://my-app/./src/vendor/store.ts", "library"],
+    ["webpack://my-app/./node_modules/@scope", "library"],
+  ])("replaces the ignore-listed location %s with its package", (fileName, expected) => {
+    expect(formatResolved(fileName, true)).toBe(`    Source: ${expected}`);
+  });
+
+  it("keeps the path of a node_modules file the source map does not ignore-list", () => {
+    expect(formatResolved("webpack://my-app/./node_modules/lib/index.js")).toBe(
+      "    Source: node_modules/lib/index.js:12:27",
     );
   });
 
@@ -498,6 +512,24 @@ describe("hook caller source formatting", () => {
         { [callerKey]: null },
       ),
     ).toContain("    Called at: /bundle.js:120:20 (unmapped)");
+  });
+
+  it("labels a call site inside library code", () => {
+    const results = {
+      ...sourceResults,
+      [callerKey]: {
+        location: ["", "webpack://app/./node_modules/lib/menu.js", 3, 4] as [
+          string,
+          string,
+          number,
+          number,
+        ],
+        ignored: true,
+      },
+    };
+    expect(
+      printHook({ hookSource, hookCallerSource }, { includeCallerSource: true }, results),
+    ).toContain("    Called at: library (lib)");
   });
 
   it("nests Called at under the hooks reason when every render is listed", () => {
