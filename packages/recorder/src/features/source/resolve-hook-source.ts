@@ -1,7 +1,9 @@
 import type { CommittedFiberChange } from "@react-record/devtools-api";
 import {
+  getHookCallerSourceLocation,
   getHookSourceLocation,
   getKeyFromHookSource,
+  type SourceLocation,
   type SourceResults,
 } from "./inspect-symbolicate-source";
 
@@ -48,7 +50,20 @@ export function resolveHookSource(
   hook: HookChange,
   sourceInfo: SourceInfo | null,
 ): HookSourceResolution {
-  const source = getHookSourceLocation(hook);
+  return resolveSourceLocation(getHookSourceLocation(hook), sourceInfo);
+}
+
+export function resolveHookCallerSource(
+  hook: HookChange,
+  sourceInfo: SourceInfo | null,
+): HookSourceResolution {
+  return resolveSourceLocation(getHookCallerSourceLocation(hook), sourceInfo);
+}
+
+function resolveSourceLocation(
+  source: SourceLocation | null,
+  sourceInfo: SourceInfo | null,
+): HookSourceResolution {
   if (source == null) return { status: "unavailable" };
   if (sourceInfo?.sourceResults == null) return { status: "pending" };
   const result = sourceInfo.sourceResults[getKeyFromHookSource(source)];

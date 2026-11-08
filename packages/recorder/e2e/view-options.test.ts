@@ -146,3 +146,31 @@ test("source URL option enables source display initially", async ({ page }) => {
   });
   await expect(recorderByTestId(page, "commit-history-result")).toContainText("Source:");
 });
+
+test("caller source option shows where the custom hook was called", async ({ page }) => {
+  await page.goto("/");
+  await recordCycle(page, async () => {
+    await clickTimes(page, SCENARIO_BUTTON.CUSTOM_HOOK, 1);
+  });
+  const result = recorderByTestId(page, "commit-history-result");
+  await expect(result).not.toContainText("Called at:");
+  await recorderByTestId(page, "view-options-button").click();
+  const toggle = recorderByTestId(page, "view-option-includeCallerSource");
+  await toggle.click();
+  // the useHookCounter() call in CustomHookButton, not the useState line inside it
+  await expect(result).toContainText(/Called at: .*CustomHookButton\.tsx:8:\d+/);
+  await expect(result).not.toContainText("Source:");
+  await expect(result).not.toContainText("(unmapped)");
+  await toggle.click();
+  await expect(result).not.toContainText("Called at:");
+});
+
+test("caller source URL option enables caller source display initially", async ({ page }) => {
+  await page.goto("/?callerSource=true");
+  await recordCycle(page, async () => {
+    await clickTimes(page, SCENARIO_BUTTON.CUSTOM_HOOK, 1);
+  });
+  await expect(recorderByTestId(page, "commit-history-result")).toContainText(
+    /Called at: .*CustomHookButton\.tsx:8:\d+/,
+  );
+});

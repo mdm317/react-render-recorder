@@ -93,28 +93,31 @@ recorder.end();
 const text = recorder.getCommitHistoryText({ includeSource: true });
 ```
 
-`getCommitHistoryText()` accepts `includeSource`, `includeHookPath`, `includeRenderDuration`, and `includeAllRenders` (all default to `false`). These API options are independent of the panel and URL options.
+`getCommitHistoryText()` accepts `includeSource`, `includeCallerSource`, `includeHookPath`, `includeRenderDuration`, and `includeAllRenders` (all default to `false`). These API options are independent of the panel and URL options.
 
-Source maps resolve asynchronously after `end()`, which returns immediately. While resolution is pending, source output shows `Source: Resolving…`; read the text again after resolution completes. If mapping fails, the generated location is marked `(unmapped)`. `getFiberChanges()` returns JSON-safe raw changes with generated `hookSource` locations; it does not include resolved source locations.
+Source maps resolve asynchronously after `end()`, which returns immediately. While resolution is pending, source output shows `Source: Resolving…` (and `Called at: Resolving…`); read the text again after resolution completes. If mapping fails, the generated location is marked `(unmapped)`. `getFiberChanges()` returns JSON-safe raw changes with generated `hookSource` and `hookCallerSource` locations; it does not include resolved source locations.
 
-Sources resolve when the generated file can be fetched and ends with a `sourceMappingURL` comment. webpack's `eval` devtool family (including the development default `eval-source-map`) is not supported; its `webpack-internal:///` locations stay `(unmapped)`. Bundler prefixes such as `webpack://<name>/./` and `file://` are stripped from resolved paths, and Turbopack's absolute paths are shown relative to its project root (the workspace root in a monorepo). A resolved location carries one of two labels when it is not a place to edit in your repo:
+Sources resolve when the generated file can be fetched and ends with a `sourceMappingURL` comment. webpack's `eval` devtool family (including the development default `eval-source-map`) is not supported; its `webpack-internal:///` locations stay `(unmapped)`. Bundler prefixes such as `webpack://<name>/./` and `file://` are stripped from resolved paths, and Turbopack's absolute paths are shown relative to its project root (the workspace root in a monorepo). Two kinds of location are not a place to edit in your repo:
 
-| Label        | Meaning                                                                                 |
-| ------------ | --------------------------------------------------------------------------------------- |
-| `(library)`  | The source map ignore-lists the file (typically `node_modules`), or it is React itself  |
-| `(unmapped)` | No source map was found; the location is the generated, bundler-space file and position |
+| Output            | Meaning                                                                                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `library (<pkg>)` | The source map ignore-lists the file (typically `node_modules`); the path is replaced by its package name, or just `library` when the path has none |
+| `(unmapped)`      | No source map was found; the location is the generated, bundler-space file and position                                                             |
 
 ## URL options
 
 Enable **Show source** in the recording panel options to show the original file, line, and column beneath each hook change. Source locations resolve asynchronously; unavailable source maps fall back to the generated location marked `(unmapped)`. Both views and copied text include sources when enabled. Use `?source=true` to enable it by default.
 
+Enable **Show caller source** to add a `Called at:` line with the place in the component that started the custom hook chain leading to the changed hook — for `useA()` → `useB()` → `useState()`, the `useA()` call. Use `?callerSource=true` to enable it by default.
+
 Append boolean query parameters to the page URL to enable recorder options by default: `?record=true&shortcut=true`.
 
-| Option     | Effect                                                                 |
-| ---------- | ---------------------------------------------------------------------- |
-| `record`   | Start recording automatically when the first React commit is available |
-| `shortcut` | Start with the Ctrl+R recording shortcut already enabled               |
-| `source`   | Show source locations beneath hook changes                             |
+| Option         | Effect                                                                          |
+| -------------- | ------------------------------------------------------------------------------- |
+| `record`       | Start recording automatically when the first React commit is available          |
+| `shortcut`     | Start with the Ctrl+R recording shortcut already enabled                        |
+| `source`       | Show source locations beneath hook changes                                      |
+| `callerSource` | Show the component line that started the custom hook chain of each changed hook |
 
 ## Notes
 

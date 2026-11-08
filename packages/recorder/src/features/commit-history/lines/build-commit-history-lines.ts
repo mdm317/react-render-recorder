@@ -48,7 +48,9 @@ export type HistoryLine =
   | { kind: "field"; path: string; prev: unknown; next: unknown }
   // last line under a "changed-fields" hook: paths whose function value was replaced by another function
   | { kind: "function-references"; paths: string[] }
-  | { kind: "source"; source: HookSourceResolution };
+  // callerSource: the line in the component body that leads to this hook; the same location as source
+  // when the component called the hook directly
+  | { kind: "source"; source: HookSourceResolution; callerSource: HookSourceResolution };
 
 export type HookChangeSummary =
   | { kind: "replaced"; prev: unknown; next: unknown }
@@ -143,7 +145,11 @@ function buildComponentChangeLines(component: CommitHistoryFiberChange): History
     const hooks = component.hooks ?? [];
     lines.push(buildRenderReasonLine({ kind: "hooks-changed", hookCount: hooks.length }));
     for (const hook of hooks) {
-      lines.push(...buildHookChangedLines(hook), { kind: "source", source: hook.source });
+      lines.push(...buildHookChangedLines(hook), {
+        kind: "source",
+        source: hook.source,
+        callerSource: hook.callerSource,
+      });
     }
   }
   if (component.props != null && component.props.length > 0) {

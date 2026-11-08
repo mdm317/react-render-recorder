@@ -24,6 +24,17 @@ function truncateSourcePath(fileName: string): string {
   return fileName.split("/").slice(-SOURCE_PATH_SEGMENT_LIMIT).join("/");
 }
 
+// The package follows the last `node_modules/` (pnpm nests `.pnpm/<id>/node_modules/<pkg>`) and keeps
+// its scope: `node_modules/@base-ui/utils/esm/x.js` → `@base-ui/utils`; null outside node_modules
+function findLibraryPackageName(fileName: string): string | null {
+  const index = fileName.lastIndexOf("node_modules/");
+  if (index === -1) return null;
+  const [first, second] = fileName.slice(index + "node_modules/".length).split("/");
+  if (first == null || first === "") return null;
+  if (!first.startsWith("@")) return first;
+  return second == null || second === "" ? null : `${first}/${second}`;
+}
+
 export function formatHookSource(source: HookSourceResolution): string {
   switch (source.status) {
     case "pending":
@@ -36,8 +47,13 @@ export function formatHookSource(source: HookSourceResolution): string {
     }
     case "resolved": {
       const { fileName, lineNumber, columnNumber } = source.location;
-      const librarySuffix = source.ignored ? " (library)" : "";
-      return `${truncateSourcePath(fileName)}:${lineNumber}:${columnNumber}${librarySuffix}`;
+      // ignore-listed code is not a place to edit, so its path gives way to the package name when the
+      // path has one; the source map's ignore list alone decides what counts as library code
+      if (source.ignored) {
+        const packageName = findLibraryPackageName(fileName);
+        return packageName == null ? "library" : `library (${packageName})`;
+      }
+      return `${truncateSourcePath(fileName)}:${lineNumber}:${columnNumber}`;
     }
   }
 }

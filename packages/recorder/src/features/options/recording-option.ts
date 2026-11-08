@@ -2,6 +2,7 @@ export type CommitHistoryFormatOptions = {
   includeRenderDuration: boolean;
   includeHookPath: boolean;
   includeSource: boolean;
+  includeCallerSource: boolean;
   includeAllRenders: boolean;
 };
 
@@ -9,6 +10,7 @@ export const DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS: CommitHistoryFormatOptions =
   includeRenderDuration: false,
   includeHookPath: false,
   includeSource: false,
+  includeCallerSource: false,
   includeAllRenders: false,
 };
 
@@ -22,6 +24,7 @@ const SHORTCUT_QUERY_PARAMETER = "shortcut";
 const RENDER_TIME_QUERY_PARAMETER = "renderTime";
 const HOOK_PATH_QUERY_PARAMETER = "hookPath";
 const SOURCE_QUERY_PARAMETER = "source";
+const CALLER_SOURCE_QUERY_PARAMETER = "callerSource";
 const ALL_RENDERS_QUERY_PARAMETER = "allRenders";
 
 function readQuery(): URLSearchParams | null {
@@ -37,6 +40,7 @@ export function readRecordingOption(): RecorderOptions {
     shortcut: queryParameters?.get(SHORTCUT_QUERY_PARAMETER) === "true",
     includeRenderDuration: queryParameters?.get(RENDER_TIME_QUERY_PARAMETER) === "true",
     includeSource: queryParameters?.get(SOURCE_QUERY_PARAMETER) === "true",
+    includeCallerSource: queryParameters?.get(CALLER_SOURCE_QUERY_PARAMETER) === "true",
     includeHookPath: queryParameters?.get(HOOK_PATH_QUERY_PARAMETER) === "true",
     includeAllRenders: queryParameters?.get(ALL_RENDERS_QUERY_PARAMETER) === "true",
   };

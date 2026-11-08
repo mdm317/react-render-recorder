@@ -180,8 +180,114 @@ describe("buildCommitHistoryLines", () => {
         changeSummary: { kind: "changed-fields" },
       },
       { kind: "field", path: "x", prev: 0, next: 1 },
-      { kind: "source", source: { status: "unavailable" } },
+      {
+        kind: "source",
+        source: { status: "unavailable" },
+        callerSource: { status: "unavailable" },
+      },
     ]);
+  });
+
+  describe("caller source", () => {
+    const hookSource = {
+      fileName: "http://localhost/bundle.js",
+      lineNumber: 48,
+      columnNumber: 9,
+      functionName: "useToggle",
+    };
+    const hookCallerSource = {
+      fileName: "http://localhost/bundle.js",
+      lineNumber: 120,
+      columnNumber: 20,
+      functionName: "Menu",
+    };
+    const callerKey = `${hookCallerSource.fileName}:120:20`;
+
+    function sourceLine(
+      hook: NonNullable<CommittedFiberChange["hooks"]>[number],
+      sourceResults: Record<
+        string,
+        { location: [string, string, number, number]; ignored: boolean } | null
+      >,
+    ): HistoryLine | undefined {
+      const [change] = resolveHookSources([[makeChange("Menu", [hook])]], {
+        sourceResults,
+        projectRoot: null,
+      })[0];
+      return buildCommitHistoryLines([[change]]).lines.find((line) => line.kind === "source");
+    }
+
+    it("resolves where the parent custom hook was called", () => {
+      expect(
+        sourceLine(
+          { hookIndex: 0, hookName: "State", prev: 0, next: 1, hookSource, hookCallerSource },
+          { [callerKey]: { location: ["", "src/Menu.tsx", 88, 20], ignored: false } },
+        ),
+      ).toMatchObject({
+        callerSource: {
+          status: "resolved",
+          location: { fileName: "src/Menu.tsx", lineNumber: 88, columnNumber: 20 },
+        },
+      });
+    });
+
+    it("resolves to the hook's own location when the component called the hook directly", () => {
+      const sourceKey = `${hookSource.fileName}:48:9`;
+      expect(
+        sourceLine(
+          {
+            hookIndex: 0,
+            hookName: "State",
+            prev: 0,
+            next: 1,
+            hookSource,
+            hookCallerSource: hookSource,
+          },
+          { [sourceKey]: { location: ["", "src/Menu.tsx", 12, 3], ignored: false } },
+        ),
+      ).toMatchObject({
+        source: { status: "resolved", location: { fileName: "src/Menu.tsx", lineNumber: 12 } },
+        callerSource: {
+          status: "resolved",
+          location: { fileName: "src/Menu.tsx", lineNumber: 12 },
+        },
+      });
+    });
+
+    it("is unavailable when the caller frame could not be parsed", () => {
+      expect(
+        sourceLine(
+          {
+            hookIndex: 0,
+            hookName: "State",
+            prev: 0,
+            next: 1,
+            hookSource,
+            hookCallerSource: {
+              fileName: null,
+              lineNumber: null,
+              columnNumber: null,
+              functionName: null,
+            },
+          },
+          {},
+        ),
+      ).toMatchObject({ callerSource: { status: "unavailable" } });
+    });
+
+    it("keeps the generated location when the call site is unmapped", () => {
+      expect(
+        sourceLine(
+          { hookIndex: 0, hookName: "State", prev: 0, next: 1, hookSource, hookCallerSource },
+          { [callerKey]: null },
+        ),
+      ).toMatchObject({
+        callerSource: {
+          status: "unmapped",
+          location: { fileName: "/bundle.js", lineNumber: 120, columnNumber: 20 },
+        },
+      });
+    });
   });
 
   it.each<[string, unknown, unknown, HookChangeSummary]>([

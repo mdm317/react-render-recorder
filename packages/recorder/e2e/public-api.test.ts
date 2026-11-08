@@ -11,6 +11,7 @@ type CommitHistoryFormatOptions = {
   includeRenderDuration: boolean;
   includeHookPath: boolean;
   includeSource: boolean;
+  includeCallerSource: boolean;
   includeAllRenders: boolean;
 };
 
@@ -67,6 +68,7 @@ test.describe("browser API getCommitHistoryText options", () => {
         includeRenderDuration: false,
         includeHookPath: false,
         includeSource: false,
+        includeCallerSource: false,
         includeAllRenders: false,
       }),
     );
@@ -97,6 +99,16 @@ test.describe("browser API getCommitHistoryText options", () => {
     expect(await readText(page, { includeSource: true })).not.toContain("(unmapped)");
     expect(await readText(page)).not.toContain("Source:");
     await expect(recorderByTestId(page, "commit-history-result")).not.toContainText("Source:");
+  });
+
+  test("includeCallerSource prints where the custom hook was called", async ({ page }) => {
+    await recordWithApi(page, SCENARIO_BUTTON.CUSTOM_HOOK, 1);
+
+    await expect
+      .poll(() => readText(page, { includeCallerSource: true }))
+      .toMatch(/Called at: .*CustomHookButton\.tsx:8:\d+/);
+    expect(await readText(page, { includeCallerSource: true })).not.toContain("(unmapped)");
+    expect(await readText(page)).not.toContain("Called at:");
   });
 
   test("includeAllRenders lists parent-rendered components with their reason", async ({ page }) => {
