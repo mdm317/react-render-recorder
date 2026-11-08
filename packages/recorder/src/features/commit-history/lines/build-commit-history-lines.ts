@@ -37,15 +37,19 @@ export type HistoryLine =
       kind: "hook";
       hookIndex: number;
       hookName: string;
-      // empty when the hook has no ancestor hooks
+      // ends at the last useDebugValue-labeled frame; empty when the hook has no ancestor hooks
       ancestorPath: string[];
       changeSummary: HookChangeSummary;
+      // a hook-path-group line heads this hook and holds its ancestorPath
+      inPathGroup: boolean;
     }
+  // heads two or more adjacent hooks of one component with the same non-empty ancestorPath
+  | { kind: "hook-path-group"; ancestorPath: string[] }
   // follows its component in DevTools' "Why did this render?" order
   | { kind: "render-reason"; reason: RenderReason }
   // follows a hook line whose changeSummary is "changed-fields"
-  | { kind: "field"; path: string; prev: unknown; next: unknown }
-  | { kind: "source"; source: HookSourceResolution };
+  | { kind: "field"; path: string; prev: unknown; next: unknown; inPathGroup: boolean }
+  | { kind: "source"; source: HookSourceResolution; inPathGroup: boolean };
 
 export type HookChangeSummary =
   | { kind: "replaced"; prev: unknown; next: unknown }
@@ -63,6 +67,14 @@ export type RenderReason =
   | { kind: "state-changed"; keys: string[] }
   | { kind: "parent-rendered" };
 
+// A useDebugValue label already identifies the hook, so the frames below the last one are its
+// internals: ['State("open")', "Store", "StoreR19"] → ['State("open")']. Only the frame text is
+// available, so wrapper names like ForwardRef(Foo) count as labels too
+function buildLabelCutPath(ancestorPath: string[]): string[] {
+  const lastLabelIndex = ancestorPath.map((frame) => frame.endsWith(")")).lastIndexOf(true);
+  return lastLabelIndex === -1 ? ancestorPath : ancestorPath.slice(0, lastLabelIndex + 1);
+}
+
 function splitHookPath(hook: CommitHistoryHookChange): {
   hookName: string;
   ancestorPath: string[];
@@ -71,7 +83,10 @@ function splitHookPath(hook: CommitHistoryHookChange): {
   const hookName = "hookName" in hook ? hook.hookName : null;
   if (hookPath == null || hookPath.length === 0)
     return { hookName: hookName ?? "", ancestorPath: [] };
-  return { hookName: hookPath[hookPath.length - 1], ancestorPath: hookPath.slice(0, -1) };
+  return {
+    hookName: hookPath[hookPath.length - 1],
+    ancestorPath: buildLabelCutPath(hookPath.slice(0, -1)),
+  };
 }
 
 function buildChangeSummary({ prev, next, diffs }: ValueChange): HookChangeSummary {
@@ -91,8 +106,8 @@ function buildComponentLine(component: CommitHistoryFiberChange): HistoryLine {
   };
 }
 
-// the hook line followed by one field line per changed field
-function buildHookChangedLines(hook: CommitHistoryHookChange): HistoryLine[] {
+// the hook line followed by one field line per changed field, then its source line
+function buildHookChangedLines(hook: CommitHistoryHookChange, inPathGroup: boolean): HistoryLine[] {
   const { hookName, ancestorPath } = splitHookPath(hook);
   const valueChange = buildValueChange(hook.prev, hook.next);
   const lines: HistoryLine[] = [
@@ -102,10 +117,30 @@ function buildHookChangedLines(hook: CommitHistoryHookChange): HistoryLine[] {
       hookName,
       ancestorPath,
       changeSummary: buildChangeSummary(valueChange),
+      inPathGroup,
     },
   ];
-  for (const diff of valueChange.diffs ?? []) lines.push({ kind: "field", ...diff });
+  for (const diff of valueChange.diffs ?? []) lines.push({ kind: "field", ...diff, inPathGroup });
+  lines.push({ kind: "source", source: hook.source, inPathGroup });
   return lines;
+}
+
+function isSamePath(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((frame, index) => frame === b[index]);
+}
+
+// the lines of one component's hooks; only adjacent hooks group, so hook order is preserved
+function buildHookListLines(hooks: CommitHistoryHookChange[]): HistoryLine[] {
+  const paths = hooks.map((hook) => splitHookPath(hook).ancestorPath);
+  const matchesPrevious = paths.map(
+    (path, index) => index > 0 && path.length > 0 && isSamePath(paths[index - 1], path),
+  );
+  return hooks.flatMap((hook, index) => {
+    const matchesNext = matchesPrevious[index + 1] === true;
+    const hookLines = buildHookChangedLines(hook, matchesPrevious[index] || matchesNext);
+    if (matchesPrevious[index] || !matchesNext) return hookLines;
+    return [{ kind: "hook-path-group", ancestorPath: paths[index] }, ...hookLines];
+  });
 }
 
 function buildRenderReasonLine(reason: RenderReason): HistoryLine {
@@ -126,9 +161,7 @@ function buildComponentChangeLines(component: CommitHistoryFiberChange): History
   if (component.didHooksChange) {
     const hooks = component.hooks ?? [];
     lines.push(buildRenderReasonLine({ kind: "hooks-changed", hookCount: hooks.length }));
-    for (const hook of hooks) {
-      lines.push(...buildHookChangedLines(hook), { kind: "source", source: hook.source });
-    }
+    lines.push(...buildHookListLines(hooks));
   }
   if (component.props != null && component.props.length > 0) {
     lines.push(buildRenderReasonLine({ kind: "props-changed", keys: component.props }));

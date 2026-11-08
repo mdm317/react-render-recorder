@@ -513,7 +513,7 @@ describe("printCommitHistory values", () => {
     expect(text.split("\n")[2]).toBe("— total render time");
   });
 
-  it("parses the debug label of a single ancestor hook", () => {
+  it("prints a single labeled ancestor verbatim", () => {
     const lines = buildCommitSectionLines(
       [
         makeChange("Foo", [
@@ -529,6 +529,115 @@ describe("printCommitHistory values", () => {
       options,
     );
 
-    expect(lines[1]).toBe('  - hook[0] SyncExternalStore (in Floating, debug="root"): 0 → 1');
+    expect(lines[1]).toBe('  - hook[0] SyncExternalStore (in Floating("root")): 0 → 1');
+  });
+});
+
+describe("printCommitHistory hook paths", () => {
+  const options = { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, includeHookPath: true };
+  const hook = (
+    hookIndex: number,
+    hookPath: string[],
+    change: { prev: unknown; next: unknown } = { prev: 0, next: 1 },
+  ) => ({
+    hookIndex,
+    hookPath,
+    ...change,
+  });
+
+  it("prints a hook below a label with the path cut there", () => {
+    const lines = buildCommitSectionLines(
+      [
+        makeChange("Foo", [
+          hook(1, ['State("mounted")', "Store", "StoreFast", "StoreR19", "SyncExternalStore"]),
+        ]),
+      ],
+      options,
+    );
+
+    expect(lines[1]).toBe('  - hook[1] SyncExternalStore (in State("mounted")): 0 → 1');
+  });
+
+  it("prints adjacent hooks with one path under a group line", () => {
+    const lines = buildCommitSectionLines(
+      [
+        makeChange("Foo", [
+          hook(19, ["A", "B", "State"], { prev: undefined, next: "starting" }),
+          hook(20, ["A", "B", "State"], { prev: false, next: true }),
+          hook(21, ["C", "State"]),
+        ]),
+      ],
+      options,
+    );
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  - in A > B:",
+      '    - hook[19] State: undefined → "starting"',
+      "    - hook[20] State: false → true",
+      "  - hook[21] State (in C): 0 → 1",
+    ]);
+  });
+
+  it("indents field and source lines with their grouped hook", () => {
+    const lines = buildCommitSectionLines(
+      [
+        makeChange("Foo", [
+          hook(0, ["A", "State"]),
+          hook(1, ["A", "State"], { prev: { x: 0 }, next: { x: 1 } }),
+          hook(2, ["B", "State"], { prev: { y: 0 }, next: { y: 1 } }),
+        ]),
+      ],
+      { ...options, includeSource: true },
+    );
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  - in A:",
+      "    - hook[0] State: 0 → 1",
+      "      Source: Unavailable",
+      "    - hook[1] State: changed fields:",
+      "        x: 0 → 1",
+      "      Source: Unavailable",
+      "  - hook[2] State (in B): changed fields:",
+      "      y: 0 → 1",
+      "    Source: Unavailable",
+    ]);
+  });
+
+  it("nests the group under the hooks reason when every render is listed", () => {
+    const lines = buildCommitSectionLines(
+      [makeChange("Foo", [hook(0, ["A", "State"]), hook(1, ["A", "State"])])],
+      { ...options, includeAllRenders: true },
+    );
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  • Hooks changed:",
+      "    - in A:",
+      "      - hook[0] State: 0 → 1",
+      "      - hook[1] State: 0 → 1",
+    ]);
+  });
+
+  it("prints no group line and no extra indent with includeHookPath off", () => {
+    const lines = buildCommitSectionLines(
+      [
+        makeChange("Foo", [
+          hook(0, ["A", "State"]),
+          hook(1, ["A", "State"], { prev: { x: 0 }, next: { x: 1 } }),
+        ]),
+      ],
+      { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, includeSource: true },
+    );
+
+    expect(lines).toEqual([
+      "- Foo:",
+      "  - hook[0] State: 0 → 1",
+      "    Source: Unavailable",
+      "  - hook[1] State: changed fields:",
+      "      x: 0 → 1",
+      "    Source: Unavailable",
+    ]);
   });
 });

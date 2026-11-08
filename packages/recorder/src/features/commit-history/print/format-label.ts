@@ -1,7 +1,5 @@
 import type { HookSourceResolution } from "@/features/source/resolve-hook-source";
 
-const ANCESTOR_HOOK_PATTERN = /^(.+?)\("(.+)"\)$/;
-
 const SOURCE_PATH_SEGMENT_LIMIT = 3;
 
 // nameless components print as "Anonymous" like DevTools
@@ -9,13 +7,9 @@ export function formatDisplayName(displayName: string | null): string {
   return displayName ?? "Anonymous";
 }
 
-// null for an empty ancestorPath; a single ancestor has its debug label parsed
-// (['Floating("root")'] → 'Floating, debug="root"'), several are joined verbatim (["A", "B"] → "A > B")
+// null for an empty ancestorPath; frames are joined verbatim: ["A", 'B("x")'] → 'A > B("x")'
 export function formatAncestorPath(ancestorPath: string[]): string | null {
-  if (ancestorPath.length === 0) return null;
-  if (ancestorPath.length > 1) return ancestorPath.join(" > ");
-  const match = ANCESTOR_HOOK_PATTERN.exec(ancestorPath[0]);
-  return match == null ? ancestorPath[0] : `${match[1]}, debug="${match[2]}"`;
+  return ancestorPath.length === 0 ? null : ancestorPath.join(" > ");
 }
 
 // Keeps the last few path segments, like zsh's `truncation_length`: `a/b/c/d` → `b/c/d`.

@@ -42,8 +42,11 @@ function printRenderReason(reason: RenderReason): string {
 }
 
 function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): string[] {
-  // hook lines nest under the "• Hooks changed:" reason when every render is listed
-  const hookIndent = options.includeAllRenders ? "  " : "";
+  // hook lines nest under the "• Hooks changed:" reason when every render is listed,
+  // and under their group line when paths are shown
+  const reasonIndent = options.includeAllRenders ? "  " : "";
+  const isUnderGroupLine = options.includeHookPath && "inPathGroup" in line && line.inPathGroup;
+  const hookIndent = isUnderGroupLine ? `${reasonIndent}  ` : reasonIndent;
   switch (line.kind) {
     case "commit":
       return [
@@ -60,14 +63,20 @@ function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): str
       return [`- ${formatDisplayName(line.displayName)}${durationSuffix}:`];
     }
     case "hook": {
-      const ancestorPathText = options.includeHookPath
-        ? formatAncestorPath(line.ancestorPath)
-        : null;
+      const ancestorPathText =
+        options.includeHookPath && !line.inPathGroup ? formatAncestorPath(line.ancestorPath) : null;
       const label =
         ancestorPathText == null ? line.hookName : `${line.hookName} (in ${ancestorPathText})`;
       return [
         `${hookIndent}  - hook[${line.hookIndex}] ${label}: ${printChangeSummary(line.changeSummary)}`,
       ];
+    }
+    case "hook-path-group": {
+      const ancestorPathText = options.includeHookPath
+        ? formatAncestorPath(line.ancestorPath)
+        : null;
+      if (ancestorPathText == null) return [];
+      return [`${hookIndent}  - in ${ancestorPathText}:`];
     }
     case "render-reason":
       return options.includeAllRenders ? [`  ${printRenderReason(line.reason)}`] : [];
