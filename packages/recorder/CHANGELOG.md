@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/mdm317/react-render-recorder/compare/v0.2.2...v0.3.0) (2026-11-08)
+
+
+### Features
+
+* **recorder:** add includeCallerSource option and library package labels ([#21](https://github.com/mdm317/react-render-recorder/issues/21)) ([855af13](https://github.com/mdm317/react-render-recorder/commit/855af13c3baa5ea070ee1dce75b70930ddc55e55))
+* **recorder:** show mounted and rerendered counts in commit headers ([#18](https://github.com/mdm317/react-render-recorder/issues/18)) ([8d605eb](https://github.com/mdm317/react-render-recorder/commit/8d605eb74b0868754e568d7f0c290bbf7e3826a9))
+
+
+### Bug Fixes
+
+* **recorder:** collapse function reference changes into one line ([#20](https://github.com/mdm317/react-render-recorder/issues/20)) ([7a4822b](https://github.com/mdm317/react-render-recorder/commit/7a4822b192c16cc574b08156f76ee10e11f6dd98))
+
 ## [0.2.2](https://github.com/mdm317/react-render-recorder/compare/v0.2.1...v0.2.2) (2026-10-29)
 
 
