@@ -77,10 +77,16 @@ function printLines(line: HistoryLine, options: CommitHistoryFormatOptions): str
       ];
     case "function-references":
       return [`${hookIndent}      ${line.paths.join(", ")}: references changed`];
-    case "source":
-      return options.includeSource
-        ? [`${hookIndent}    Source: ${formatHookSource(line.source)}`]
-        : [];
+    case "source": {
+      const lines: string[] = [];
+      if (options.includeCallerSource) {
+        lines.push(`${hookIndent}    Called at: ${formatHookSource(line.callerSource)}`);
+      }
+      if (options.includeSource) {
+        lines.push(`${hookIndent}    Source: ${formatHookSource(line.source)}`);
+      }
+      return lines;
+    }
   }
 }
 

@@ -433,6 +433,83 @@ describe("hook source formatting", () => {
   });
 });
 
+describe("hook caller source formatting", () => {
+  const hookSource = {
+    fileName: "http://localhost/bundle.js",
+    lineNumber: 48,
+    columnNumber: 9,
+    functionName: "useToggle",
+  };
+  const hookCallerSource = {
+    fileName: "http://localhost/bundle.js",
+    lineNumber: 120,
+    columnNumber: 20,
+    functionName: "Menu",
+  };
+  const sourceKey = `${hookSource.fileName}:48:9`;
+  const callerKey = `${hookCallerSource.fileName}:120:20`;
+  const sourceResults = {
+    [sourceKey]: {
+      location: ["", "src/useToggle.ts", 5, 27] as [string, string, number, number],
+      ignored: false,
+    },
+    [callerKey]: {
+      location: ["", "src/Menu.tsx", 88, 20] as [string, string, number, number],
+      ignored: false,
+    },
+  };
+
+  function printHook(
+    hook: Partial<NonNullable<CommittedFiberChange["hooks"]>[number]>,
+    options: Partial<CommitHistoryFormatOptions>,
+    results: typeof sourceResults | Record<string, null> = sourceResults,
+  ): string[] {
+    const changes = [
+      makeChange("Menu", [{ hookIndex: 0, hookName: "State", prev: 0, next: 1, ...hook }]),
+    ];
+    return buildCommitSectionLines(
+      resolveHookSources([changes], { sourceResults: results, projectRoot: null })[0],
+      { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, ...options },
+    );
+  }
+
+  it.each<[string, Partial<CommitHistoryFormatOptions>, string[]]>([
+    ["both off", {}, []],
+    ["only caller source", { includeCallerSource: true }, ["    Called at: src/Menu.tsx:88:20"]],
+    ["only source", { includeSource: true }, ["    Source: src/useToggle.ts:5:27"]],
+    [
+      "both on",
+      { includeSource: true, includeCallerSource: true },
+      ["    Called at: src/Menu.tsx:88:20", "    Source: src/useToggle.ts:5:27"],
+    ],
+  ])("prints source lines with %s", (_label, options, expected) => {
+    expect(printHook({ hookSource, hookCallerSource }, options)).toEqual([
+      "- Menu:",
+      "  - hook[0] State: 0 → 1",
+      ...expected,
+    ]);
+  });
+
+  it("marks an unmapped call site", () => {
+    expect(
+      printHook(
+        { hookSource, hookCallerSource },
+        { includeCallerSource: true },
+        { [callerKey]: null },
+      ),
+    ).toContain("    Called at: /bundle.js:120:20 (unmapped)");
+  });
+
+  it("nests Called at under the hooks reason when every render is listed", () => {
+    expect(
+      printHook(
+        { hookSource, hookCallerSource },
+        { includeCallerSource: true, includeAllRenders: true },
+      ),
+    ).toContain("      Called at: src/Menu.tsx:88:20");
+  });
+});
+
 describe("print-commit-history with includeAllRenders", () => {
   const options = { ...DEFAULT_COMMIT_HISTORY_FORMAT_OPTIONS, includeAllRenders: true };
 

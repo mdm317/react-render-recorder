@@ -59,11 +59,22 @@ export function getHookSourceLocation(hook: HookChange): SourceLocation | null {
   return isSourceLocation(source) ? source : null;
 }
 
+// The line in the component body that leads to `hook`: the outermost custom hook call, or the same
+// location as hookSource when the component called `hook` directly.
+export function getHookCallerSourceLocation(hook: HookChange): SourceLocation | null {
+  const source = "hookCallerSource" in hook ? hook.hookCallerSource : null;
+  return isSourceLocation(source) ? source : null;
+}
+
+// unique by location key, so each place is symbolicated and checked for a project root once
 export function collectSourceLocations(fiberChanges: CommittedFiberChange[][]): SourceLocation[] {
-  return fiberChanges
-    .flat()
-    .flatMap((change) => change.hooks ?? [])
-    .flatMap((hook) => getHookSourceLocation(hook) ?? []);
+  const locationsByKey = new Map<string, SourceLocation>();
+  for (const hook of fiberChanges.flat().flatMap((change) => change.hooks ?? [])) {
+    for (const location of [getHookSourceLocation(hook), getHookCallerSourceLocation(hook)]) {
+      if (location != null) locationsByKey.set(getKeyFromHookSource(location), location);
+    }
+  }
+  return [...locationsByKey.values()];
 }
 
 function isSourceLocation(source: unknown): source is SourceLocation {
