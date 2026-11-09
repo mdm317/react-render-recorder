@@ -18,6 +18,11 @@
       "Bash(git restore *)"
     ]
   },
+  "skillOverrides": {
+    "analyze-rerenders": "name-only",
+    "react-render-perf": "name-only",
+    "react-render-perf-verify": "name-only"
+  },
   "hooks": {
     "PreToolUse": [
       {
