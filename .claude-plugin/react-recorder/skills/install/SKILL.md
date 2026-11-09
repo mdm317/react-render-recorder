@@ -10,7 +10,7 @@ Add the recorder script so it runs before the React app does, then reload and co
 ```html
 <script
   crossorigin="anonymous"
-  src="https://unpkg.com/react-render-recorder@0.2.2/dist/react-render-recorder.js"
+  src="https://unpkg.com/react-render-recorder@0.3.0/dist/react-render-recorder.js"
 ></script>
 ```
 

@@ -14,7 +14,8 @@ declare const __REACT_RENDER_RECORDER__: {
 type Options = {
   includeRenderDuration?: boolean; // "(11.8ms)" after each component
   includeHookPath?: boolean; // "(in useTodos)" after each hook
-  includeSource?: boolean; // "Source:" line under each hook
+  includeSource?: boolean; // "Source:" line under each hook — where the hook is defined
+  includeCallerSource?: boolean; // "Called at:" line under each hook — the line in the component body that leads to it
   includeAllRenders?: boolean; // every rendered component with its render reason, not only hook changes
 }; // all default to false
 ```
@@ -49,17 +50,21 @@ The script is not kept in the repo, so copy its output into the conversation as 
 Call `getCommitHistoryText` twice after each `end()`, with the same options except `includeSource`:
 
 ```js
-const options = { includeAllRenders: true, includeHookPath: true };
+const options = { includeAllRenders: true, includeCallerSource: true };
 const text = recorder.getCommitHistoryText(options);
 const full = recorder.getCommitHistoryText({ ...options, includeSource: true });
 ```
 
 Save them as `<scenario>-<step>-<run>.txt` and `<scenario>-<step>-<run>.full.txt`.
 
-- `.txt`: read this first to find which commits and components cost what.
-- `.full.txt`: the same recording with `Source:` lines. Open it only for the commit you're tracing, when you need where a hook is defined.
-  - `Source: Resolving…` — source maps resolve after `end()`; read again until it is gone.
-  - `(unmapped)` — a bundler-output location, a hint only.
+- `.txt`: read this first to find which commits and components cost what. Each commit header splits its components into first mounts and re-renders: `## Commit 2 (3 mounted, 11 rerendered)`. Each hook has a `Called at:` line — the line in the component that leads to it; edit here when the hook comes from a library.
+- `.full.txt`: the same recording with `Source:` lines added. Open it only for the commit you're tracing, when you need where a hook itself is defined.
+
+`Called at:` and `Source:` can also read:
+
+- `Resolving…` — source maps resolve after `end()`; read again until it is gone.
+- `(unmapped)` — a bundler-output location, a hint only.
+- `library (<package>)` — code the source map ignore-lists; not a place to edit, so follow `Called at:` instead.
 
 ## Recorder artifacts
 
